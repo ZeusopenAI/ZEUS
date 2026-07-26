@@ -1,0 +1,103 @@
+[
+  {
+    "id": "QAI-FB-001",
+    "status": "READY_FOR_DRAFT",
+    "channel": "facebook_reel",
+    "audience": "Chủ spa nhỏ",
+    "experiment_group": "spa-time-saving",
+    "hypothesis": "Một demo ngắn về việc tự động trả lời inbox sẽ tạo nhiều inbox chất lượng hơn một bài chỉ nói chung về AI.",
+    "hook": "Chủ spa đang trả lời cùng một câu hỏi hơn 30 lần mỗi ngày?",
+    "script_outline": [
+      "Nêu tình huống khách hỏi giá, lịch và ưu đãi lặp lại.",
+      "Quay màn hình một workflow mẫu phân loại nhu cầu và tạo phản hồi nháp.",
+      "Nói rõ đây là demo, cần thiết lập phù hợp với từng spa.",
+      "Mời người xem nhắn từ khóa SPA để nhận checklist khảo sát miễn phí."
+    ],
+    "visual_direction": "Quay màn hình workflow thật kết hợp giọng nói hoặc khuôn mặt thật của Quý; không dùng video reup.",
+    "primary_kpi": "qualified_inbox",
+    "secondary_kpis": ["three_second_hold", "average_watch_time", "saves", "shares"],
+    "cta": "Nhắn “SPA” để nhận checklist AI Automation cho spa.",
+    "originality_requirements": ["screen_recording_or_owner_voice", "no_reused_watermarked_video", "source_files_saved_to_drive"]
+  },
+  {
+    "id": "QAI-FB-002",
+    "status": "READY_FOR_DRAFT",
+    "channel": "facebook_reel",
+    "audience": "Môi giới và đội kinh doanh bất động sản",
+    "experiment_group": "real-estate-speed-to-lead",
+    "hypothesis": "Một tình huống mất lead vì phản hồi chậm sẽ giúp khách BĐS nhận ra giá trị của CRM và tự động hóa ngay lập tức.",
+    "hook": "Lead bất động sản không mất vì giá cao — nhiều khi chỉ vì trả lời chậm 5 phút.",
+    "script_outline": [
+      "Mô tả một lead để lại số điện thoại ngoài giờ.",
+      "Demo luồng ghi lead vào sheet/CRM, gắn tag nhu cầu và nhắc nhân viên gọi lại.",
+      "Nêu rõ AI hỗ trợ tốc độ, không thay thế tư vấn pháp lý hay quyết định mua bán.",
+      "Mời người xem nhắn BDS để nhận sơ đồ luồng mẫu."
+    ],
+    "visual_direction": "Dùng dữ liệu giả lập, quay màn hình Google Sheets/Make và lời giải thích thật.",
+    "primary_kpi": "qualified_inbox",
+    "secondary_kpis": ["three_second_hold", "average_watch_time", "shares", "profile_visits"],
+    "cta": "Nhắn “BDS” để nhận sơ đồ CRM tự động cho đội sales.",
+    "originality_requirements": ["synthetic_demo_data_only", "owner_voice_or_face", "source_files_saved_to_drive"]
+  },
+  {
+    "id": "QAI-FB-003",
+    "status": "READY_FOR_DRAFT",
+    "channel": "facebook_reel",
+    "audience": "Chủ doanh nghiệp SME",
+    "experiment_group": "sme-operations",
+    "hypothesis": "Nội dung đối chiếu trước/sau một quy trình thủ công sẽ tăng tỷ lệ xem hết hơn một danh sách công cụ AI.",
+    "hook": "Đừng mua 10 công cụ AI trước khi tự động hóa đúng một việc này.",
+    "script_outline": [
+      "Đặt hai cột: việc thủ công và việc sau khi có workflow.",
+      "Demo việc nhận form, phân loại nhu cầu, gửi thông báo nội bộ.",
+      "Nêu chỉ số cần đo: thời gian phản hồi, tỉ lệ xử lý, lead đủ điều kiện.",
+      "Mời người xem bình luận quy trình đang tốn thời gian nhất."
+    ],
+    "visual_direction": "Bảng so sánh tối giản + quay màn hình workflow; không nêu cam kết tiết kiệm hay doanh thu tuyệt đối.",
+    "primary_kpi": "comments_from_business_owners",
+    "secondary_kpis": ["completion_rate", "saves", "shares", "qualified_inbox"],
+    "cta": "Bình luận “QUY TRÌNH” để nhận mẫu audit 15 phút.",
+    "originality_requirements": ["owner_voice_or_face", "claims_supported_by_demo", "source_files_saved_to_drive"]
+  },
+  {
+    "id": "QAI-FB-004",
+    "status": "READY_FOR_DRAFT",
+    "channel": "facebook_reel",
+    "audience": "Chủ spa, BĐS và SME đang thử AI",
+    "experiment_group": "ai-myths",
+    "hypothesis": "Một phản biện thẳng về kỳ vọng sai khi dùng AI sẽ tạo niềm tin thương hiệu và lượt lưu tốt hơn nội dung khoe công cụ.",
+    "hook": "AI không tự cứu doanh nghiệp nếu quy trình của anh chị đang rối.",
+    "script_outline": [
+      "Nêu ba điểm AI không thể tự giải quyết: dữ liệu rối, mục tiêu mơ hồ, không có người nhận lead.",
+      "Nêu ba việc cần chuẩn hóa trước khi automation.",
+      "Mở một template checklist đơn giản.",
+      "Mời người xem lấy checklist qua website hoặc inbox."
+    ],
+    "visual_direction": "Nói trực diện trước camera, xen checklist tự thiết kế và ví dụ workflow.",
+    "primary_kpi": "saves",
+    "secondary_kpis": ["average_watch_time", "shares", "website_clicks", "qualified_inbox"],
+    "cta": "Lưu video này, sau đó nhắn “CHECKLIST” nếu cần bản mẫu.",
+    "originality_requirements": ["owner_face_or_voice", "no_generic_stock_only_video", "source_files_saved_to_drive"]
+  },
+  {
+    "id": "QAI-FB-005",
+    "status": "READY_FOR_DRAFT",
+    "channel": "facebook_reel",
+    "audience": "Chủ doanh nghiệp SME",
+    "experiment_group": "build-in-public",
+    "hypothesis": "Chia sẻ một bước làm thật trong dự án sẽ tăng độ tin cậy và tỉ lệ xem hồ sơ hơn video minh họa AI thuần túy.",
+    "hook": "Đây là cách em biến một ghi chú khách hàng thành việc cho cả đội trong chưa đến 1 phút.",
+    "script_outline": [
+      "Hiển thị ghi chú mẫu đã ẩn dữ liệu cá nhân.",
+      "Quay workflow biến ghi chú thành task và trạng thái.",
+      "Nói rõ điểm con người vẫn phải quyết: ưu tiên và phê duyệt.",
+      "Mời xem thêm case demo trên website."
+    ],
+    "visual_direction": "Build-in-public bằng bản demo sạch, có chú thích từng bước.",
+    "primary_kpi": "website_clicks",
+    "secondary_kpis": ["profile_visits", "average_watch_time", "qualified_inbox"],
+    "cta": "Xem bản demo quy trình tại quangquy88.super.site.",
+    "originality_requirements": ["anonymized_or_demo_data", "screen_recording", "source_files_saved_to_drive"]
+  }
+]
+

@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "updated_at": "2026-07-26",
+  "brand": "Quang Quý AI",
+  "website": "https://quangquy88.super.site",
+  "primary_goal": "qualified_leads_for_ai_automation",
+  "secondary_goal": "facebook_content_monetization",
+  "execution_mode": "DRAFT_ONLY",
+  "daily_target": {
+    "original_reels": 1,
+    "support_posts_per_week": 3
+  },
+  "integrations": {
+    "facebook_publish_api": "NOT_CONNECTED",
+    "facebook_insights_api": "NOT_CONNECTED",
+    "notion_dashboard": "NEEDS_INTEGRATION_SHARE",
+    "google_drive_assets": "NOT_CONNECTED"
+  },
+  "channel_constraints": {
+    "instagram_creator_or_business": "ELIGIBLE_ONLY_AFTER_OFFICIAL_OAUTH",
+    "facebook_page": "ELIGIBLE_ONLY_AFTER_OFFICIAL_OAUTH",
+    "facebook_personal_profile": "MANUAL_ONLY_IN_NATIVE_APP",
+    "instagram_to_facebook_personal_crosspost": "UNSUPPORTED_BY_AUTOMATION"
+  },
+  "account_recovery": {
+    "payout_status": "META_REVIEW_UI_UNAVAILABLE",
+    "evidence_to_keep": [
+      "screenshot_of_the_unavailable_review_page",
+      "date_and_device_used",
+      "one_clear_support_request_when_a_supported_channel_is_available"
+    ]
+  },
+  "gates": {
+    "publish_requires": [
+      "official_publishing_connection_verified",
+      "asset_rights_and_originality_checked",
+      "policy_check_passed"
+    ],
+    "insight_sync_requires": [
+      "official_insights_connection_verified"
+    ],
+    "payout_changes_require": [
+      "owner_action_in_meta"
+    ]
+  },
+  "safeguards": {
+    "do_not_store": [
+      "passwords",
+      "cookies",
+      "access_tokens",
+      "api_keys",
+      "otp_codes",
+      "tax_documents"
+    ],
+    "external_actions_disabled": [
+      "publish_to_facebook",
+      "change_payout_details",
+      "submit_or_repeat_meta_appeals"
+    ]
+  }
+}

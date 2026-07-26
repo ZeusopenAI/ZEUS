@@ -1,0 +1,22 @@
+name: quang-quy-ai
+version: 0.2.0
+description: "Operational profile for Quang Quý AI's content and automation workflows"
+author: "Nguyễn Quang Quý"
+license: "Proprietary"
+env_requires:
+  - name: GOOGLE_API_KEY
+    description: "Optional Gemini key, entered locally by the owner only"
+    required: false
+  - name: TERMINAL_SSH_HOST
+    description: "Optional isolated VPS lab host"
+    required: false
+  - name: TERMINAL_SSH_USER
+    description: "Optional unprivileged VPS user"
+    required: false
+distribution_owned:
+  - SOUL.md
+  - config.yaml
+  - skills/
+  - distribution.yaml
+  - README.md
+

@@ -1,0 +1,23 @@
+approvals:
+  mode: smart
+  timeout: 120
+  cron_mode: deny
+  mcp_reload_confirm: false
+  destructive_slash_confirm: true
+  deny:
+    - "git push --force*"
+    - "git reset --hard*"
+    - "rm -rf /"
+    - "rm -rf ~*"
+    - "dd if=* of=/dev/*"
+    - "mkfs*"
+    - "*curl*|*sh*"
+    - "*wget*|*sh*"
+
+updates:
+  pre_update_backup: full
+  non_interactive_local_changes: stash
+
+agent:
+  api_max_retries: 1
+
