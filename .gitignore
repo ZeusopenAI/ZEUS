@@ -1,0 +1,54 @@
+# Quang Quy AI — secrets and local state
+.env
+.env.*
+!.env.example
+*.env
+secrets/
+.secret/
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+credentials.json
+service-account*.json
+token.json
+cookies.json
+*.session
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+.npm/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Runtime data and generated artifacts
+logs/
+*.log
+tmp/
+temp/
+.cache/
+outputs/
+artifacts/
+
+# Local Hermes runtime state
+agents/hermes/.env
+agents/hermes/.env.*
+!agents/hermes/.env.example
+agents/hermes/logs/
+agents/hermes/data/
+agents/hermes/.cache/
