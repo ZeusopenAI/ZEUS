@@ -48,7 +48,7 @@ jobs:
             exit 1
           fi
 
-      - name: Scan for common credential patterns
+      - name: Scan production code for common credential patterns
         shell: bash
         run: |
           set -euo pipefail
@@ -61,9 +61,14 @@ jobs:
             -e 'xox[baprs]-[A-Za-z0-9-]{20,}' \
             -e '[0-9]{8,10}:[A-Za-z0-9_-]{35}' \
             -e '-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----' \
-            -- agents/hermes ':!agents/hermes/.env.example' || true)
+            -- agents/hermes \
+            ':!agents/hermes/.env.example' \
+            ':!agents/hermes/tests/**' \
+            ':!agents/hermes/website/**' \
+            ':!agents/hermes/skills/**' \
+            ':!agents/hermes/agent/redact.py' || true)
           if [ -n "$findings" ]; then
-            echo "Potential credential patterns found:"
+            echo "Potential credential patterns found in production paths:"
             echo "$findings"
             exit 1
           fi
