@@ -6,6 +6,7 @@ on:
       - integration/hermes-monorepo
     paths:
       - .github/workflows/integrate-hermes.yml
+      - .github/hermes-integration.trigger
   workflow_dispatch:
 
 permissions:
