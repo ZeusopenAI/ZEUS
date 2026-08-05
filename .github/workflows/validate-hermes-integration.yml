@@ -8,6 +8,7 @@ on:
       - 'agents/hermes/**'
       - '.gitignore'
       - 'docs/HERMES_INTEGRATION.md'
+      - 'docs/HERMES_VALIDATION.md'
       - 'scripts/update-hermes-snapshot.sh'
       - '.github/workflows/integrate-hermes.yml'
       - '.github/workflows/validate-hermes-integration.yml'
@@ -44,6 +45,26 @@ jobs:
           if [ -n "$blocked" ]; then
             echo "Sensitive-looking tracked files found:"
             echo "$blocked"
+            exit 1
+          fi
+
+      - name: Scan for common credential patterns
+        shell: bash
+        run: |
+          set -euo pipefail
+          findings=$(git grep -nEI \
+            -e 'AIza[0-9A-Za-z_-]{35}' \
+            -e 'sk-(proj-)?[A-Za-z0-9_-]{20,}' \
+            -e 'github_pat_[A-Za-z0-9_]{20,}' \
+            -e 'gh[pousr]_[A-Za-z0-9]{30,}' \
+            -e 'AKIA[0-9A-Z]{16}' \
+            -e 'xox[baprs]-[A-Za-z0-9-]{20,}' \
+            -e '[0-9]{8,10}:[A-Za-z0-9_-]{35}' \
+            -e '-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----' \
+            -- agents/hermes ':!agents/hermes/.env.example' || true)
+          if [ -n "$findings" ]; then
+            echo "Potential credential patterns found:"
+            echo "$findings"
             exit 1
           fi
 
