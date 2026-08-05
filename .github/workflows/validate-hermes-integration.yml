@@ -47,12 +47,23 @@ jobs:
             exit 1
           fi
 
-      - name: Check example configuration contains placeholders only
+      - name: Check secret-shaped values in example configuration
         shell: bash
         run: |
           set -euo pipefail
-          if grep -nE '^[A-Za-z_][A-Za-z0-9_]*=[^[:space:]#][^[:space:]]{15,}$' agents/hermes/.env.example; then
-            echo "Potential real secret found in .env.example. Replace it with an empty value or placeholder."
+          findings=$(awk -F= '
+            /^[A-Za-z_][A-Za-z0-9_]*(API_KEY|TOKEN|SECRET|PASSWORD|PRIVATE_KEY)=/ {
+              value=substr($0, index($0, "=") + 1)
+              lower=tolower(value)
+              if (value != "" &&
+                  lower !~ /^(your_|example|changeme|placeholder|replace_me|test_|dummy|<|\$\{)/) {
+                print NR ":" $0
+              }
+            }
+          ' agents/hermes/.env.example)
+          if [ -n "$findings" ]; then
+            echo "Potential real secret-shaped values found in .env.example:"
+            echo "$findings"
             exit 1
           fi
 
