@@ -19,4 +19,14 @@ Dự án website và hệ thống AI Automation cho thương hiệu cá nhân Ng
 
 ## Trạng thái
 
-Repository đã được khởi tạo. Bước tiếp theo là đưa mã nguồn hiện có từ máy Mac lên thư mục dự án này, kiểm tra bảo mật, sau đó cấu hình triển khai website.
+Hermes Agent đã được tích hợp tại `agents/hermes/` và đang đóng vai trò AI Manager/orchestration runtime. Môi trường Termux đã chạy được bằng virtualenv + tmux supervisor; production VPS và các integration bên ngoài vẫn đang được triển khai.
+
+## Tài liệu vận hành
+
+- [Status](Status.md)
+- [TODO](TODO.md)
+- [Roadmap](Roadmap.md)
+- [Architecture](Architecture.md)
+- [Deployment](Deployment.md)
+- [Repository audit](docs/AUDIT_2026-08-06.md)
+- [Secret management](docs/SecretManagement.md)
