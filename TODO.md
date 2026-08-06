@@ -19,7 +19,7 @@ Cập nhật: 2026-08-06
 ## P1 — tích hợp vận hành
 
 - [ ] Đăng nhập `gh auth login`; bật branch protection và required CI trên `main`.
-- [ ] Tạo backup tag và migration branch; thay snapshot Hermes bằng submodule/version pin (hoặc subtree không squash nếu bắt buộc monorepo).
+- [x] Tạo backup tag và migration branch; thay snapshot Hermes bằng subtree không squash để giữ một repository và bảo toàn lịch sử.
 - [ ] Đồng bộ technical fork với `NousResearch/hermes-agent` theo batch có review/test; dọn branch refs sau khi xác minh không còn active work.
 - [ ] Tạo đúng bộ icon 32/128/256 cho Tauri installer và thêm/check `Cargo.lock` theo policy build application.
 - [ ] Tạo Telegram bot, lưu token ngoài Git, cấu hình Hermes Gateway và kiểm thử hai chiều.

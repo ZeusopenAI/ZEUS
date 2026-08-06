@@ -91,10 +91,10 @@ quangquy-ai/
   automations/          # Make/n8n specs và webhook contracts, không chứa secret
   config/hermes/         # overlay/config không chứa secret
   deploy/                # VPS/container manifests
-  vendor/hermes-agent/   # submodule pin technical fork bằng SHA đã duyệt
+  agents/hermes/        # history-preserving subtree của Hermes
   docs/                 # runbook, audit, ADR
   scripts/              # update/validate/deploy scripts
   .github/workflows/    # CI/CD đã pin SHA
 ```
 
-Hiện tại `agents/hermes/` là snapshot copy, không phải history-preserving merge. Mục tiêu là giữ ranh giới repository bằng submodule/version pin. Nếu bắt buộc monorepo, dùng subtree không squash. Không tạo fork tùy biến sâu nếu có thể giải bằng skill/plugin/config; điều này giữ đường cập nhật upstream đơn giản.
+`agents/hermes/` được hợp nhất bằng subtree không squash, nên lịch sử và attribution của `hermes-agent` có thể truy vết trong repository Quang Quy AI duy nhất. Các cập nhật sau phải dùng `scripts/update-hermes-subtree.sh` trên nhánh riêng. Không tạo fork tùy biến sâu nếu có thể giải bằng skill/plugin/config; điều này giữ đường cập nhật upstream đơn giản.

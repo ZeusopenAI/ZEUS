@@ -32,9 +32,9 @@ Trạng thái: development runtime hoạt động; chưa production-ready.
 ## Repository
 
 - Canonical: `qquy28888-ops/quangquy-ai`, branch `main`, local khớp `origin/main` trước các thay đổi audit.
-- Technical fork: `qquy28888-ops/hermes-agent`, branch `main`; canonical upstream là `NousResearch/hermes-agent`.
-- Strategy đích: product repo + technical fork được pin bằng submodule/version; dừng snapshot copy. Subtree không squash là fallback nếu bắt buộc monorepo.
-- Working tree hiện có thay đổi tài liệu, CI action pin và script ngoài repo; chưa commit/push.
+- Source history: `qquy28888-ops/hermes-agent`, branch `main`; canonical upstream của Hermes là `NousResearch/hermes-agent`.
+- Strategy: một repository Quang Quy AI duy nhất; Hermes là subtree không squash tại `agents/hermes/`, với source SHA được ghi trong marker.
+- Migration branch đã bảo toàn ancestry Hermes và thay updater snapshot bằng subtree updater; đang chờ push/PR.
 
 ## Mức sẵn sàng
 

@@ -72,4 +72,4 @@ Giữ hai repository với vai trò tách biệt:
 - `qquy28888-ops/hermes-agent`: technical fork — chỉ chứa patch Hermes thực sự cần cho Quang Quý.
 - `NousResearch/hermes-agent`: canonical upstream.
 
-Thay snapshot `rsync` hiện tại bằng Git submodule pin SHA/tag dưới `vendor/hermes-agent/` (ưu tiên), pinned release/container nếu runtime ổn định, hoặc `git subtree` không `--squash` nếu bắt buộc một checkout. Không tiếp tục copy snapshot vì cách đó mất ancestry, contributor attribution và khiến CI upstream nằm lồng nên không chạy. Việc chuyển đổi phải diễn ra trên migration branch có backup tag, tree-equivalence check và rollback; không rewrite `main` trực tiếp.
+Quang Quy AI dùng một repository duy nhất với Hermes tại `agents/hermes/` dưới dạng Git subtree không `--squash`. Không tiếp tục copy snapshot vì cách đó mất ancestry và contributor attribution. Migration phải có backup tag, tree-equivalence check và rollback; mọi cập nhật tiếp theo chạy trên integration branch qua `scripts/update-hermes-subtree.sh`.

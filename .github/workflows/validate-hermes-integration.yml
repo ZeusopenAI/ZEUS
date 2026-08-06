@@ -9,7 +9,7 @@ on:
       - '.gitignore'
       - 'docs/HERMES_INTEGRATION.md'
       - 'docs/HERMES_VALIDATION.md'
-      - 'scripts/update-hermes-snapshot.sh'
+      - 'scripts/update-hermes-subtree.sh'
       - '.github/workflows/integrate-hermes.yml'
       - '.github/workflows/validate-hermes-integration.yml'
   workflow_dispatch:
@@ -34,8 +34,11 @@ jobs:
           test -f agents/hermes/LICENSE
           test -f agents/hermes/pyproject.toml
           test -f docs/HERMES_INTEGRATION.md
-          test -x scripts/update-hermes-snapshot.sh
+          test -x scripts/update-hermes-subtree.sh
           grep -Eq '^[0-9a-f]{40}$' agents/hermes/.quang-quy-source-commit
+          source_sha="$(cat agents/hermes/.quang-quy-source-commit)"
+          git cat-file -e "${source_sha}^{commit}"
+          git merge-base --is-ancestor "$source_sha" HEAD
 
       - name: Reject tracked secret files
         shell: bash
@@ -109,4 +112,4 @@ jobs:
         run: python -m compileall -q agents/hermes
 
       - name: Validate update script syntax
-        run: bash -n scripts/update-hermes-snapshot.sh
+        run: bash -n scripts/update-hermes-subtree.sh

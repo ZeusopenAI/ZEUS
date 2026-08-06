@@ -4,8 +4,9 @@ Hermes is vendored under `agents/hermes/` as the orchestration runtime for Quang
 
 ## Source
 
-- Upstream snapshot: `qquy28888-ops/hermes-agent`, branch `main`
-- Exact imported revision: `agents/hermes/.quang-quy-source-commit`
+- History-preserving subtree source: `qquy28888-ops/hermes-agent`, branch `main`
+- Exact integrated revision: `agents/hermes/.quang-quy-source-commit`
+- The source commit and its ancestry are reachable from the Quang Quy AI history.
 - The original Hermes license and attribution files remain inside `agents/hermes/`.
 
 ## Security rules
@@ -21,4 +22,4 @@ Production target: VPS Ubuntu + Hermes Gateway + Telegram. GitHub stores code an
 
 ## Updating Hermes
 
-Run `scripts/update-hermes-snapshot.sh` from a clean integration branch, review the diff, run tests, and open a pull request. Do not update production directly from upstream.
+Run `scripts/update-hermes-subtree.sh` from a clean integration branch, review the history-preserving subtree commits, run tests, and open a pull request. Do not update `main` or production directly from the source repository.

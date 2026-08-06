@@ -80,7 +80,7 @@ feature branch → pull request → secret scan + tests + build
 → staging → approval → production → health check → rollback nếu lỗi
 ```
 
-Hiện tại runtime vẫn nằm tại snapshot `agents/hermes/`. Migration đích thay snapshot bằng technical fork được pin bằng submodule/version. Mỗi lần nâng Hermes phải dùng nhánh riêng, pin SHA/tag bất biến, review upstream diff, chạy full tests/build ở CI và staging; không update trực tiếp trên production. `git subtree` không `--squash` chỉ là fallback nếu bắt buộc monorepo.
+Runtime nằm tại history-preserving subtree `agents/hermes/` trong repository Quang Quy AI duy nhất. Mỗi lần nâng Hermes phải chạy `scripts/update-hermes-subtree.sh` trên nhánh riêng, review source diff, chạy full tests/build ở CI và staging; không update trực tiếp trên production hoặc `main`.
 
 ## 4. Rollback
 
