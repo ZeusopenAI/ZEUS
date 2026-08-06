@@ -1,45 +1,130 @@
-name: Update Hermes subtree
+name: Integrate Hermes into Quang Quy AI
 
 on:
+  push:
+    branches:
+      - integration/hermes-monorepo
+    paths:
+      - .github/workflows/integrate-hermes.yml
+      - .github/hermes-integration.trigger
   workflow_dispatch:
-    inputs:
-      source_ref:
-        description: Hermes source branch, tag, or SHA
-        required: true
-        default: main
 
 permissions:
   contents: write
 
 jobs:
-  update:
+  integrate:
+    if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip ci]') }}
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out selected integration branch
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+      - name: Check out integration branch
+        uses: actions/checkout@v4
         with:
+          ref: integration/hermes-monorepo
           fetch-depth: 0
-
-      - name: Reject direct updates to the default branch
-        shell: bash
-        run: |
-          set -euo pipefail
-          branch="${GITHUB_REF_NAME}"
-          if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
-            echo "Dispatch this workflow from a dedicated integration branch." >&2
-            exit 1
-          fi
 
       - name: Configure Git identity
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Update history-preserving Hermes subtree
-        env:
-          HERMES_SOURCE_REF: ${{ inputs.source_ref }}
-        run: scripts/update-hermes-subtree.sh
+      - name: Stop if Hermes is already integrated
+        id: existing
+        run: |
+          if [ -d agents/hermes ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Push update branch
-        run: git push origin "HEAD:${GITHUB_REF_NAME}"
+      - name: Clone Hermes source snapshot
+        if: steps.existing.outputs.present == 'false'
+        run: |
+          rm -rf /tmp/hermes-agent
+          git clone --depth 1 --branch main https://github.com/qquy28888-ops/hermes-agent.git /tmp/hermes-agent
+          HERMES_SHA=$(git -C /tmp/hermes-agent rev-parse HEAD)
+          mkdir -p agents/hermes
+          rm -rf /tmp/hermes-agent/.git
+          rsync -a --delete /tmp/hermes-agent/ agents/hermes/
+          printf '%s\n' "$HERMES_SHA" > agents/hermes/.quang-quy-source-commit
+
+      - name: Reject tracked secrets and private keys
+        if: steps.existing.outputs.present == 'false'
+        shell: bash
+        run: |
+          set -euo pipefail
+          blocked=$(find agents/hermes -type f \
+            \( -name '.env' -o -name '*.pem' -o -name '*.p12' -o -name '*.pfx' \
+               -o -name 'id_rsa' -o -name 'id_ed25519' -o -name 'credentials.json' \
+               -o -name 'token.json' -o -name 'cookies.json' \) \
+            ! -name '.env.example' -print)
+          if [ -n "$blocked" ]; then
+            echo "Blocked sensitive-looking files found:"
+            echo "$blocked"
+            exit 1
+          fi
+
+      - name: Add integration documentation
+        if: steps.existing.outputs.present == 'false'
+        run: |
+          mkdir -p docs scripts
+          cat > docs/HERMES_INTEGRATION.md <<'EOF'
+          # Hermes integration in Quang Quy AI
+
+          Hermes is vendored under `agents/hermes/` as the orchestration runtime for Quang Quy AI.
+
+          ## Source
+
+          - Upstream snapshot: `qquy28888-ops/hermes-agent`, branch `main`
+          - Exact imported revision: `agents/hermes/.quang-quy-source-commit`
+          - The original Hermes license and attribution files remain inside `agents/hermes/`.
+
+          ## Security rules
+
+          - Never commit `.env`, API keys, OAuth tokens, cookies, private keys, or service-account JSON.
+          - Runtime secrets must be stored in VPS environment variables, GitHub Actions Secrets, or an approved secret manager.
+          - `.env.example` may contain variable names and placeholders only.
+          - Rotate any credential that was ever committed, even if it was later deleted.
+
+          ## Deployment model
+
+          Production target: VPS Ubuntu + Hermes Gateway + Telegram. GitHub stores code and CI/CD; it does not host the always-on Hermes process.
+
+          ## Updating Hermes
+
+          Run `scripts/update-hermes-snapshot.sh` from a clean integration branch, review the diff, run tests, and open a pull request. Do not update production directly from upstream.
+          EOF
+
+          cat > scripts/update-hermes-snapshot.sh <<'EOF'
+          #!/usr/bin/env bash
+          set -euo pipefail
+
+          SOURCE_REPO="https://github.com/qquy28888-ops/hermes-agent.git"
+          SOURCE_BRANCH="main"
+          TARGET_DIR="agents/hermes"
+          TEMP_DIR="$(mktemp -d)"
+          trap 'rm -rf "$TEMP_DIR"' EXIT
+
+          git clone --depth 1 --branch "$SOURCE_BRANCH" "$SOURCE_REPO" "$TEMP_DIR/hermes"
+          SOURCE_SHA="$(git -C "$TEMP_DIR/hermes" rev-parse HEAD)"
+          rm -rf "$TEMP_DIR/hermes/.git"
+          mkdir -p "$TARGET_DIR"
+          rsync -a --delete --exclude '.env' "$TEMP_DIR/hermes/" "$TARGET_DIR/"
+          printf '%s\n' "$SOURCE_SHA" > "$TARGET_DIR/.quang-quy-source-commit"
+
+          echo "Hermes snapshot updated to $SOURCE_SHA"
+          echo "Review git diff, run tests, then commit on a non-main branch."
+          EOF
+          chmod +x scripts/update-hermes-snapshot.sh
+
+      - name: Commit integrated snapshot
+        if: steps.existing.outputs.present == 'false'
+        run: |
+          git add agents/hermes docs/HERMES_INTEGRATION.md scripts/update-hermes-snapshot.sh
+          git commit -m "feat(hermes): integrate Hermes runtime into Quang Quy AI [skip ci]"
+          git push origin HEAD:integration/hermes-monorepo
+
+      - name: Report existing integration
+        if: steps.existing.outputs.present == 'true'
+        run: echo "agents/hermes already exists; no duplicate import was created."
