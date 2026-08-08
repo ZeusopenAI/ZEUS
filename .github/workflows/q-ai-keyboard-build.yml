@@ -1,0 +1,51 @@
+name: Build Q AI Keyboard APK
+
+on:
+  push:
+    branches:
+      - feat/q-ai-keyboard-v1
+    paths:
+      - 'apps/q-ai-keyboard/**'
+      - '.github/workflows/q-ai-keyboard-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK 35
+        run: yes | sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Build debug APK
+        working-directory: apps/q-ai-keyboard
+        run: gradle :app:assembleDebug --stacktrace
+      - name: Stage downloadable APK
+        run: |
+          mkdir -p apps/q-ai-keyboard/releases
+          cp apps/q-ai-keyboard/app/build/outputs/apk/debug/app-debug.apk apps/q-ai-keyboard/releases/Q-AI-Keyboard-alpha.apk
+      - name: Commit APK to branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f apps/q-ai-keyboard/releases/Q-AI-Keyboard-alpha.apk
+          if git diff --cached --quiet; then
+            echo "APK unchanged"
+          else
+            git commit -m "build: Q AI Keyboard alpha APK [skip ci]"
+            git push
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Q-AI-Keyboard-alpha
+          path: apps/q-ai-keyboard/app/build/outputs/apk/debug/app-debug.apk
