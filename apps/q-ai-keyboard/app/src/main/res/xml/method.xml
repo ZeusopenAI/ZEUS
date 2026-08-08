@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <input-method xmlns:android="http://schemas.android.com/apk/res/android"
     android:settingsActivity="ai.quangquy.qkeyboard.MainActivity"
-    android:supportsSwitchingToNextInputMethod="true">
+    android:supportsSwitchingToNextInputMethod="true"
+    android:showInInputMethodPicker="true"
+    android:isDefault="true">
     <subtype
         android:imeSubtypeLocale="vi_VN"
+        android:languageTag="vi-VN"
         android:imeSubtypeMode="keyboard"
+        android:imeSubtypeExtraValue="AsciiCapable"
+        android:isAsciiCapable="true"
+        android:isAuxiliary="false"
+        android:overridesImplicitlyEnabledSubtype="true"
         android:label="Tiếng Việt" />
 </input-method>
