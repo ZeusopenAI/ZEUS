@@ -11,8 +11,8 @@ android {
         applicationId = "ai.quangquy.qkeyboard"
         minSdk = 23
         targetSdk = 35
-        versionCode = 4
-        versionName = "0.4.0-alpha"
+        versionCode = 5
+        versionName = "0.4.1-alpha"
     }
 
     compileOptions {
