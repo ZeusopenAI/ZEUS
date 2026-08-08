@@ -1,4 +1,4 @@
-name: Build Q AI Keyboard APK
+name: Build Q Ai Key v04 APK
 
 on:
   push:
@@ -33,19 +33,19 @@ jobs:
       - name: Stage downloadable APK
         run: |
           mkdir -p apps/q-ai-keyboard/releases
-          cp apps/q-ai-keyboard/app/build/outputs/apk/debug/app-debug.apk apps/q-ai-keyboard/releases/Q-AI-Keyboard-alpha.apk
+          cp apps/q-ai-keyboard/app/build/outputs/apk/debug/app-debug.apk "apps/q-ai-keyboard/releases/Q-Ai-Key-v04.apk"
       - name: Commit APK to branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f apps/q-ai-keyboard/releases/Q-AI-Keyboard-alpha.apk
+          git add -f "apps/q-ai-keyboard/releases/Q-Ai-Key-v04.apk"
           if git diff --cached --quiet; then
             echo "APK unchanged"
           else
-            git commit -m "build: Q AI Keyboard alpha APK [skip ci]"
+            git commit -m "build: Q Ai Key v04 APK [skip ci]"
             git push
           fi
       - uses: actions/upload-artifact@v4
         with:
-          name: Q-AI-Keyboard-alpha
+          name: Q-Ai-Key-v04
           path: apps/q-ai-keyboard/app/build/outputs/apk/debug/app-debug.apk
