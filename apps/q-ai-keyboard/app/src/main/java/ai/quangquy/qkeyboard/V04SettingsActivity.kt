@@ -52,6 +52,35 @@ class V04SettingsActivity : Activity() {
             addView(space(8)); addView(secondary("Chọn bàn phím") { (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showInputMethodPicker() })
         })
 
+        root.addView(section("Test bàn phím ngay trong app")); root.addView(card().apply {
+            addView(info("Chạm vào ô bên dưới để gọi bàn phím. Khung này dùng để test Telex, gợi ý từ, emoji, Dịch và AI mà không cần mở app khác."))
+            val test = EditText(this@V04SettingsActivity).apply {
+                hint = "Gõ thử ở đây…\nVí dụ: tieengs vieetj, chúc mừng sinh nhật…"
+                setHintTextColor(muted)
+                setTextColor(fg)
+                textSize = 17f
+                gravity = Gravity.TOP or Gravity.START
+                minLines = 5
+                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+                background = round(Color.rgb(239,241,246),14)
+                setPadding(dp(14),dp(14),dp(14),dp(14))
+            }
+            addView(test, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(150)).apply { setMargins(0,dp(10),0,dp(10)) })
+            addView(primary("Mở Q Ai Key để test") {
+                test.requestFocus()
+                val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.showSoftInput(test, InputMethodManager.SHOW_IMPLICIT)
+            })
+            addView(space(8))
+            val status = TextView(this@V04SettingsActivity).apply {
+                textSize=13f; setTextColor(muted); setPadding(dp(2),dp(8),dp(2),dp(2))
+                text = imeStatus()
+            }
+            addView(status)
+            addView(space(6))
+            addView(secondary("Kiểm tra lại trạng thái bàn phím") { status.text = imeStatus() })
+        })
+
         root.addView(section("Gợi ý & tự học")); root.addView(card().apply {
             addView(label("Số từ gợi ý")); val sp=spinner(listOf("3 từ — mặc định","4 từ","5 từ"),prefs.suggestionCount-3); addView(sp); sp.onItemSelectedListener=Selected{prefs.suggestionCount=it+3}
             addView(space(8)); addView(check("Gợi ý 1 emoji theo ngữ cảnh",prefs.contextualEmoji){prefs.contextualEmoji=it})
@@ -87,6 +116,14 @@ class V04SettingsActivity : Activity() {
 
         root.addView(section("Cách dùng")); root.addView(card().apply { addView(info("Thanh chính: ☰ + 3/4/5 từ gợi ý + 1 emoji theo ngữ cảnh. Bấm ☰ để vuốt qua 🌐 Dịch, AI, Clipboard, Emoji, Cài đặt. Phím ☺ mở bộ emoji nhiều nhóm.")) })
         return scroll
+    }
+
+    private fun imeStatus(): String {
+        val def = Settings.Secure.getString(contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD).orEmpty()
+        val enabled = Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_INPUT_METHODS).orEmpty()
+        val isDefault = def.contains(packageName, ignoreCase = true)
+        val isEnabled = enabled.contains(packageName, ignoreCase = true)
+        return "Trạng thái: ${if (isEnabled) "ĐÃ BẬT" else "CHƯA BẬT"} • ${if (isDefault) "ĐANG LÀ BÀN PHÍM MẶC ĐỊNH" else "CHƯA ĐƯỢC CHỌN LÀM MẶC ĐỊNH"}\nIME hiện tại: ${def.ifBlank { "Không đọc được" }}"
     }
 
     private fun section(s:String)=TextView(this).apply{text=s;textSize=18f;setTextColor(fg);setTypeface(null,Typeface.BOLD);setPadding(dp(2),dp(20),dp(2),dp(8))}
