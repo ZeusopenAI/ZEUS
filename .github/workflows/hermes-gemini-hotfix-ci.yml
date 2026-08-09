@@ -1,0 +1,75 @@
+name: Hermes Gemini Hotfix CI
+
+on:
+  push:
+    branches:
+      - fix/hermes-gemini-auth
+    paths:
+      - scripts/hermes-gemini-hotfix.sh
+      - scripts/verify-hermes-gemini-hotfix.py
+      - .github/workflows/hermes-gemini-hotfix-ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Q AI branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Shell syntax check
+        run: bash -n scripts/hermes-gemini-hotfix.sh
+
+      - name: Download current upstream Gemini adapter
+        run: |
+          mkdir -p /tmp/hermes-adapters
+          curl -fL --retry 3 \
+            https://raw.githubusercontent.com/NousResearch/hermes-agent/main/agent/gemini_native_adapter.py \
+            -o /tmp/hermes-adapters/upstream.py
+
+      - name: Download Quang Quy Hermes fork adapter
+        run: |
+          curl -fL --retry 3 \
+            https://raw.githubusercontent.com/qquy28888-ops/hermes-agent/main/agent/gemini_native_adapter.py \
+            -o /tmp/hermes-adapters/quangquy-fork.py
+
+      - name: Verify hotfix against both adapters
+        run: |
+          python scripts/verify-hermes-gemini-hotfix.py \
+            --script scripts/hermes-gemini-hotfix.sh \
+            --adapter /tmp/hermes-adapters/upstream.py \
+            --adapter /tmp/hermes-adapters/quangquy-fork.py
+
+      - name: Verify no secret values are committed in hotfix files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          paths = [
+              Path('scripts/hermes-gemini-hotfix.sh'),
+              Path('scripts/verify-hermes-gemini-hotfix.py'),
+          ]
+          patterns = [
+              re.compile(r'AIza[0-9A-Za-z_-]{20,}'),
+              re.compile(r'\bAQ\.[0-9A-Za-z._-]{20,}'),
+          ]
+          for p in paths:
+              text = p.read_text(errors='ignore')
+              for pat in patterns:
+                  assert not pat.search(text), f'possible API key committed in {p}'
+          print('PASS: no Gemini key-looking secrets committed')
+          PY
+
+      - name: Summary
+        run: |
+          echo 'Hermes Gemini hotfix structural CI passed.'
+          echo 'Live API verification remains device-side because the API key is intentionally not stored in GitHub.'
