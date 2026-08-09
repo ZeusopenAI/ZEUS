@@ -27,14 +27,15 @@ die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 command -v python3 >/dev/null 2>&1 || die "Thiếu python3."
 command -v curl >/dev/null 2>&1 || die "Thiếu curl."
 
-# Never send the OpenRouter credential to a caller-supplied lookalike/custom URL.
+# Fail closed: the repair utility intentionally supports the official
+# OpenRouter endpoint only. A custom/mirror URL must never receive this key.
 python3 - "$OPENROUTER_BASE_URL" <<'PY'
 from urllib.parse import urlparse
 import sys
 url = sys.argv[1].strip()
 p = urlparse(url)
 host = (p.hostname or "").lower().rstrip(".")
-if p.scheme != "https" or host not in {"openrouter.ai", "www.openrouter.ai"}:
+if p.scheme != "https" or host != "openrouter.ai":
     raise SystemExit("ERROR: OPENROUTER_BASE_URL phải là https://openrouter.ai[/...] để tránh rò API key")
 PY
 
