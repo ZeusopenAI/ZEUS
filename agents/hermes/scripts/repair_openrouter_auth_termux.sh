@@ -1,0 +1,176 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+# Repair OpenRouter authentication for Hermes on Termux/PRoot without ever
+# printing or committing the API key. The script normalizes the local
+# ~/.hermes/.env entry, validates the key directly against OpenRouter, then
+# configures/tests Hermes with openrouter/free.
+
+HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
+ENV_FILE="${HERMES_HOME}/.env"
+MODEL="${HERMES_OPENROUTER_MODEL:-openrouter/free}"
+OPENROUTER_BASE_URL="${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}"
+TMP_DIR="${TMPDIR:-/tmp}"
+CHECK_BODY="${TMP_DIR}/hermes-openrouter-key-check.$$"
+USAGE_FILE="${TMP_DIR}/hermes-openrouter-usage.$$.json"
+BACKUP_FILE="${ENV_FILE}.bak.$(date +%Y%m%d-%H%M%S)"
+
+cleanup() {
+  rm -f "$CHECK_BODY"
+}
+trap cleanup EXIT
+
+log() { printf '%s\n' "$*"; }
+die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
+
+[[ -f "$ENV_FILE" ]] || die "Không tìm thấy $ENV_FILE. Hãy chạy 'hermes model' và nhập OpenRouter API key trước."
+command -v python3 >/dev/null 2>&1 || die "Thiếu python3."
+command -v curl >/dev/null 2>&1 || die "Thiếu curl."
+
+cp -p "$ENV_FILE" "$BACKUP_FILE"
+chmod 600 "$BACKUP_FILE" 2>/dev/null || true
+log "[1/5] Đã backup .env (không đưa secret lên GitHub)."
+
+# Normalize only OPENROUTER_API_KEY. Never print the value.
+python3 - "$ENV_FILE" <<'PY'
+from pathlib import Path
+import os
+import sys
+
+path = Path(sys.argv[1])
+raw = path.read_bytes()
+text = raw.decode("utf-8-sig", errors="replace").replace("\x00", "")
+lines = text.splitlines()
+
+values = []
+kept = []
+for line in lines:
+    if line.startswith("OPENROUTER_API_KEY="):
+        value = line.split("=", 1)[1].strip().strip("\r")
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+            value = value[1:-1]
+        # Remove invisible copy/paste characters that are never valid in HTTP credentials.
+        for ch in ("\ufeff", "\u200b", "\u200c", "\u200d", "\u2060", "\u00a0"):
+            value = value.replace(ch, "")
+        value = value.strip()
+        if value:
+            values.append(value)
+    else:
+        kept.append(line)
+
+if not values:
+    raise SystemExit("ERROR: OPENROUTER_API_KEY đang trống hoặc không đọc được trong .env")
+
+key = values[-1]
+try:
+    key.encode("ascii")
+except UnicodeEncodeError:
+    raise SystemExit("ERROR: API key chứa ký tự non-ASCII. Hãy copy lại key trực tiếp từ OpenRouter.")
+
+# OpenRouter keys currently use sk-or-v1-. Do not expose the key if the format is wrong.
+if not key.startswith("sk-or-v1-"):
+    raise SystemExit("ERROR: Giá trị OPENROUTER_API_KEY không giống OpenRouter key (không có prefix sk-or-v1-). Hãy nhập lại key bằng 'hermes model'.")
+
+out = "\n".join(kept).rstrip("\n")
+if out:
+    out += "\n"
+out += f"OPENROUTER_API_KEY={key}\n"
+path.write_text(out, encoding="utf-8", newline="\n")
+os.chmod(path, 0o600)
+print(f"KEY_OK length={len(key)} duplicates_removed={max(0, len(values)-1)}")
+PY
+
+# Read the normalized value without sourcing the whole .env as shell code.
+OPENROUTER_API_KEY="$((python3 - "$ENV_FILE" <<'PY'
+from pathlib import Path
+import sys
+for line in Path(sys.argv[1]).read_text(encoding='utf-8').splitlines():
+    if line.startswith('OPENROUTER_API_KEY='):
+        print(line.split('=', 1)[1], end='')
+        break
+PY
+) 2>/dev/null || true)"
+
+# The arithmetic-looking command substitution above is intentionally avoided below
+# on shells that parse it differently. Re-read using a plain command substitution.
+OPENROUTER_API_KEY="$(python3 - "$ENV_FILE" <<'PY'
+from pathlib import Path
+import sys
+for line in Path(sys.argv[1]).read_text(encoding='utf-8').splitlines():
+    if line.startswith('OPENROUTER_API_KEY='):
+        print(line.split('=', 1)[1], end='')
+        break
+PY
+)"
+
+[[ -n "$OPENROUTER_API_KEY" ]] || die "Không nạp được OPENROUTER_API_KEY sau khi normalize."
+export OPENROUTER_API_KEY
+log "[2/5] Đã nạp key an toàn vào process (không in key)."
+
+HTTP_CODE="$(curl -sS -o "$CHECK_BODY" -w '%{http_code}' \
+  -H "Authorization: Bearer ${OPENROUTER_API_KEY}" \
+  "${OPENROUTER_BASE_URL%/}/key" || true)"
+
+if [[ "$HTTP_CODE" != "200" ]]; then
+  ERROR_SUMMARY="$(python3 - "$CHECK_BODY" <<'PY'
+import json, sys
+from pathlib import Path
+p = Path(sys.argv[1])
+try:
+    data = json.loads(p.read_text(encoding='utf-8', errors='replace'))
+    err = data.get('error', {})
+    msg = err.get('message') if isinstance(err, dict) else str(err)
+    code = err.get('code') if isinstance(err, dict) else None
+    print(f"code={code} message={msg}")
+except Exception:
+    print("response body không đọc được")
+PY
+)"
+  die "OpenRouter direct auth thất bại: HTTP ${HTTP_CODE}; ${ERROR_SUMMARY}. Đây chưa phải lỗi Hermes. Hãy tạo/copy lại OpenRouter key rồi chạy script lại."
+fi
+log "[3/5] OpenRouter direct auth: HTTP 200. Key hợp lệ."
+
+if ! command -v hermes >/dev/null 2>&1; then
+  for activate in /root/hermes-env/bin/activate "$HOME/hermes-env/bin/activate"; do
+    if [[ -f "$activate" ]]; then
+      # shellcheck disable=SC1090
+      source "$activate"
+      break
+    fi
+  done
+fi
+command -v hermes >/dev/null 2>&1 || die "Không tìm thấy lệnh hermes / hermes-env."
+
+hermes config set model.provider openrouter >/dev/null
+hermes config set model.default "$MODEL" >/dev/null
+log "[4/5] Hermes model: provider=openrouter, default=${MODEL}."
+
+set +e
+OPENROUTER_API_KEY="$OPENROUTER_API_KEY" hermes -z \
+  "Chỉ trả lời đúng câu này: OpenRouter Free hoạt động." \
+  --provider openrouter \
+  --model "$MODEL" \
+  --usage-file "$USAGE_FILE"
+HERMES_RC=$?
+set -e
+
+if [[ $HERMES_RC -ne 0 ]]; then
+  die "Direct OpenRouter đã HTTP 200 nhưng Hermes vẫn lỗi (exit=${HERMES_RC}). Khi đó mới cần patch runtime/provider; giữ file usage tại ${USAGE_FILE} để chẩn đoán."
+fi
+
+log "[5/5] THÀNH CÔNG: OpenRouter auth + Hermes ${MODEL} đều hoạt động."
+if [[ -f "$USAGE_FILE" ]]; then
+  python3 - "$USAGE_FILE" <<'PY'
+import json, sys
+from pathlib import Path
+try:
+    d = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+except Exception:
+    raise SystemExit(0)
+for k in ('provider', 'model', 'estimated_cost_usd', 'input_tokens', 'output_tokens', 'failed'):
+    if k in d:
+        print(f"{k}={d[k]}")
+PY
+fi
+
+log "Backup local: ${BACKUP_FILE}"
