@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """CI verifier for the Q AI Hermes Gemini hotfix.
 
-This does not need a real API key. It validates that the hotfix still applies
-cleanly to Hermes' current Gemini native adapter and that the resulting source
-has the auth invariants we depend on. The device-side hotfix script performs
-the two live tests with the user's local key.
+No real API key is used in CI. The device-side script performs the live calls.
+This verifier ensures the hotfix still applies cleanly to current Hermes native
+Gemini adapters and that the self-recovery logic is present and secret-safe.
 """
 
 from __future__ import annotations
@@ -43,7 +42,6 @@ def verify_adapter(path: Path) -> None:
     assert 'headers["x-goog-api-key"] = self.api_key' in patched
     assert 'self.api_key = (api_key or "").strip()' in patched
 
-    # The canonical key must be set AFTER default headers are merged/scrubbed.
     update_pos = patched.index("headers.update(self._default_headers)")
     final_key_pos = patched.index('headers["x-goog-api-key"] = self.api_key', update_pos)
     return_pos = patched.index("return headers", final_key_pos)
@@ -56,6 +54,10 @@ def verify_hotfix_script(path: Path) -> None:
     s = path.read_text(errors="strict")
     required = [
         "unset GOOGLE_API_KEY GEMINI_API_KEY",
+        "candidate_files()",
+        "ACCESS_TOKEN_TYPE_UNSUPPORTED",
+        "Found {len(candidates)} unique Gemini key candidate(s)",
+        "Selected working key fp=",
         "GOOGLE_API_KEY={secret}",
         "Runtime key fp",
         "Key match",
@@ -66,6 +68,13 @@ def verify_hotfix_script(path: Path) -> None:
     ]
     missing = [item for item in required if item not in s]
     assert not missing, f"hotfix script missing invariants: {missing}"
+
+    # Safety: the script may print fingerprints and source filenames, not key values.
+    assert "print(secret" not in s
+    assert "print(key" not in s
+    assert "echo $GOOGLE_API_KEY" not in s
+    assert "echo $GEMINI_API_KEY" not in s
+
     print(f"PASS hotfix script: {path}")
 
 
