@@ -35,6 +35,7 @@ log "[1/6] Đã backup .env (không đưa secret lên GitHub)."
 python3 - "$ENV_FILE" <<'PY'
 from pathlib import Path
 import os
+import re
 import sys
 
 path = Path(sys.argv[1])
@@ -44,10 +45,11 @@ lines = text.splitlines()
 
 values = []
 kept = []
+assignment = re.compile(r"^\s*OPENROUTER_API_KEY\s*=\s*(.*)$")
 for line in lines:
-    stripped = line.lstrip()
-    if stripped.startswith("OPENROUTER_API_KEY="):
-        value = stripped.split("=", 1)[1].strip().strip("\r")
+    match = assignment.match(line)
+    if match:
+        value = match.group(1).strip().strip("\r")
         if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
             value = value[1:-1]
         for ch in ("\ufeff", "\u200b", "\u200c", "\u200d", "\u2060", "\u00a0"):
@@ -120,8 +122,6 @@ try:
     msg = err.get('message') if isinstance(err, dict) else str(err)
     code = err.get('code') if isinstance(err, dict) else None
     msg = str(msg or "")
-    # Defensive redaction: never print token-shaped material even if the remote
-    # service reflects part of a credential in an error message.
     msg = re.sub(r"sk-or-v1-[A-Za-z0-9_-]+", "[REDACTED]", msg)
     print(f"code={code} message={msg}")
 except Exception:
