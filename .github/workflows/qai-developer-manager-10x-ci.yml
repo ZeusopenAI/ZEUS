@@ -1,0 +1,84 @@
+name: QAI Developer Manager 10x CI
+
+on:
+  push:
+    branches:
+      - fix/hermes-gemini-auth
+    paths:
+      - skills/qai-developer-manager/**
+      - scripts/verify-qai-developer-manager.py
+      - scripts/verify-hermes-gemini-hotfix.py
+      - scripts/hermes-gemini-hotfix.sh
+      - .github/workflows/qai-developer-manager-10x-ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify iteration ${{ matrix.iteration }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        iteration: [1,2,3,4,5,6,7,8,9,10]
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify developer-manager skill
+        run: python scripts/verify-qai-developer-manager.py
+
+      - name: Shell syntax check hotfix
+        run: bash -n scripts/hermes-gemini-hotfix.sh
+
+      - name: Download current Hermes adapters
+        run: |
+          mkdir -p /tmp/hermes-adapters
+          curl -fL --retry 3 \
+            https://raw.githubusercontent.com/NousResearch/hermes-agent/main/agent/gemini_native_adapter.py \
+            -o /tmp/hermes-adapters/upstream.py
+          curl -fL --retry 3 \
+            https://raw.githubusercontent.com/qquy28888-ops/hermes-agent/main/agent/gemini_native_adapter.py \
+            -o /tmp/hermes-adapters/quangquy-fork.py
+
+      - name: Verify Hermes Gemini hotfix compatibility
+        run: |
+          python scripts/verify-hermes-gemini-hotfix.py \
+            --script scripts/hermes-gemini-hotfix.sh \
+            --adapter /tmp/hermes-adapters/upstream.py \
+            --adapter /tmp/hermes-adapters/quangquy-fork.py
+
+      - name: Secret-pattern scan
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          roots = [Path('skills/qai-developer-manager'), Path('scripts')]
+          pats = [
+              re.compile(r'AIza[0-9A-Za-z_-]{20,}'),
+              re.compile(r'\bAQ\.[0-9A-Za-z._-]{20,}'),
+              re.compile(r'sk-[A-Za-z0-9_-]{20,}'),
+          ]
+          checked = 0
+          for root in roots:
+              for p in root.rglob('*'):
+                  if not p.is_file():
+                      continue
+                  text = p.read_text(errors='ignore')
+                  checked += 1
+                  for pat in pats:
+                      assert not pat.search(text), f'possible secret committed in {p}'
+          print(f'PASS secret-pattern scan across {checked} files')
+          PY
+
+      - name: Iteration summary
+        run: echo "PASS iteration ${{ matrix.iteration }}/10"
