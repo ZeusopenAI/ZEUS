@@ -29,7 +29,7 @@ command -v curl >/dev/null 2>&1 || die "Thiếu curl."
 
 cp -p "$ENV_FILE" "$BACKUP_FILE"
 chmod 600 "$BACKUP_FILE" 2>/dev/null || true
-log "[1/5] Đã backup .env (không đưa secret lên GitHub)."
+log "[1/6] Đã backup .env (không đưa secret lên GitHub)."
 
 # Normalize only OPENROUTER_API_KEY. Never print the value.
 python3 - "$ENV_FILE" <<'PY'
@@ -45,8 +45,10 @@ lines = text.splitlines()
 values = []
 kept = []
 for line in lines:
-    if line.startswith("OPENROUTER_API_KEY="):
-        value = line.split("=", 1)[1].strip().strip("\r")
+    # tolerate harmless leading whitespace around the key name
+    stripped = line.lstrip()
+    if stripped.startswith("OPENROUTER_API_KEY="):
+        value = stripped.split("=", 1)[1].strip().strip("\r")
         if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
             value = value[1:-1]
         for ch in ("\ufeff", "\u200b", "\u200c", "\u200d", "\u2060", "\u00a0"):
@@ -75,7 +77,7 @@ if out:
 out += f"OPENROUTER_API_KEY={key}\n"
 path.write_text(out, encoding="utf-8", newline="\n")
 os.chmod(path, 0o600)
-print(f"KEY_OK length={len(key)} duplicates_removed={max(0, len(values)-1)}")
+print(f"KEY_PRESENT=true KEY_LENGTH={len(key)} PREFIX_VALID=true DUPLICATES_REMOVED={max(0, len(values)-1)}")
 PY
 
 # Read the normalized value without sourcing the whole .env as shell code.
@@ -91,7 +93,18 @@ PY
 
 [[ -n "$OPENROUTER_API_KEY" ]] || die "Không nạp được OPENROUTER_API_KEY sau khi normalize."
 export OPENROUTER_API_KEY
-log "[2/5] Đã nạp key an toàn vào process (không in key)."
+log "[2/6] Đã nạp key an toàn vào process (không in key)."
+
+# Confirm that curl sees a non-empty Authorization value locally without
+# exposing the secret. This separates shell/env parsing from network auth.
+python3 - <<'PY'
+import os
+k = os.environ.get("OPENROUTER_API_KEY", "")
+if not k:
+    raise SystemExit("ERROR: process không có OPENROUTER_API_KEY")
+print(f"AUTH_HEADER_READY=true BEARER_VALUE_LENGTH={len(k)}")
+PY
+log "[3/6] Authorization header đã sẵn sàng ở local process."
 
 HTTP_CODE="$(curl -sS -o "$CHECK_BODY" -w '%{http_code}' \
   -H "Authorization: Bearer ${OPENROUTER_API_KEY}" \
@@ -108,14 +121,15 @@ try:
     err = data.get('error', {})
     msg = err.get('message') if isinstance(err, dict) else str(err)
     code = err.get('code') if isinstance(err, dict) else None
+    # Never echo headers or token-like fields from a provider response.
     print(f"code={code} message={msg}")
 except Exception:
     print("response body không đọc được")
 PY
 )"
-  die "OpenRouter direct auth thất bại: HTTP ${HTTP_CODE}; ${ERROR_SUMMARY}. Đây chưa phải lỗi Hermes. Hãy tạo/copy lại OpenRouter key rồi chạy script lại."
+  die "DIRECT_OPENROUTER_AUTH_FAILED HTTP=${HTTP_CODE}; ${ERROR_SUMMARY}. Hermes core chưa được kết luận có lỗi. Hãy tạo/copy lại OpenRouter key rồi chạy script lại."
 fi
-log "[3/5] OpenRouter direct auth: HTTP 200. Key hợp lệ."
+log "[4/6] DIRECT_OPENROUTER_AUTH_SUCCESS HTTP=200. Key hợp lệ."
 
 if ! command -v hermes >/dev/null 2>&1; then
   for activate in /root/hermes-env/bin/activate "$HOME/hermes-env/bin/activate"; do
@@ -130,7 +144,7 @@ command -v hermes >/dev/null 2>&1 || die "Không tìm thấy lệnh hermes / her
 
 hermes config set model.provider openrouter >/dev/null
 hermes config set model.default "$MODEL" >/dev/null
-log "[4/5] Hermes model: provider=openrouter, default=${MODEL}."
+log "[5/6] Hermes model: provider=openrouter, default=${MODEL}."
 
 set +e
 OPENROUTER_API_KEY="$OPENROUTER_API_KEY" hermes -z \
@@ -142,10 +156,10 @@ HERMES_RC=$?
 set -e
 
 if [[ $HERMES_RC -ne 0 ]]; then
-  die "Direct OpenRouter đã HTTP 200 nhưng Hermes vẫn lỗi (exit=${HERMES_RC}). Khi đó mới cần patch runtime/provider; giữ file usage tại ${USAGE_FILE} để chẩn đoán."
+  die "DIRECT_OPENROUTER_AUTH_SUCCESS nhưng HERMES_SMOKE_TEST_FAILED exit=${HERMES_RC}. Đây mới là điều kiện để trace/patch runtime_provider; giữ usage tại ${USAGE_FILE}."
 fi
 
-log "[5/5] THÀNH CÔNG: OpenRouter auth + Hermes ${MODEL} đều hoạt động."
+log "[6/6] THÀNH CÔNG: OpenRouter auth + Hermes ${MODEL} đều hoạt động."
 if [[ -f "$USAGE_FILE" ]]; then
   python3 - "$USAGE_FILE" <<'PY'
 import json
