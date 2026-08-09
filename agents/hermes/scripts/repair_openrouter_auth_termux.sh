@@ -45,7 +45,6 @@ lines = text.splitlines()
 values = []
 kept = []
 for line in lines:
-    # tolerate harmless leading whitespace around the key name
     stripped = line.lstrip()
     if stripped.startswith("OPENROUTER_API_KEY="):
         value = stripped.split("=", 1)[1].strip().strip("\r")
@@ -95,8 +94,6 @@ PY
 export OPENROUTER_API_KEY
 log "[2/6] Đã nạp key an toàn vào process (không in key)."
 
-# Confirm that curl sees a non-empty Authorization value locally without
-# exposing the secret. This separates shell/env parsing from network auth.
 python3 - <<'PY'
 import os
 k = os.environ.get("OPENROUTER_API_KEY", "")
@@ -113,6 +110,7 @@ HTTP_CODE="$(curl -sS -o "$CHECK_BODY" -w '%{http_code}' \
 if [[ "$HTTP_CODE" != "200" ]]; then
   ERROR_SUMMARY="$(python3 - "$CHECK_BODY" <<'PY'
 import json
+import re
 import sys
 from pathlib import Path
 p = Path(sys.argv[1])
@@ -121,7 +119,10 @@ try:
     err = data.get('error', {})
     msg = err.get('message') if isinstance(err, dict) else str(err)
     code = err.get('code') if isinstance(err, dict) else None
-    # Never echo headers or token-like fields from a provider response.
+    msg = str(msg or "")
+    # Defensive redaction: never print token-shaped material even if the remote
+    # service reflects part of a credential in an error message.
+    msg = re.sub(r"sk-or-v1-[A-Za-z0-9_-]+", "[REDACTED]", msg)
     print(f"code={code} message={msg}")
 except Exception:
     print("response body không đọc được")
