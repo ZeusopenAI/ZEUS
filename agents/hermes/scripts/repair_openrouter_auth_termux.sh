@@ -49,7 +49,6 @@ for line in lines:
         value = line.split("=", 1)[1].strip().strip("\r")
         if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
             value = value[1:-1]
-        # Remove invisible copy/paste characters that are never valid in HTTP credentials.
         for ch in ("\ufeff", "\u200b", "\u200c", "\u200d", "\u2060", "\u00a0"):
             value = value.replace(ch, "")
         value = value.strip()
@@ -67,9 +66,8 @@ try:
 except UnicodeEncodeError:
     raise SystemExit("ERROR: API key chứa ký tự non-ASCII. Hãy copy lại key trực tiếp từ OpenRouter.")
 
-# OpenRouter keys currently use sk-or-v1-. Do not expose the key if the format is wrong.
 if not key.startswith("sk-or-v1-"):
-    raise SystemExit("ERROR: Giá trị OPENROUTER_API_KEY không giống OpenRouter key (không có prefix sk-or-v1-). Hãy nhập lại key bằng 'hermes model'.")
+    raise SystemExit("ERROR: OPENROUTER_API_KEY không có prefix sk-or-v1-. Hãy nhập lại key bằng 'hermes model'.")
 
 out = "\n".join(kept).rstrip("\n")
 if out:
@@ -81,18 +79,6 @@ print(f"KEY_OK length={len(key)} duplicates_removed={max(0, len(values)-1)}")
 PY
 
 # Read the normalized value without sourcing the whole .env as shell code.
-OPENROUTER_API_KEY="$((python3 - "$ENV_FILE" <<'PY'
-from pathlib import Path
-import sys
-for line in Path(sys.argv[1]).read_text(encoding='utf-8').splitlines():
-    if line.startswith('OPENROUTER_API_KEY='):
-        print(line.split('=', 1)[1], end='')
-        break
-PY
-) 2>/dev/null || true)"
-
-# The arithmetic-looking command substitution above is intentionally avoided below
-# on shells that parse it differently. Re-read using a plain command substitution.
 OPENROUTER_API_KEY="$(python3 - "$ENV_FILE" <<'PY'
 from pathlib import Path
 import sys
@@ -113,7 +99,8 @@ HTTP_CODE="$(curl -sS -o "$CHECK_BODY" -w '%{http_code}' \
 
 if [[ "$HTTP_CODE" != "200" ]]; then
   ERROR_SUMMARY="$(python3 - "$CHECK_BODY" <<'PY'
-import json, sys
+import json
+import sys
 from pathlib import Path
 p = Path(sys.argv[1])
 try:
@@ -161,7 +148,8 @@ fi
 log "[5/5] THÀNH CÔNG: OpenRouter auth + Hermes ${MODEL} đều hoạt động."
 if [[ -f "$USAGE_FILE" ]]; then
   python3 - "$USAGE_FILE" <<'PY'
-import json, sys
+import json
+import sys
 from pathlib import Path
 try:
     d = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
