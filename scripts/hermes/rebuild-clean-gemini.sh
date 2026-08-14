@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Clean reinstall of upstream Hermes Agent for the Quang Quý AI Codespace.
-# Secrets are read from the process environment and are never printed.
+# Secrets are read from the process environment and are never printed or persisted.
 
 HERMES_VERSION="0.18.2"
 HERMES_ROOT="${HOME}/.hermes"
@@ -31,9 +31,9 @@ python -m pip install --upgrade "hermes-agent==${HERMES_VERSION}"
 command -v hermes >/dev/null 2>&1 || { echo "ERROR: hermes executable not found" >&2; exit 1; }
 
 mkdir -p "$HERMES_ROOT"
-umask 077
 
-# Native Gemini configuration. No OpenRouter endpoint or credential is copied.
+# Native Gemini configuration. No API key is written to disk and no OpenRouter
+# endpoint or credential is copied. Hermes reads GEMINI_API_KEY from the process.
 cat > "${HERMES_ROOT}/config.yaml" <<EOF
 model:
   provider: gemini
@@ -41,10 +41,8 @@ model:
   base_url: ${GEMINI_ENDPOINT}
 EOF
 
-cat > "${HERMES_ROOT}/.env" <<EOF
-GEMINI_API_KEY=${GEMINI_API_KEY}
-EOF
-chmod 600 "${HERMES_ROOT}/.env"
+# Keep any secret-bearing user env out of the new clean runtime path.
+rm -f "${HERMES_ROOT}/.env"
 
 echo "[4/7] Verifying direct Gemini API access without exposing the key..."
 status="$(curl -sS -o /tmp/hermes-gemini-smoke.json -w '%{http_code}' \
@@ -81,7 +79,6 @@ set -e
 if [[ $hermes_rc -ne 0 ]] || ! grep -q 'GEMINI_HERMES_OK' <<<"$hermes_output"; then
   echo "ERROR: Hermes → Gemini smoke test failed." >&2
   echo "Exit code: $hermes_rc" >&2
-  rm -f /tmp/hermes-gemini-smoke.json
   exit 1
 fi
 
@@ -89,4 +86,4 @@ echo "Hermes → Gemini: OK"
 
 echo "[7/7] Clean rebuild completed successfully."
 echo "Hermes Agent ${HERMES_VERSION} is configured for native Gemini (${GEMINI_MODEL})."
-echo "No API key value was printed or committed."
+echo "No API key value was printed or persisted."
