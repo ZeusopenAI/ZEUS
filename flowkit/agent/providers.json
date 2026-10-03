@@ -1,0 +1,10 @@
+{
+  "active": "claude",
+  "roles": {
+    "video_review": {
+      "provider": "claude",
+      "model": null,
+      "effort": null
+    }
+  }
+}

@@ -1,108 +1,86 @@
 ---
 name: flowkit-ai-filmmaker
-description: Automated AI filmmaking and video production pipeline using Google Flow / Veo, Gemini AI planning, reference image consistency, TTS narration, and FFmpeg post-processing.
+description: Plan, operate, and maintain the FlowKit AI video pipeline integrated in ZEUS.
 license: MIT-compatible synthesized workflow
 ---
 
 # FlowKit AI Filmmaker Skill
 
-## 1. Mission & Overview
-Act as the AI Film Director and Automated Video Pipeline Engineer for **Quang Quý AI / Zeus**.
-This skill automates end-to-end video creation (from story concept to finished, narrated, subtitled, multi-scene video) leveraging **Google Flow (Veo / VideoFX)**, **Gemini AI**, and **FFmpeg**.
+## Mission
 
----
+Help create and operate AI video projects with the FlowKit application in `flowkit/`. FlowKit is a standalone ZEUS subproject: a FastAPI/SQLite agent, Chrome Manifest V3 bridge to Google Flow, React dashboard, FFmpeg post-processing, and reusable workflow guides. It does not require the Hermes runtime.
 
-## 2. Core Architecture & Mental Model
+- Integration and setup guide: [docs/FLOWKIT_INTEGRATION.md](../../docs/FLOWKIT_INTEGRATION.md)
+- FlowKit application docs: [flowkit/README.md](../../flowkit/README.md) and [flowkit/CLAUDE.md](../../flowkit/CLAUDE.md)
+- Canonical command recipes: [flowkit/skills/](../../flowkit/skills/)
+- Imported upstream revision: [flowkit/.quang-quy-source-commit](../../flowkit/.quang-quy-source-commit)
+
+## Pre-flight
+
+Before running a generation workflow:
+
+1. Read the matching recipe under `flowkit/skills/` and follow its prerequisites.
+2. Confirm the FlowKit agent is healthy at `http://127.0.0.1:8100/health` and the Chrome extension is connected.
+3. Keep a Google Flow tab open in Chrome while the signed-in session is active.
+4. Configure `FLOW_PROJECT_ID` with a project created in the Flow UI. The current Flow transport does not create projects itself.
+5. Never expose API credentials, cookies, browser tokens, or `.env` values in prompts, logs, or commits.
+
+If a request is to change FlowKit code rather than operate it, work inside `flowkit/` and read `flowkit/AGENTS.md` first. Keep generated projects, media, database files, and local configuration out of Git.
+
+## Workflow overview
 
 ```text
-1. Ý tưởng / Kịch bản (Story Concept)
-        │
-        ▼  [Gemini AI Planning]
-2. Phân tách Thực thể (Entities: Characters, Locations, Props)
-        │  └── Tạo ảnh tham chiếu (Reference Images) để giữ NHẤT QUÁN 100%
-        ▼
-3. Phân cảnh hành động (Scene Prompts & Camera Motions)
-        │  └── Scene 1 (8s) ──▶ Scene 2 (8s) ──▶ Scene 3 (8s)
-        ▼  [Chrome Extension / Google Flow Veo Bridge]
-4. Render Video Clips + Gemini TTS (Lồng tiếng) + Whisper Subtitles (SRT)
-        │
-        ▼  [FFmpeg Engine]
-5. Ghép Video hoàn chỉnh + Nhạc nền (Ducked Music) + Phụ đề + Xuất bản (16:9 hoặc 9:16)
+Research / brief
+  → create project, entities, video and scenes
+  → generate entity reference images
+  → generate scene images
+  → generate videos (optionally chain supported models)
+  → review clips and fix issues before final assembly
+  → narration / music / optional overlays
+  → concat and export
 ```
 
----
+Treat reference images as a consistency aid, not a guarantee of identical results. Confirm every generated asset and user-approved prompt before publishing.
 
-## 3. Quy Tắc Vàng Trong Prompting (FlowKit Blueprint)
+## Prompt rules
 
-### A. Quy tắc Thực thể (Entity / Reference Rule)
-* **Chỉ mô tả ngoại hình (Appearance ONLY)** trong mô tả nhân vật/đạo cụ để tạo ảnh tham chiếu:
-  * *Đúng:* `An elegant businesswoman, late 20s, wearing a tailored navy blazer and minimalist pearl earrings, neat bun hairstyle, warm confident smile.`
-  * *Sai:* `She is walking into a luxury spa and talking to a client.` (Không đưa hành động vào entity).
+### Entities and reference images
 
-### B. Quy tắc Phân cảnh (Scene Action Rule)
-* **Mô tả hành động (Action ONLY) & gọi tên thực thể:**
-  * *Đúng:* `[Character_A] walks slowly towards the reception desk of [Spa_Lobby], smiling warmly and handing a brochure to [Client_B]. Camera dolly-in, cinematic lighting.`
-  * *Sai:* Lặp lại toàn bộ mô tả ngoại hình của nhân vật trong scene prompt.
+Describe stable appearance only: facial features, clothing, colors, materials, and other visual traits. Keep actions, camera movements, and story events out of entity descriptions.
 
-### C. Quy tắc Nối cảnh (Scene Chaining & Continuity)
-* Lấy **frame cuối của Scene N** làm **frame đầu của Scene N+1** (`/fk-gen-chain-videos`) để đảm bảo chuyển cảnh liền mạch, không giật cục.
+### Scene prompts
 
----
+Describe the action and composition, and refer to established entities by name. Do not copy the full appearance description into every scene. Keep sensitive or factual real-world claims accurate and sourced; distinguish fictionalized or editorial material from fact.
 
-## 4. Các Lệnh Điều Khiển Chuẩn (Agent Workflows / Skills)
+### Continuity
 
-| Lệnh | Chức năng |
-| :--- | :--- |
-| `/fk-create-project "<Tên dự án>"` | Khởi tạo dự án video mới trong SQLite DB |
-| `/fk-plan-story` | Dùng Gemini lên kịch bản, chia nhân vật, bối cảnh và lời thoại |
-| `/fk-gen-references` | Sinh toàn bộ ảnh tham chiếu cho nhân vật, địa điểm, đạo cụ |
-| `/fk-gen-scenes` | Sinh ảnh khung đầu tiên cho từng phân cảnh từ ảnh tham chiếu |
-| `/fk-gen-chain-videos` | Render các clip 8s liên kết khung hình qua Google Flow / Veo |
-| `/fk-gen-tts` | Tạo giọng đọc thuyết minh qua Gemini TTS + xuất word timings |
-| `/fk-pipeline` | Chạy tự động toàn bộ quy trình từ kịch bản tới video cuối cùng |
-| `/fk-creative-mix` | Tự động phân tích kịch bản để gợi ý góc cận, góc rộng, cutaway |
-| `/fk-export-video` | Dùng FFmpeg ghép video, lồng nhạc nền, chèn phụ đề theo tỷ lệ 16:9 hoặc 9:16 |
+Use the recipe for the chosen model and the supported scene-chain mode. On the current Flow batch API, Veo start+end-frame chaining is not supported and should fail visibly; Omni first+last modes may be used where supported. `FLOW_ALLOW_DEGRADED=1` changes behavior by allowing a fallback and must not be enabled silently.
 
----
+## Available workflow skills
 
-## 5. Mẫu Cấu Trúc Dữ Liệu Phân Cảnh (JSON Schema cho Gemini)
+Use the matching canonical recipe in `flowkit/skills/`:
 
-```json
-{
-  "project_name": "Thiện Thành Limousine - Trải Nghiệm Thượng Lưu",
-  "orientation": "portrait", // "portrait" (9:16) hoặc "landscape" (16:9)
-  "entities": [
-    {
-      "name": "Businessman_Nam",
-      "type": "character",
-      "description": "Vietnamese businessman, early 30s, sharp modern suit, neat haircut, holding a leather briefcase."
-    },
-    {
-      "name": "Luxury_Cabin",
-      "type": "location",
-      "description": "Ultra-luxury limousine interior, plush leather massage seats, ambient starlight LED ceiling, warm golden lighting."
-    }
-  ],
-  "scenes": [
-    {
-      "scene_index": 1,
-      "character_names": ["Businessman_Nam", "Luxury_Cabin"],
-      "action_prompt": "[Businessman_Nam] relaxes on the massage chair inside [Luxury_Cabin], looking out the window while holding a cup of tea. Slow smooth pan left, cinematic bokeh.",
-      "narration": "Mỗi chuyến đi không chỉ là di chuyển, mà là không gian tái tạo năng lượng hoàn hảo.",
-      "duration_seconds": 8
-    }
-  ],
-  "music_style": "Ambient cinematic piano, relaxing and premium"
-}
-```
+| Command | Purpose |
+|---|---|
+| `/fk-research` | Research and fact-check a story brief |
+| `/fk-create-project` | Create the project, entities, video, and scenes |
+| `/fk-gen-refs` | Generate entity reference images |
+| `/fk-gen-images` | Generate scene images |
+| `/fk-gen-videos` | Generate scene videos |
+| `/fk-gen-chain-videos` | Generate supported chained-video sequences |
+| `/fk-review-video` | Review generated clips and address issues |
+| `/fk-gen-narrator` / `/fk-gen-tts-template` | Prepare narration and voice templates |
+| `/fk-gen-music` | Generate or attach music |
+| `/fk-concat` / `/fk-concat-fit-narrator` | Assemble scene videos, optionally fit to narration |
+| `/fk-pipeline` | Orchestrate the documented end-to-end workflow |
+| `/fk-thumbnail` / `/fk-youtube-seo` / `/fk-youtube-upload` | Prepare publication assets and upload when explicitly approved |
+| `/fk-doctor` | Diagnose Flow, extension, worker, or pipeline errors |
 
----
+The skills are recipes, not authorization to publish content or incur third-party costs. Ask before uploading, publishing, or using a paid service.
 
-## 6. Ứng Dụng Thực Chiến Cho Hệ Sinh Thái Quang Quý AI
+## Definition of done
 
-1. **Video Marketing BĐS / Spa / Du lịch:**
-   * Tạo video review căn hộ mẫu, quy trình chăm sóc da Spa chuẩn 5 sao với dàn nhân vật AI nhất quán.
-2. **Video Kể chuyện Thương hiệu & Triết lý Nhân sinh:**
-   * Biến các truyện ngắn (*"Duyên do trời định, phận do người tạo"*, *"Hạt Bụi Ghé Qua"*) thành các thước phim hoạt hình 3D/Cinematic giàu cảm xúc.
-3. **Kênh Video Ngắn Tự Động (TikTok / Reels / YouTube Shorts):**
-   * Sản xuất hàng loạt video ngắn có phụ đề động, giọng đọc AI truyền cảm hứng với chi phí tối ưu.
+- All requested scenes/assets are accounted for and reviewed.
+- The final video is assembled in the requested aspect ratio and checked for audio, timing, captions/overlays, and continuity.
+- Any remaining unsupported model capability or degraded fallback is disclosed.
+- No secrets, browser session data, or generated private media are committed to the repository.
