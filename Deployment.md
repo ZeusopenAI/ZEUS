@@ -46,6 +46,19 @@ Mở Google Colab và thực thi:
 !curl -s https://raw.githubusercontent.com/ZeusopenAI/ZEUS/main/colab/bootstrap.py | python3
 ```
 
+### E. Chạy FlowKit AI Filmmaker (`flowkit/`)
+FlowKit chạy độc lập với Hermes. Cần Python 3.10+, FFmpeg/ffprobe, Chrome và một Google Flow tab đã đăng nhập:
+
+```bash
+cd flowkit
+./setup.sh
+export FLOW_PROJECT_ID="<UUID dự án đã tạo trong Google Flow>"
+source venv/bin/activate
+python -m agent.main
+```
+
+Nạp `flowkit/extension/` bằng Chrome Developer mode → **Load unpacked**, giữ tab Google Flow mở, rồi kiểm tra `http://127.0.0.1:8100/health`. Có thể chạy dashboard riêng bằng `cd flowkit/dashboard && npm ci && npm run dev`. Xem [docs/FLOWKIT_INTEGRATION.md](docs/FLOWKIT_INTEGRATION.md) trước khi cấu hình. Không đưa API key hoặc cookie vào repository.
+
 ## 2. Quy trình Cập nhật & Đồng bộ Mã Nguồn
 
 ```text
