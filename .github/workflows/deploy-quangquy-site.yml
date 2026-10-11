@@ -1,0 +1,70 @@
+name: Deploy landing page quangquy (GitHub Pages)
+
+# ⚠️ CHỈ CHẠY THỦ CÔNG (workflow_dispatch) — không tự deploy khi push.
+# Lý do: deploy production phải có sự xác nhận của chủ tài khoản (xem AGENTS.md).
+#
+# Cách dùng:
+#   1. Repo → Settings → Pages → Source = "GitHub Actions".
+#   2. Tab Actions → "Deploy landing page quangquy" → Run workflow.
+#   3. Chọn nhánh cần deploy (mặc định: main) rồi bấm Run.
+#   4. Sau khi xong, URL sẽ hiện ở bước "deploy" của job.
+#
+# Action được PIN theo commit SHA (theo khuyến nghị trong docs/AUDIT_2026-08-06.md).
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Nhánh/commit cần deploy"
+        required: true
+        default: "main"
+        type: string
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-quangquy
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Kiểm tra nhanh site tĩnh
+        run: |
+          set -e
+          test -f site/index.html
+          test -f site/assets/css/styles.css
+          test -f site/assets/js/app.js
+          test -f site/assets/js/chat-demo.js
+          node --check site/assets/js/app.js
+          node --check site/assets/js/chat-demo.js
+          echo "✔ Site tĩnh hợp lệ (không có bước build vì là HTML/CSS/JS thuần)"
+
+      - name: Cấu hình GitHub Pages
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+
+      - name: Đóng gói thư mục site/
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy lên GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Đổi domain khi bạn trỏ tên miền thật
+Sitemap: https://quangquy.ai/sitemap.xml
