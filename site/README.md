@@ -56,6 +56,17 @@ npx serve site
 > Ghi chú: Google Fonts (`Be Vietnam Pro`, `JetBrains Mono`) tải qua CDN. Nếu chạy offline,
 > trang vẫn dùng được với font hệ thống nhờ fallback trong `styles.css`.
 
+## 3b. Kiểm thử tự động
+
+```bash
+npm i --no-save jsdom          # cài 1 lần
+node scripts/site-smoke-test.mjs
+```
+
+Script mô phỏng trình duyệt (jsdom) và kiểm tra: menu, carousel, validate form, gõ tin nhắn vào
+chatbot trong lúc demo đang chạy, bấm gợi ý liên tiếp, countdown, và kịch bản chatbot tự chạy hết.
+Chạy tự động trên CI qua `.github/workflows/site-check.yml` (không deploy).
+
 ## 4. Deploy lên GitHub Pages
 
 Workflow có sẵn: `.github/workflows/deploy-quangquy-site.yml` — **chạy thủ công**, không tự deploy.

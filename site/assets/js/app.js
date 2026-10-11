@@ -21,7 +21,10 @@
 
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Guard cho môi trường không có matchMedia (trình duyệt cũ / môi trường test)
+  const media = (q) =>
+    typeof window.matchMedia === "function" ? window.matchMedia(q) : { matches: false, addEventListener() {}, addListener() {} };
+  const reduceMotion = media("(prefers-reduced-motion: reduce)").matches;
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* bỏ qua */ } },

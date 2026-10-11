@@ -1,0 +1,68 @@
+name: Site check (landing page quangquy)
+
+# Kiểm tra site tĩnh trong site/ khi có thay đổi:
+#   - HTML cân bằng thẻ, không trùng id, không có hash link hỏng
+#   - JS đúng cú pháp (node --check)
+#   - Chạy smoke test bằng jsdom: nav, carousel, form, chatbot demo, countdown
+# Không deploy gì cả (deploy nằm ở workflow deploy-quangquy-site.yml, chạy thủ công).
+
+on:
+  pull_request:
+    paths:
+      - "site/**"
+      - "scripts/site-smoke-test.mjs"
+      - ".github/workflows/site-check.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "site/**"
+      - "scripts/site-smoke-test.mjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Cài Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+
+      - name: Kiểm tra cú pháp JS
+        run: |
+          node --check site/assets/js/app.js
+          node --check site/assets/js/chat-demo.js
+          echo "✔ JS hợp lệ"
+
+      - name: Kiểm tra cấu trúc HTML
+        run: |
+          python3 - <<'PY'
+          import re, sys
+          s = open('site/index.html', encoding='utf-8').read()
+          ids = re.findall(r'id="([A-Za-z0-9_-]+)"', s)
+          dup = {i for i in ids if ids.count(i) > 1}
+          bad = [h for h in set(re.findall(r'href="#([A-Za-z0-9_-]+)"', s)) if h not in set(ids)]
+          files = ['site/assets/css/styles.css', 'site/assets/js/app.js', 'site/assets/js/chat-demo.js',
+                   'site/assets/img/favicon.svg', 'site/robots.txt', 'site/sitemap.xml']
+          missing = [f for f in files if not __import__('os').path.exists(f)]
+          print("id trùng:", dup or "không có")
+          print("hash link hỏng:", bad or "không có")
+          print("file thiếu:", missing or "không có")
+          sys.exit(1 if (dup or bad or missing) else 0)
+          PY
+
+      - name: Smoke test bằng jsdom
+        run: |
+          npm i --no-save jsdom --no-audit --no-fund
+          node scripts/site-smoke-test.mjs

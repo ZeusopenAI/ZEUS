@@ -36,6 +36,7 @@ Cập nhật: 2026-09-17
 - [ ] Chốt nội dung cuối: tên miền thật, email, giá 3 gói (danh sách trong `site/content.md` mục 16).
 - [ ] Bật GitHub Pages (Settings → Pages → Source: GitHub Actions) rồi chạy workflow `deploy-quangquy-site.yml` — cần Quý xác nhận vì là deploy public.
 - [ ] (Tuỳ chọn) Nối form tư vấn vào webhook nhận lead tự động qua `CONFIG.formEndpoint`.
+- [x] Viết smoke test jsdom (`scripts/site-smoke-test.mjs`) + CI `site-check.yml` cho `site/**`; test đã phát hiện và sửa 2 lỗi UX ở demo chatbot.
 
 ## Quy tắc hoàn thành
 

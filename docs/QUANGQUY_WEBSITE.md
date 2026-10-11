@@ -55,6 +55,29 @@ scripts/build-og-image.sh        # tạo lại og-image.png khi đổi chữ
 .github/workflows/deploy-quangquy-site.yml   # deploy GitHub Pages (chạy THỦ CÔNG)
 ```
 
+## 3b. Kiểm thử tự động
+
+```bash
+npm i --no-save jsdom
+node scripts/site-smoke-test.mjs        # exit 0 = pass
+```
+
+Script dùng **jsdom** mô phỏng trình duyệt và kiểm tra: mở/đóng menu, nút chọn gói điền sẵn form,
+carousel (nút · dot · phím ← →), form chặn dữ liệu sai và nhận dữ liệu đúng, gõ tin nhắn vào chatbot
+**trong lúc kịch bản demo đang chạy**, bấm gợi ý liên tiếp, đóng thanh thông báo, cuộn trang,
+countdown chạy đúng, và kịch bản chatbot tự chạy hết 5 tin bot / 4 tin khách / 8 product card
+không để lại con trỏ “đang soạn”.
+
+Hai lỗi thật do test phát hiện và đã sửa trong `chat-demo.js`:
+
+1. **Người dùng gõ tin nhắn giữa lúc kịch bản demo đang chạy → tin bị bỏ qua im lặng.**
+   Đã sửa: người dùng luôn “giành quyền” điều khiển, kịch bản dừng ngay.
+2. **Bấm gợi ý trong lúc bot đang trả lời → không có phản hồi nào.**
+   Đã sửa: tin nhắn xếp hàng đợi và được trả lời lần lượt (tối đa 3 tin chờ).
+
+Workflow `.github/workflows/site-check.yml` chạy đúng các bước trên trên mọi PR/push có đổi
+`site/**` (kèm kiểm tra cú pháp JS, id trùng, hash link hỏng, file thiếu). Workflow này **không deploy**.
+
 ## 4. Cách chạy & deploy
 
 ```bash

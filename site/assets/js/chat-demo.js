@@ -77,7 +77,9 @@
   if (!bodyEl || !formEl) return;
 
   let scriptToken = 0;      // huỷ kịch bản tự chạy khi người dùng can thiệp
-  let busy = false;
+  let busy = false;         // kịch bản tự chạy đang chạy
+  let processing = false;   // đang xử lý tin nhắn của người dùng
+  const queue = [];         // hàng đợi tin nhắn người dùng (bấm liên tiếp vẫn không mất)
 
   /* ─────────────── RENDER ─────────────── */
   function scrollDown() {
@@ -281,25 +283,37 @@
   /* ─────────────── GỬI TIN NHẮN ─────────────── */
   async function send(text, opts = {}) {
     const value = String(text || "").trim();
-    if (!value || busy) return;
+    if (!value) return;
 
-    busy = true;
-    scriptToken++;                 // dừng kịch bản tự chạy nếu đang chạy
+    // Xếp hàng đợi: bấm gợi ý liên tiếp trong lúc bot đang trả lời vẫn được xử lý,
+    // thay vì bị bỏ qua im lặng. Giới hạn 3 tin chờ để tránh dồn ứ.
+    if (queue.length >= 3) return;
+    queue.push({ value, opts });
+    if (processing) return;
 
-    addMsg("user", esc(value));
-    inputEl.value = "";
+    processing = true;
 
-    const typing = addTyping();
-    await sleep(opts.fast ? 420 : 900);
-    typing.remove();
-
-    const r = reply(value);
-    addMsg("bot", r.html, r.tag);
-    if (r.products) bodyEl.querySelector(".msg:last-child").insertAdjacentHTML("beforeend", productCards(r.products));
-    if (r.colors) bodyEl.querySelector(".msg:last-child").insertAdjacentHTML("beforeend", colorCards());
-    scrollDown();
-
+    // Người dùng can thiệp → dừng kịch bản tự chạy để nhường quyền điều khiển
+    scriptToken++;
     busy = false;
+
+    while (queue.length) {
+      const item = queue.shift();
+      addMsg("user", esc(item.value));
+      inputEl.value = "";
+
+      const typing = addTyping();
+      await sleep(item.opts.fast ? 420 : 900);
+      typing.remove();
+
+      const r = reply(item.value);
+      addMsg("bot", r.html, r.tag);
+      if (r.products) bodyEl.querySelector(".msg:last-child").insertAdjacentHTML("beforeend", productCards(r.products));
+      if (r.colors) bodyEl.querySelector(".msg:last-child").insertAdjacentHTML("beforeend", colorCards());
+      scrollDown();
+    }
+
+    processing = false;
   }
 
   /* ─────────────── KỊCH BẢN TỰ CHẠY ─────────────── */
