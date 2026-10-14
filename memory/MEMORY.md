@@ -6,6 +6,6 @@
 
 ## 2. Kiến thức & Kỹ năng Đã Lưu Trữ
 * **Hệ thống Bộ nhớ thứ hai (Second Brain):** Ingest hội thoại đa nguồn (ChatGPT, Claude, Gemini) qua `scripts/second-brain-import.mjs`.
-* **FlowKit AI Filmmaker (`memory/flowkit-ai-filmmaking.md`):** Tự động hóa quy trình làm phim AI với Gemini + Google Flow (Veo) + FFmpeg. Đảm bảo 100% nhất quán nhân vật qua hệ thống Reference Image System và Scene Chaining.
+* **FlowKit AI Filmmaker (`flowkit/`, `memory/flowkit-ai-filmmaking.md`):** Ứng dụng độc lập gồm FastAPI/SQLite agent, Chrome MV3 bridge tới Google Flow, dashboard React, workflow skills và FFmpeg pipeline. Hướng dẫn chạy tại `docs/FLOWKIT_INTEGRATION.md`.
 * **Telegram Webhook Edge Proxy (`worker/telegram-proxy/`):** Proxy mỏng giải quyết triệt để lỗi xung đột 409 khi kết nối bot Telegram 24/7.
 * **Hermes OpenRouter Actions (`.github/workflows/hermes-openrouter.yml`):** Runner tạo ảnh và thực thi agent qua GitHub Actions miễn phí.

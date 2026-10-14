@@ -48,13 +48,16 @@ Full guide: [docs/second-brain.md](../docs/second-brain.md) & [skills/second-bra
 
 ### 4. flowkit-ai-filmmaker
 
-**Purpose**: Automated AI filmmaking and video production pipeline using Google Flow / Veo, Gemini AI planning, reference image consistency, TTS narration, and FFmpeg post-processing.
+**Purpose**: Plan, operate, and maintain the standalone FlowKit AI video application (FastAPI/SQLite agent, Chrome MV3 bridge, React dashboard, and FFmpeg post-processing).
 
 **When to use**:
-- End-to-end automated video creation (Shorts, Reels, YouTube 16:9, commercial videos).
-- Ensuring 100% character and location consistency via Reference Image System.
-- Smooth scene transitions via frame chaining (`/fk-gen-chain-videos`).
-- Multi-model video orchestration (Gemini kịch bản/TTS + Google Flow video + FFmpeg ghép video).
+- Running the documented video-production workflow for Shorts, Reels, YouTube, or commercial content.
+- Creating and reviewing projects, reference images, scene images, clips, narration, and final exports.
+- Diagnosing Google Flow, extension, or pipeline issues; modifying FlowKit code under `flowkit/`.
+
+Character references can improve visual continuity but do not guarantee identical outputs; supported chaining depends on the selected model and current Flow API.
+
+Implementation: [flowkit/](../flowkit/) — standalone FlowKit agent, extension, dashboard, tests, and workflow guides. Start here: [docs/FLOWKIT_INTEGRATION.md](../docs/FLOWKIT_INTEGRATION.md).
 
 Full guide: [skills/flowkit-ai-filmmaker/SKILL.md](flowkit-ai-filmmaker/SKILL.md) & [memory/flowkit-ai-filmmaking.md](../memory/flowkit-ai-filmmaking.md)
 

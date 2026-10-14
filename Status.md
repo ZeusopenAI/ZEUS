@@ -1,38 +1,42 @@
 # Status — Zeus / Quang Quý AI
 
-Cập nhật: 2026-09-17
+Cập nhật: 2026-10-03
 
 ## Tổng quan
 
-Kho mã nguồn đã được tinh gọn hoàn toàn theo định hướng cá nhân (không dùng mô hình monorepo doanh nghiệp cồng kềnh). Mọi module hoạt động độc lập, sẵn sàng cho việc phát triển và vận hành qua điện thoại / cloud.
+ZEUS tiếp tục theo hướng module độc lập, cloud-first và vận hành được từ điện thoại. Hermes là runtime điều phối; FlowKit là ứng dụng AI filmmaking riêng trong `flowkit/`, không buộc chung dependency với Hermes.
 
-## Các thành phần đã hoàn tất & kiểm chứng
+## Các thành phần
 
 ### 1. Hermes Agent Runtime (`agents/hermes/`)
-- Hermes Agent runtime tích hợp sẵn, hỗ trợ gọi các mô hình AI linh hoạt (OpenRouter, Gemini, OpenAI Codex, Claude).
-- Python test & syntax check đạt chuẩn.
+- Runtime Hermes tích hợp sẵn, hỗ trợ các mô hình AI và công cụ automation.
+- Quy trình kiểm tra Hermes nằm trong các workflow và tài liệu `docs/HERMES_*`.
 
 ### 2. GitHub Actions Runner (`.github/workflows/hermes-openrouter.yml`)
-- Tự động chạy Hermes Agent qua OpenRouter bằng 1 nút bấm (chọn model text/code hoặc `google/gemini-2.5-flash-image` tạo ảnh).
-- Tự động đóng gói kết quả tải về qua Artifacts và mở Pull Request khi có kết quả mới.
-- Tự động đồng bộ nhánh phát triển với `arena-auto-pr.yml`.
+- Chạy tác vụ một lần qua OpenRouter, tải artifacts hoặc mở Pull Request.
+- `arena-auto-pr.yml` tự tạo/cập nhật PR cho nhánh Arena.
 
-### 3. Bộ nhớ thứ hai (Second Brain Standalone)
-- Chuyển toàn bộ module xử lý hội thoại từ ChatGPT, Claude.ai, Google Gemini thành công cụ độc lập `scripts/second-brain-import.mjs` (kèm module `scripts/second-brain/`).
-- Chạy bằng Node.js ≥ 22 không cần phụ thuộc monorepo nặng nề.
-- 20/20 test normalizer + import + ingest đạt chuẩn (Node test runner).
-- Tự động redact secrets nhạy cảm trước khi lưu thành file Markdown.
+### 3. Bộ nhớ thứ hai (Second Brain)
+- Import ChatGPT, Claude.ai và Google Gemini vào Markdown qua `scripts/second-brain-import.mjs`.
+- Chạy bằng Node.js ≥ 22 và lọc secrets trong dữ liệu import.
 
 ### 4. Telegram Webhook Proxy (`worker/telegram-proxy/`)
-- Worker proxy mỏng trên Cloudflare (phương án A), giải quyết triệt để lỗi xung đột HTTP 409 khi bot bị nhiều bên tiêu thụ.
-- Đã có tài liệu hướng dẫn cấu hình và runbook chi tiết trong `docs/TELEGRAM_WIRING.md`.
+- Cloudflare Worker proxy webhook Telegram tới Hermes Gateway.
+- Hướng dẫn và runbook: `docs/TELEGRAM_WIRING.md`.
 
-### 5. Google Colab & Media Automation (`colab/`, `docs/COLAB_COMFYUI.md`)
-- File `colab/bootstrap.py` trỏ chuẩn về `https://github.com/ZeusopenAI/ZEUS.git`.
-- Hướng dẫn chạy ComfyUI tạo ảnh/video trên Colab miễn phí/giá rẻ.
+### 5. FlowKit AI Filmmaker (`flowkit/`)
+- Tích hợp snapshot mã nguồn `ZeusopenAI/flowkit` (commit `d7977fd51b87d4da2a25a05b896f5cdac064e030`) vào ZEUS; giữ nguyên MIT license.
+- Bao gồm FastAPI/SQLite agent, Chrome MV3 extension, React dashboard, workflow skills và tests.
+- Đã loại bỏ giá trị API-key-shaped hard-coded không được dùng khỏi snapshot; nếu giá trị upstream từng là credential thật, cần thu hồi/rotate tại Google Cloud. Xem `docs/FLOWKIT_INTEGRATION.md`.
+- Kiểm thử local: 365/365 Python unit tests, extension regression test và dashboard production build đều đạt. Dashboard build còn cảnh báo chunk JavaScript lớn hơn 500 kB; build vẫn thành công.
+- CI mới: `.github/workflows/flowkit-ci.yml` (secret-pattern scan, Python 3.10/3.13 tests, extension test và dashboard build).
+
+### 6. Google Colab & Media Automation (`colab/`, `docs/COLAB_COMFYUI.md`)
+- `colab/bootstrap.py` trỏ về repo `ZeusopenAI/ZEUS`.
+- Tài liệu hướng dẫn chạy ComfyUI và tác vụ media trên Colab.
 
 ## Repository & Chiến lược
 
-- **Canonical Repository:** `ZeusopenAI/ZEUS` (nhánh `main`).
-- **Triết lý:** Tinh gọn, cá nhân hóa, cloud-first, modular, không mang gánh nặng kiến trúc doanh nghiệp.
-- **Đồng bộ:** Cung cấp script `scripts/sync-to-zeusopenai.sh` để đẩy trực tiếp các cập nhật sang `ZeusopenAI/ZEUS`.
+- **Canonical Repository:** `ZeusopenAI/ZEUS` (`main` sau khi pull request được duyệt/merge).
+- **FlowKit source-of-truth trong thay đổi này:** `flowkit/`; snapshot provenance tại `flowkit/.quang-quy-source-commit`.
+- **Triết lý:** Cá nhân hóa, cloud-first, modular; các ứng dụng độc lập giữ dependency và quy trình riêng.

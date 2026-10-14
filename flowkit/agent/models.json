@@ -1,0 +1,71 @@
+{
+  "video_models": {
+    "PAYGATE_TIER_TWO": {
+      "frame_2_video": {
+        "VIDEO_ASPECT_RATIO_LANDSCAPE": "veo_3_1_i2v_lite_low_priority",
+        "VIDEO_ASPECT_RATIO_PORTRAIT": "veo_3_1_i2v_lite_low_priority"
+      },
+      "start_end_frame_2_video": {
+        "VIDEO_ASPECT_RATIO_LANDSCAPE": "veo_3_1_i2v_lite_low_priority",
+        "VIDEO_ASPECT_RATIO_PORTRAIT": "veo_3_1_i2v_lite_low_priority"
+      },
+      "reference_frame_2_video": {
+        "VIDEO_ASPECT_RATIO_LANDSCAPE": "veo_3_1_r2v_fast_landscape_ultra_relaxed",
+        "VIDEO_ASPECT_RATIO_PORTRAIT": "veo_3_1_r2v_fast_landscape_ultra_relaxed"
+      }
+    },
+    "PAYGATE_TIER_ONE": {
+      "frame_2_video": {
+        "VIDEO_ASPECT_RATIO_LANDSCAPE": "veo_3_1_i2v_s_fast",
+        "VIDEO_ASPECT_RATIO_PORTRAIT": "veo_3_1_i2v_s_fast_portrait"
+      },
+      "start_end_frame_2_video": {
+        "VIDEO_ASPECT_RATIO_LANDSCAPE": "veo_3_1_i2v_s_fast_fl",
+        "VIDEO_ASPECT_RATIO_PORTRAIT": "veo_3_1_i2v_s_fast_portrait_fl"
+      },
+      "reference_frame_2_video": {
+        "VIDEO_ASPECT_RATIO_LANDSCAPE": "veo_3_1_r2v_fast",
+        "VIDEO_ASPECT_RATIO_PORTRAIT": "veo_3_1_r2v_fast_portrait"
+      }
+    }
+  },
+  "omni_flash_models": {
+    "frame_to_video": {
+      "4": "abra_i2v_4s",
+      "6": "abra_i2v_6s",
+      "8": "abra_i2v_8s",
+      "10": "abra_i2v_10s"
+    },
+    "start_end_frame_to_video": {
+      "4": "abra_i2v_4s",
+      "6": "abra_i2v_6s",
+      "8": "abra_i2v_8s",
+      "10": "abra_i2v_10s"
+    },
+    "reference_to_video": {
+      "4": "abra_r2v_4s",
+      "6": "abra_r2v_6s",
+      "8": "abra_r2v_8s",
+      "10": "abra_r2v_10s"
+    }
+  },
+  "upscale_models": {
+    "VIDEO_RESOLUTION_4K": "veo_3_1_upsampler_4k",
+    "VIDEO_RESOLUTION_1080P": "veo_3_1_upsampler_1080p"
+  },
+  "image_models": {
+    "NANO_BANANA_PRO": "GEM_PIX_2",
+    "NANO_BANANA_2": "NARWHAL",
+    "NANO_BANANA_2_LITE": "HARBOR_SEAL"
+  },
+  "default_image_model": "NANO_BANANA_PRO",
+  "batch_video_models": {
+    "_comment": "Wire names the flow.google.com batchexecute path accepts. video_models above are REST-era keys; resolve_video_model() folds them onto these (anything asking for 'ultra' lands on the ultra model).",
+    "accepted": [
+      "veo_3_1_i2v_lite_low_priority",
+      "veo_3_1_i2v_lite",
+      "veo_3_1_i2v_s_fast_ultra"
+    ],
+    "default": "veo_3_1_i2v_lite_low_priority"
+  }
+}

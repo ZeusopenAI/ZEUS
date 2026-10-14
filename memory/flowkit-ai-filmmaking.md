@@ -1,32 +1,44 @@
-# BRAIN MEMORY — FLOWKIT AI FILMMAKING PIPELINE (GEMINI + GOOGLE FLOW/VEO)
+# BRAIN MEMORY — FLOWKIT AI FILMMAKING PIPELINE
 
-- **Thời điểm ghi nhận:** 2026-09-27
-- **Chủ đề:** Tự động hóa sản xuất phim AI & Video Marketing (End-to-End AI Video Pipeline)
-
----
-
-## 1. Bản chất công nghệ & Khái niệm cốt lõi
-* **FlowKit** là hệ thống tự động hóa làm phim AI cục bộ (Local + Cloud Bridge), kết hợp:
-  * **Gemini AI:** Lập kế hoạch phân cảnh, phân tách thực thể, viết prompt hành động, sinh giọng đọc TTS và bắt word timings để tạo sub.
-  * **Google Flow (Veo / VideoFX):** Sinh video chất lượng cao dựa trên tài khoản Google qua Chrome Extension MV3 bridge (không tốn chi phí API video đắt đỏ).
-  * **FFmpeg:** Tự động ghép nối clip, khớp timing âm thanh, chèn phụ đề động `.srt` và lồng nhạc nền (Ducked Music).
-  * **SQLite / FastAPI:** Quản lý hàng đợi render và lưu trữ dự án.
+- **Cập nhật:** 2026-10-03
+- **Chủ đề:** Tự động hóa sản xuất phim AI & video marketing
+- **Mã nguồn chuẩn:** `flowkit/` trong `ZeusopenAI/ZEUS`
 
 ---
 
-## 2. Giải pháp cho bài toán "Nhất quán nhân vật" (Character Consistency)
-* **Reference Image System:** Mỗi nhân vật, địa điểm, đạo cụ được gán 1 UUID media_id và 1 ảnh tham chiếu riêng (chỉ mô tả ngoại hình).
-* **Scene Prompting:** Khi render cảnh, chỉ mô tả hành động (Action) và truyền danh sách `character_names`. Veo nhận ảnh tham chiếu làm input để giữ mặt và trang phục nhân vật giống nhau 100% qua mọi phân cảnh.
-* **Scene Chaining:** Dùng frame cuối của Scene trước làm frame đầu của Scene sau để tạo chuyển động máy quay mượt mà.
+## 1. Bản chất công nghệ & khái niệm cốt lõi
+
+FlowKit là ứng dụng độc lập gồm:
+
+- **FastAPI + SQLite:** Quản lý dự án, request queue và trạng thái pipeline.
+- **Chrome Extension MV3 + Google Flow:** Browser bridge dùng tab Google Flow đã đăng nhập; cấu hình dự án qua `FLOW_PROJECT_ID`.
+- **Dashboard React/Vite:** Theo dõi dự án, trạng thái render và media.
+- **FFmpeg:** Ghép clip và xử lý hậu kỳ.
+- **Skills trong `flowkit/skills/`:** Các recipe cho agent và người vận hành.
+
+FlowKit chạy riêng, không cần Hermes runtime. Setup, requirements, dữ liệu runtime và tests nằm trong `flowkit/`. Xem `docs/FLOWKIT_INTEGRATION.md` để cài đặt và chạy.
 
 ---
 
-## 3. Ứng dụng trong hệ sinh thái Quang Quý AI
-* **Thương mại / Dịch vụ:** Sản xuất video quảng cáo cho Thiện Thành Limousine, dịch vụ Spa, dự án Bất động sản.
-* **Nội dung sáng tạo / Triết lý:** Chuyển thể các tác phẩm chiêm nghiệm nhân sinh (*"Hạt Bụi Ghé Qua"*, *"Duyên do trời định, phận do người tạo"*) thành video hoạt họa cinematic.
-* **Định dạng:** Tối ưu hóa cả tỷ lệ 9:16 (Shorts/Reels/TikTok) và 16:9 (YouTube/TVC).
+## 2. Tính nhất quán hình ảnh và giới hạn
+
+- **Reference Image System:** Gán media ID và ảnh tham chiếu cho nhân vật, địa điểm, đạo cụ; mô tả entity chỉ nên chứa ngoại hình ổn định.
+- **Scene Prompting:** Prompt cảnh tập trung vào hành động, bố cục và camera, gọi entity theo tên thay vì lặp mô tả ngoại hình.
+- **Giới hạn:** Ảnh tham chiếu hỗ trợ tính nhất quán nhưng không đảm bảo kết quả giống hệt qua mọi cảnh.
+- **Scene chaining:** Khả năng phụ thuộc model và Flow API hiện hành. Veo start+end-frame chaining chưa được hỗ trợ trên batch API hiện tại; dùng mode Omni được hỗ trợ hoặc chỉ bật fallback sau khi người vận hành đồng ý.
 
 ---
 
-## 4. Kỹ năng điều khiển liên kết
-* Skill tương ứng: `skills/flowkit-ai-filmmaker/SKILL.md`
+## 3. Ứng dụng
+
+- **Thương mại / dịch vụ:** Video quảng cáo cho dịch vụ, du lịch, bất động sản.
+- **Nội dung sáng tạo:** Chuyển thể câu chuyện, thông điệp thương hiệu và nội dung ngắn.
+- **Định dạng:** Tối ưu cho 9:16 (Shorts/Reels/TikTok) và 16:9 (YouTube/TVC), tùy workflow.
+
+---
+
+## 4. Kỹ năng điều khiển
+
+- Hướng dẫn ZEUS: `skills/flowkit-ai-filmmaker/SKILL.md`.
+- Recipe và commands chuẩn: `flowkit/skills/`.
+- Bắt đầu chạy: `docs/FLOWKIT_INTEGRATION.md`.
