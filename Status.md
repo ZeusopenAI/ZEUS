@@ -1,10 +1,17 @@
 # Status — Zeus / Quang Quý AI
 
-Cập nhật: 2026-10-03
+Cập nhật: 2026-10-14
+
+## Nhịp gần nhất (14/10/2026)
+
+- Dứt điểm 4 PR mở: **#9 (website `site/`) và #8 (FlowKit `flowkit/`) đã merge vào main**; #6 và #7 đóng vì nội dung đã bị main vượt qua (comment kiểm chứng trên từng PR).
+- Hermes chạy thật trên Linux: cài từ `agents/hermes`, `hermes --version` OK, bộ test nhanh memory/gateway/skills **154/154 pass**.
+- Bộ 24/7 sẵn sàng: `deploy/vps/` (install đã chạy thật — unit systemd chuẩn `User=hermes`, `Restart=always`, enable boot-start; healthcheck; backup đã chạy thật) + runbook `docs/RUNBOOK_247.md`.
+- CI runtime mới `.github/workflows/hermes-runtime-ci.yml` cài Hermes và chạy test trên Python 3.11/3.12 mỗi khi `agents/hermes/**` hoặc `deploy/**` thay đổi.
 
 ## Tổng quan
 
-ZEUS tiếp tục theo hướng module độc lập, cloud-first và vận hành được từ điện thoại. Hermes là runtime điều phối; FlowKit là ứng dụng AI filmmaking riêng trong `flowkit/`, không buộc chung dependency với Hermes.
+ZEUS tiếp tục theo hướng module độc lập, cloud-first và vận hành được từ điện thoại. Hermes là runtime điều phối; FlowKit là ứng dụng AI filmmaking riêng trong `flowkit/`, không buộc chung dependency với Hermes; landing page thương hiệu là site tĩnh trong `site/` (deploy GitHub Pages thủ công qua workflow).
 
 ## Các thành phần
 

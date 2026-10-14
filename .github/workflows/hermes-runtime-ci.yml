@@ -1,0 +1,75 @@
+name: Hermes runtime CI (Linux)
+
+# Chạy Hermes Agent THẬT trên Linux: cài từ agents/hermes, smoke CLI,
+# compileall và chạy bộ test nhanh (memory / gateway split-brain / skills).
+# Bổ sung cho validate-hermes-integration.yml (kiểm cấu trúc + secret scan).
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'agents/hermes/**'
+      - 'deploy/**'
+      - '.github/workflows/hermes-runtime-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'agents/hermes/**'
+      - 'deploy/**'
+      - '.github/workflows/hermes-runtime-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hermes-runtime-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cài hermes-agent từ agents/hermes
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ./agents/hermes pytest pytest-asyncio
+          hermes --version
+
+      - name: Compile toàn bộ nguồn Hermes
+        run: python -m compileall -q agents/hermes
+
+      - name: Chạy bộ test nhanh (memory, gateway split-brain, skills)
+        run: |
+          python -m pytest \
+            agents/hermes/tests/tools/test_memory_tool.py \
+            agents/hermes/tests/gateway/test_session_split_brain_11016.py \
+            agents/hermes/tests/agent/test_skill_commands.py \
+            -q -p no:cacheprovider --no-header
+
+      - name: Kiểm tra cú pháp script vận hành 24/7
+        run: |
+          bash -n deploy/vps/install-hermes-vps.sh
+          bash -n deploy/vps/healthcheck.sh
+          bash -n deploy/vps/backup-hermes.sh
+          echo "OK: cú pháp deploy/vps/*.sh hợp lệ"
+
+      - name: Dry-run bộ cài VPS (không thay đổi hệ thống)
+        run: |
+          sudo bash deploy/vps/install-hermes-vps.sh --dry-run | tee /tmp/dryrun.log
+          grep -q "hermes gateway install" /tmp/dryrun.log
+          echo "OK: dry-run đi trọn luồng tới bước gateway install"
