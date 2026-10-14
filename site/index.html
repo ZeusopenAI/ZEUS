@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Nguyễn Quang Quý — AI Chatbot CSKH &amp; Automation cho doanh nghiệp Việt</title>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     SEO & CHIA SẺ  [SỬA Ở ĐÂY]
+     - Đổi https://quangquy.ai/ thành domain thật khi bạn trỏ tên miền.
+     ══════════════════════════════════════════════════════════════════ -->
+<meta name="description" content="Dựng nhân viên AI trả lời khách 24/7, tự động hoá Zalo – Facebook – Website – Shopee, chạy quảng cáo đa nền tảng và đo lường bằng dữ liệu. 8+ năm Digital Marketing · 9 AI tools · 50.000+ SKU xử lý được." />
+<meta name="author" content="Nguyễn Quang Quý" />
+<meta name="theme-color" content="#07070a" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://quangquy.ai/" />
+<meta name="geo.region" content="VN-SG" />
+<meta name="geo.placename" content="TP. Hồ Chí Minh" />
+
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="vi_VN" />
+<meta property="og:site_name" content="Nguyễn Quang Quý — AI Creator" />
+<meta property="og:title" content="Dùng AI Đúng Cách, Tiết Kiệm Cả Ngày Làm Việc" />
+<meta property="og:description" content="AI Chatbot biết toàn bộ catalogue · Automation Zalo + Facebook + CRM · Chạy 24/7. Buổi tư vấn đầu tiên miễn phí." />
+<meta property="og:url" content="https://quangquy.ai/" />
+<meta property="og:image" content="https://quangquy.ai/assets/img/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Dùng AI Đúng Cách, Tiết Kiệm Cả Ngày Làm Việc" />
+<meta name="twitter:description" content="AI Chatbot CSKH 24/7 + Automation đa kênh + đo lường bằng dữ liệu. 8+ năm Digital Marketing." />
+<meta name="twitter:image" content="https://quangquy.ai/assets/img/og-image.png" />
+
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="assets/img/favicon.svg" />
+
+<!-- Fonts: Be Vietnam Pro (thiết kế cho tiếng Việt) + JetBrains Mono (code/terminal) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+
+<link rel="stylesheet" href="assets/css/styles.css" />
+
+<!-- Dữ liệu có cấu trúc: Person + Service + FAQ -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Person",
+      "@id": "https://quangquy.ai/#person",
+      "name": "Nguyễn Quang Quý",
+      "jobTitle": "Digital Marketing CMO · AI Creator",
+      "telephone": "+84763123992",
+      "address": { "@type": "PostalAddress", "addressLocality": "TP. Hồ Chí Minh", "addressCountry": "VN" },
+      "knowsAbout": ["AI Chatbot", "RAG", "n8n Automation", "Facebook Ads", "Google Ads", "TikTok Ads", "SEO", "GA4"],
+      "sameAs": ["https://zalo.me/0763123992"]
+    },
+    {
+      "@type": "ProfessionalService",
+      "@id": "https://quangquy.ai/#service",
+      "name": "Triển khai AI Chatbot & Automation cho doanh nghiệp",
+      "provider": { "@id": "https://quangquy.ai/#person" },
+      "areaServed": { "@type": "Country", "name": "Việt Nam" },
+      "serviceType": ["AI Chatbot CSKH 24/7", "Automation đa kênh", "Chạy quảng cáo đa nền tảng", "SEO & Analytics", "Đào tạo AI Tools"],
+      "priceRange": "8.900.000₫ - 34.000.000₫",
+      "telephone": "+84763123992"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        { "@type": "Question", "name": "Triển khai AI chatbot mất bao lâu?", "acceptedAnswer": { "@type": "Answer", "text": "Gói Starter thường 7–10 ngày, Professional 14–21 ngày, Enterprise 4–6 tuần. Phần lớn thời gian dành cho chuẩn hoá dữ liệu sản phẩm và kiểm thử câu trả lời, không phải cài đặt kỹ thuật." } },
+        { "@type": "Question", "name": "Doanh nghiệp có cần nhân sự IT không?", "acceptedAnswer": { "@type": "Answer", "text": "Không. Toàn bộ hạ tầng chạy trên cloud, bàn giao kèm video hướng dẫn và 1 buổi đào tạo trực tiếp cho team CSKH/marketing." } },
+        { "@type": "Question", "name": "Dữ liệu sản phẩm của tôi có bị chia sẻ không?", "acceptedAnswer": { "@type": "Answer", "text": "Không. Knowledge base nằm trong tài khoản của bạn, tôi bàn giao toàn bộ quyền truy cập khi kết thúc dự án và không dùng dữ liệu của bạn cho khách hàng khác." } },
+        { "@type": "Question", "name": "Nếu AI trả lời sai thì sao?", "acceptedAnswer": { "@type": "Answer", "text": "Hệ thống dùng RAG trên chính catalogue của bạn nên chỉ trả lời trong phạm vi dữ liệu đã nạp; câu hỏi ngoài phạm vi sẽ được chuyển sang nhân viên thật kèm tóm tắt hội thoại." } },
+        { "@type": "Question", "name": "Chi phí vận hành hàng tháng gồm những gì?", "acceptedAnswer": { "@type": "Answer", "text": "Gồm phí API model (tính theo lượng tin nhắn), hạ tầng chạy automation và phí duy trì 1.500.000₫/tháng nếu bạn dùng gói Care." } },
+        { "@type": "Question", "name": "Tôi đã có website rồi, có tích hợp được không?", "acceptedAnswer": { "@type": "Answer", "text": "Được. Chatbot nhúng vào website hiện tại bằng 1 đoạn script, không cần đổi nền tảng. Hỗ trợ WordPress, Shopify, Haravan, Sapo, LadiPage và website code tay." } }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+
+<body>
+
+<a class="skip-link" href="#main">Bỏ qua điều hướng</a>
+
+<!-- Hoa đào rơi (canvas) -->
+<canvas id="petals" aria-hidden="true"></canvas>
+
+<!-- Thanh tiến độ đọc -->
+<div class="reading-progress" aria-hidden="true"><span id="readingBar"></span></div>
+
+<!-- ═══════════════ THANH THÔNG BÁO ═══════════════ -->
+<div class="announce" id="announce">
+  <div class="announce__inner">
+    <span class="announce__dot" aria-hidden="true"></span>
+    <p class="announce__text">
+      <strong>Mở 10 slot tháng này:</strong> miễn phí audit dữ liệu sản phẩm + demo chatbot trên chính catalogue của bạn.
+    </p>
+    <a class="announce__cta" href="#lien-he">Nhận tư vấn →</a>
+    <div class="countdown" id="countdown" aria-live="off">
+      <span class="countdown__label">Đóng slot sau</span>
+      <span class="countdown__cell"><b data-cd="d">00</b><i>ngày</i></span>
+      <span class="countdown__cell"><b data-cd="h">00</b><i>giờ</i></span>
+      <span class="countdown__cell"><b data-cd="m">00</b><i>phút</i></span>
+      <span class="countdown__cell"><b data-cd="s">00</b><i>giây</i></span>
+    </div>
+    <button class="announce__close" id="announceClose" type="button" aria-label="Đóng thông báo">✕</button>
+  </div>
+</div>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header class="header" id="header">
+  <div class="container header__inner">
+    <a class="brand" href="#top">
+      <span class="brand__mark" aria-hidden="true">QQ</span>
+      <span class="brand__text">
+        <strong>Nguyễn Quang Quý</strong>
+        <small>AI Creator · Digital Marketing</small>
+      </span>
+    </a>
+
+    <nav class="nav" id="nav" aria-label="Điều hướng chính">
+      <a href="#van-de">Vấn đề</a>
+      <a href="#dich-vu">Dịch vụ</a>
+      <a href="#san-pham">Sản phẩm</a>
+      <a href="#chatbot">Chatbot AI</a>
+      <a href="#quy-trinh">Quy trình</a>
+      <a href="#bang-gia">Bảng giá</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+
+    <div class="header__actions">
+      <a class="btn btn--ghost btn--sm hide-sm" href="tel:0763123992">📞 0763 123 992</a>
+      <a class="btn btn--gold btn--sm" href="https://zalo.me/0763123992" target="_blank" rel="noopener">Nhắn Zalo</a>
+      <button class="burger" id="burger" type="button" aria-label="Mở menu" aria-expanded="false" aria-controls="nav">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section class="hero" id="top">
+  <div class="hero__glow" aria-hidden="true"></div>
+  <div class="container hero__grid">
+
+    <div class="hero__copy">
+      <span class="chip chip--gold">AI Chatbot · Automation · Growth</span>
+
+      <h1 class="hero__title">
+        Dùng AI <span class="grad-text">Đúng Cách</span>,<br />
+        Tiết Kiệm Cả Ngày Làm Việc.
+      </h1>
+
+      <p class="hero__tagline">Marketing là khoa học × nghệ thuật — và từ 2026, nó còn là <em>một quy trình chạy được</em>.</p>
+
+      <p class="hero__lead">
+        Tôi giúp doanh nghiệp Việt dựng <strong>nhân viên AI trả lời khách 24/7</strong>, tự động hoá Zalo – Facebook – Website – Shopee,
+        và biến marketing thành hệ thống đo được — để bạn bớt <strong>60% thao tác thủ công</strong> mỗi ngày.
+      </p>
+
+      <div class="hero__cta">
+        <a class="btn btn--gold btn--lg" href="https://zalo.me/0763123992" target="_blank" rel="noopener">
+          Nhắn Zalo — Tư vấn miễn phí
+        </a>
+        <a class="btn btn--outline btn--lg" href="#chatbot">🤖 Xem chatbot đang chạy</a>
+      </div>
+
+      <p class="hero__meta">
+        <span>⏱ Phản hồi trong 30 phút</span>
+        <span>🕗 8:00 – 21:00</span>
+        <span>🎟 Chỉ nhận 10 slot/tháng</span>
+      </p>
+
+      <blockquote class="quote-inline">
+        “Lúa chín cúi đầu. Sông sâu tĩnh lặng.”
+        <cite>— Nguyễn Quang Quý</cite>
+      </blockquote>
+    </div>
+
+    <!-- Thẻ "đang chạy" bên phải: dashboard + feed hoạt động -->
+    <aside class="hero__panel" aria-label="Bảng hoạt động minh hoạ">
+      <div class="panel">
+        <div class="panel__head">
+          <span class="panel__title">Bảng điều khiển hôm nay</span>
+          <span class="pill pill--live"><i></i> LIVE</span>
+        </div>
+
+        <div class="panel__kpis">
+          <div class="kpi">
+            <span class="kpi__label">Hội thoại đã xử lý</span>
+            <b class="kpi__value" data-count="1284">0</b>
+            <span class="kpi__delta up">▲ 12% so với tuần trước</span>
+          </div>
+          <div class="kpi">
+            <span class="kpi__label">Thời gian phản hồi</span>
+            <b class="kpi__value"><span data-count="2">0</span>s</b>
+            <span class="kpi__delta up">▼ nhanh hơn 94%</span>
+          </div>
+          <div class="kpi">
+            <span class="kpi__label">Chuyển hot lead cho sale</span>
+            <b class="kpi__value" data-count="37">0</b>
+            <span class="kpi__delta">kèm tóm tắt hội thoại</span>
+          </div>
+          <div class="kpi">
+            <span class="kpi__label">Kênh đang chạy song song</span>
+            <b class="kpi__value" data-count="4">0</b>
+            <span class="kpi__delta">Zalo · FB · Web · Shopee</span>
+          </div>
+        </div>
+
+        <div class="feed">
+          <div class="feed__title">Dòng hoạt động</div>
+          <ul class="feed__list" id="feedList" aria-live="off">
+            <li><span class="feed__time">vừa xong</span> Khách hỏi <b>SF204 màu kem trắng</b> → AI gửi ảnh + giá + tồn kho</li>
+            <li><span class="feed__time">12 giây</span> Phát hiện <b>hot lead</b> → chuyển sale kèm tóm tắt</li>
+            <li><span class="feed__time">1 phút</span> 8 tin nhắn mới từ <b>Zalo OA</b> → phân loại intent tự động</li>
+            <li><span class="feed__time">3 phút</span> Khách hỏi chính sách đổi trả → trả lời từ <b>knowledge base</b></li>
+          </ul>
+        </div>
+
+        <div class="panel__foot">
+          <span class="mono">rag.answer_latency = 1.8s</span>
+          <span class="mono">intent.confidence = 0.94</span>
+        </div>
+      </div>
+
+      <p class="panel__note">* Số liệu minh hoạ cho cách hệ thống vận hành — không phải kết quả của một khách hàng cụ thể.</p>
+    </aside>
+  </div>
+
+  <!-- Dải số liệu -->
+  <div class="container">
+    <div class="stats" id="stats">
+      <div class="stat reveal">
+        <b class="stat__num"><span data-count="8">0</span>+</b>
+        <span class="stat__label">Năm thực chiến</span>
+      </div>
+      <div class="stat reveal">
+        <b class="stat__num"><span data-count="9">0</span></b>
+        <span class="stat__label">AI tools đang dùng</span>
+      </div>
+      <div class="stat reveal">
+        <b class="stat__num">24/7</b>
+        <span class="stat__label">AI hoạt động</span>
+      </div>
+      <div class="stat reveal">
+        <b class="stat__num"><span data-count="50">0</span>K+</b>
+        <span class="stat__label">SKU xử lý được</span>
+      </div>
+      <div class="stat reveal">
+        <b class="stat__num">−60%</b>
+        <span class="stat__label">Thao tác thủ công</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ VẤN ĐỀ ═══════════════ -->
+<section class="section" id="van-de">
+  <div class="container">
+    <header class="sec-head reveal">
+      <span class="chip">Thực trạng</span>
+      <h2>Doanh nghiệp không thiếu traffic.<br />Họ thiếu <span class="grad-text">khả năng xử lý</span>.</h2>
+      <p class="sec-head__lead">
+        Sau 8 năm làm marketing, bài toán tôi gặp lặp lại nhiều nhất không phải là “làm sao có thêm khách”,
+        mà là <strong>làm sao trả lời mọi khách đủ nhanh và đủ chuyên nghiệp</strong> — ở mọi giờ trong ngày.
+      </p>
+    </header>
+
+    <div class="grid grid--4 pain-grid">
+      <article class="card card--pain reveal">
+        <span class="card__icon" aria-hidden="true">🕐</span>
+        <h3>Khách nhắn ngoài giờ</h3>
+        <p>Khách hỏi giá lúc 22h. Sáng hôm sau trả lời thì họ đã mua chỗ khác. Tỷ lệ chốt giảm mạnh chỉ vì độ trễ.</p>
+      </article>
+      <article class="card card--pain reveal">
+        <span class="card__icon" aria-hidden="true">🔁</span>
+        <h3>Cùng một câu hỏi, 40 lần/ngày</h3>
+        <p>“Còn hàng không?”, “Giá bao nhiêu?”, “Có giao Q7 không?” — nhân viên trả lời thủ công, hết ngày không còn thời gian bán.</p>
+      </article>
+      <article class="card card--pain reveal">
+        <span class="card__icon" aria-hidden="true">🧩</span>
+        <h3>5 kênh, 5 cách làm rời rạc</h3>
+        <p>Zalo một nơi, Facebook một nẻo, Shopee một kiểu. Không ai biết khách nào đã được trả lời, khách nào đang bị bỏ quên.</p>
+      </article>
+      <article class="card card--pain reveal">
+        <span class="card__icon" aria-hidden="true">📉</span>
+        <h3>Chạy quảng cáo mà không đo được</h3>
+        <p>Tiền ads chạy đều, nhưng không rõ creative nào ra đơn, audience nào lãng phí. Quyết định dựa trên cảm giác.</p>
+      </article>
+    </div>
+
+    <p class="note note--center reveal">
+      Nếu bạn gật đầu với <strong>2 trong 4 điều trên</strong> — vấn đề không nằm ở ngân sách, mà ở thiết kế quy trình.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════ DỊCH VỤ ═══════════════ -->
+<section class="section section--alt" id="dich-vu">
+  <div class="container">
+    <header class="sec-head reveal">
+      <span class="chip">Dịch vụ</span>
+      <h2>Sáu việc tôi làm — và <span class="grad-text">kết quả đo được</span> cho từng việc.</h2>
+      <p class="sec-head__lead">Mỗi hạng mục đều có phạm vi rõ ràng, thời gian bàn giao và cách đo thành công. Không làm dở dang, không “để đó tính sau”.</p>
+    </header>
+
+    <div class="grid grid--3">
+      <article class="card card--service reveal">
+        <span class="card__num">01</span>
+        <h3>🤖 AI Chatbot CSKH 24/7</h3>
+        <p>Trợ lý AI nắm toàn bộ catalogue: giá, màu, kích thước, tồn kho, bảo hành, chính sách đổi trả.</p>
+        <ul class="ticks">
+          <li>RAG trên chính dữ liệu của bạn — hỏi gì đúng nấy</li>
+          <li>Tự động gửi ảnh đúng SKU, đúng màu</li>
+          <li>Phân loại intent &amp; chuyển hot lead cho sale</li>
+        </ul>
+        <p class="card__metric">Đo được: thời gian phản hồi · tỷ lệ chốt từ chat · số hội thoại bỏ sót</p>
+      </article>
+
+      <article class="card card--service reveal">
+        <span class="card__num">02</span>
+        <h3>🔀 Automation đa kênh (n8n)</h3>
+        <p>Nối Zalo OA + Facebook Messenger + Email + Website + CRM thành một luồng duy nhất.</p>
+        <ul class="ticks">
+          <li>Khách nhắn → AI phân loại → trả lời + gửi catalogue</li>
+          <li>Tự tạo lead, tự nhắc follow-up, tự ghi log</li>
+          <li>Báo cáo về Google Sheet / Telegram mỗi ngày</li>
+        </ul>
+        <p class="card__metric">Đo được: số lead rơi rụng · thời gian chăm sóc/lead · tỷ lệ phản hồi đầu tiên</p>
+      </article>
+
+      <article class="card card--service reveal">
+        <span class="card__num">03</span>
+        <h3>📣 Quảng cáo đa nền tảng</h3>
+        <p>Facebook · Google · TikTok · Shopee · Zalo — mỗi kênh một creative, một thông điệp, một cách đo.</p>
+        <ul class="ticks">
+          <li>Cấu trúc campaign, test hook, test audience</li>
+          <li>Vòng lặp A/B có kiểm soát, scale khi ROAS ổn định</li>
+          <li>Dashboard theo KPI doanh nghiệp, không báo cáo trang trí</li>
+        </ul>
+        <p class="card__metric">Đo được: ROAS · CPA · CTR theo từng hook</p>
+      </article>
+
+      <article class="card card--service reveal">
+        <span class="card__num">04</span>
+        <h3>🔎 SEO &amp; Local SEO</h3>
+        <p>Từ khoá → nội dung → technical → Google Business Profile → citation building cho thị trường Việt.</p>
+        <ul class="ticks">
+          <li>Kiến trúc nội dung theo search intent</li>
+          <li>Local pack: GBP, review, NAP nhất quán</li>
+          <li>Search Console + GA4 để biết nội dung nào ra khách</li>
+        </ul>
+        <p class="card__metric">Đo được: thứ hạng từ khoá · traffic organic · lead từ tìm kiếm</p>
+      </article>
+
+      <article class="card card--service reveal">
+        <span class="card__num">05</span>
+        <h3>🎓 Đào tạo AI cho team</h3>
+        <p>Dạy team bạn dùng ChatGPT, Gemini, Grok, Kling, Krea, Hailuo… đúng cách — để tự chạy sau khi tôi rút.</p>
+        <ul class="ticks">
+          <li>Prompt engineering thực chiến theo ngành</li>
+          <li>Thư viện prompt &amp; workflow dùng lại được</li>
+          <li>1 buổi đào tạo trực tiếp + video ghi lại</li>
+        </ul>
+        <p class="card__metric">Đo được: thời gian tạo 1 creative · số việc team tự làm được</p>
+      </article>
+
+      <article class="card card--service reveal">
+        <span class="card__num">06</span>
+        <h3>📊 Đo lường &amp; Dashboard</h3>
+        <p>GA4, Search Console, Looker Studio — một màn hình trả lời: tiền đi đâu, đơn đến từ đâu.</p>
+        <ul class="ticks">
+          <li>Tracking plan theo KPI, gắn sự kiện chuyển đổi chuẩn</li>
+          <li>Dashboard tự cập nhật, mở trên điện thoại là xem được</li>
+          <li>Cảnh báo khi chỉ số rơi bất thường</li>
+        </ul>
+        <p class="card__metric">Đo được: chi phí/kênh · giá trị đơn · điểm rò rỉ phễu</p>
+      </article>
+    </div>
+
+    <div class="cta-row reveal">
+      <a class="btn btn--gold" href="#quy-trinh">Xem quy trình triển khai →</a>
+      <a class="btn btn--outline" href="#bang-gia">Xem bảng giá</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ KÊNH + SAI LẦM PHỔ BIẾN ═══════════════ -->
+<section class="section" id="kenh">
+  <div class="container">
+    <div class="split">
+      <div class="split__copy reveal">
+        <span class="chip">Nguyên tắc nền</span>
+        <h2>Đứng yên một chỗ — để nhìn rõ hơn mọi hướng.</h2>
+        <p>
+          Người ta hay nghĩ chạy đa nền tảng là copy-paste một creative qua nhiều chỗ. Thực tế hoàn toàn ngược lại.
+          Cùng một sản phẩm, cùng ngân sách — creative cho Facebook phải khác TikTok, copy cho Google Ads phải khác Shopee Ads.
+        </p>
+        <p>
+          Hiểu được điều đó — và quan trọng hơn, biết cách <strong>triển khai đúng trên từng kênh</strong> — là thứ tôi mất mấy năm đầu để thấm.
+        </p>
+
+        <div class="platforms">
+          <div class="platform"><b>Facebook Ads</b><span>Interest · Lookalike · Retargeting</span></div>
+          <div class="platform"><b>Google Ads</b><span>Search · PMax · Display</span></div>
+          <div class="platform"><b>TikTok Ads</b><span>In-feed · TopView · Spark Ads</span></div>
+          <div class="platform"><b>Shopee Ads</b><span>Search · Discovery</span></div>
+          <div class="platform"><b>Zalo Ads</b><span>OA · ZNS · Follower</span></div>
+          <div class="platform"><b>Telegram</b><span>Channel · Bot · Broadcast</span></div>
+        </div>
+      </div>
+
+      <div class="split__aside reveal">
+        <div class="warn-card">
+          <h3>⚠ Ba sai lầm phổ biến nhất</h3>
+          <ol class="warn-list">
+            <li>
+              <b>Scale budget khi ROAS chưa ổn định</b>
+              <p>Nhân lỗ thay vì nhân lãi. Cần đủ dữ liệu ở một mức chi tiêu trước khi mở rộng.</p>
+            </li>
+            <li>
+              <b>Dùng một creative cho mọi ad set</b>
+              <p>Mỗi audience cần một góc tiếp cận khác nhau — cùng sản phẩm, khác nỗi đau.</p>
+            </li>
+            <li>
+              <b>Tắt campaign quá sớm khi chưa đủ data</b>
+              <p>Thuật toán cần thời gian học; can thiệp sớm phá vỡ learning phase và làm loãng kết quả.</p>
+            </li>
+          </ol>
+        </div>
+
+        <!-- Terminal A/B test — gõ chữ khi scroll tới -->
+        <figure class="terminal" data-terminal>
+          <figcaption class="terminal__bar">
+            <span class="dot dot--r"></span><span class="dot dot--y"></span><span class="dot dot--g"></span>
+            <span class="terminal__name">campaign_analysis.json</span>
+            <span class="pill pill--live"><i></i> LIVE DATA</span>
+          </figcaption>
+          <pre class="terminal__body mono" data-term-lines><code>// A/B Test — Same Budget · Different Hook
+variant_A = "Sản phẩm của chúng tôi..."  CTR: 0.8% · ROAS: 1.2×
+variant_B = "Tại sao bạn vẫn chưa..."    CTR: 3.4% · ROAS: 4.1×
+
+→ Winner: B — Hook pain point trực tiếp
+→ Action: scale B, tắt A, test C với angle mới</code></pre>
+        </figure>
+        <p class="note">Ví dụ minh hoạ cách tôi đọc kết quả test — không phải số liệu của một khách hàng cụ thể.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ SẢN PHẨM ĐÃ THIẾT KẾ ═══════════════ -->
+<section class="section section--alt" id="san-pham">
+  <div class="container">
+    <header class="sec-head reveal">
+      <span class="chip chip--gold">🎨 Portfolio</span>
+      <h2>Sản phẩm đã thiết kế &amp; triển khai</h2>
+      <p class="sec-head__lead">Sáu nhóm sản phẩm số tôi dựng cho khách hàng và cho chính thương hiệu cá nhân — từ landing page, blog chuyên gia đến chatbot RAG và dashboard dữ liệu.</p>
+    </header>
+
+    <div class="carousel" id="carousel">
+      <div class="carousel__viewport" id="carouselViewport" tabindex="0" role="region" aria-label="Danh sách 6 sản phẩm, dùng phím trái/phải để xem">
+
+        <!-- 01 -->
+        <article class="slide is-active" data-slide="0">
+          <div class="slide__meta">
+            <span class="slide__index">01 / 06 — Landing Page</span>
+            <h3>Personal Brand Landing Page</h3>
+            <p>Trang giới thiệu cá nhân cho AI Brand Mentor — dark theme, hiệu ứng vàng gold, responsive hoàn toàn. Tích hợp countdown FOMO, live visitor counter, hoa đào rơi animation và phần pricing 3 gói rõ ràng.</p>
+            <div class="tags"><span>HTML/CSS</span><span>Responsive</span><span>Animation</span><span>SEO Ready</span></div>
+          </div>
+          <div class="slide__mock">
+            <div class="mock mock--browser">
+              <div class="mock__bar"><i></i><i></i><i></i><span>quangquy.ai</span></div>
+              <div class="mock__body">
+                <div class="sk sk--pill"></div>
+                <div class="sk sk--title"></div>
+                <div class="sk sk--title short"></div>
+                <div class="sk sk--line"></div>
+                <div class="sk sk--line short"></div>
+                <div class="mock__row">
+                  <span class="mockbtn mockbtn--gold">Nhắn Zalo</span>
+                  <span class="mockbtn">Xem demo</span>
+                </div>
+                <div class="mock__chip">⏳ Countdown · 👀 Live visitor</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 02 -->
+        <article class="slide" data-slide="1">
+          <div class="slide__meta">
+            <span class="slide__index">02 / 06 — Blog Post</span>
+            <h3>Expert Blog — AI &amp; Marketing</h3>
+            <p>Bài viết dạng kể chuyện cho chuyên gia marketing 8 năm. Tích hợp AI tool demo cards với giao diện dark UI thực tế, marketing term cards, platform cards và chatbot demo animation.</p>
+            <div class="tags"><span>Storytelling</span><span>JetBrains Mono</span><span>Long-form</span><span>SEO Ready</span></div>
+          </div>
+          <div class="slide__mock">
+            <div class="mock mock--article">
+              <div class="mock__bar"><i></i><i></i><i></i><span>blog / expert-note</span></div>
+              <div class="mock__body">
+                <div class="sk sk--line tiny"></div>
+                <div class="sk sk--title short"></div>
+                <div class="sk sk--line"></div>
+                <div class="sk sk--line"></div>
+                <div class="sk sk--line short"></div>
+                <div class="mock__grid">
+                  <div class="mockcard">AI tools</div>
+                  <div class="mockcard">Thuật ngữ</div>
+                  <div class="mockcard">Nền tảng</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 03 -->
+        <article class="slide" data-slide="2">
+          <div class="slide__meta">
+            <span class="slide__index">03 / 06 — AI Chatbot Demo</span>
+            <h3>AI Chatbot CSKH 24/7</h3>
+            <p>Giao diện demo chatbot AI cho doanh nghiệp — hiểu hàng nghìn mã hàng, tự động gửi hình ảnh sản phẩm, trả lời chuyên nghiệp như nhân viên thật. Tích hợp product card với ảnh, giá, tình trạng kho.</p>
+            <div class="tags"><span>AI Chatbot</span><span>RAG System</span><span>24/7 Auto</span><span>Product Card</span></div>
+          </div>
+          <div class="slide__mock">
+            <div class="mock mock--phone">
+              <div class="mock__notch"></div>
+              <div class="mock__chat">
+                <div class="bubble bubble--in">Sofa 20m² tầm 15 triệu có mẫu nào?</div>
+                <div class="bubble bubble--out">Có 3 mẫu phù hợp, mình gửi ảnh nhé 📸</div>
+                <div class="mock__prodrow">
+                  <div class="mock__prod">🛋️<b>SF204</b><span>12.8tr</span></div>
+                  <div class="mock__prod">🪑<b>SF118</b><span>9.5tr</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 04 -->
+        <article class="slide" data-slide="3">
+          <div class="slide__meta">
+            <span class="slide__index">04 / 06 — AI Tool Training</span>
+            <h3>AI Creator Training Package</h3>
+            <p>Hệ thống đào tạo sử dụng AI tools — ChatGPT, Gemini, Grok, Kling, Seedance, Qwen, Krea, Hailuo, GitHub. Từ prompt engineering cơ bản đến xây dựng workflow tự động cho doanh nghiệp.</p>
+            <div class="tags"><span>ChatGPT</span><span>Gemini</span><span>Kling · Krea</span><span>Workflow</span></div>
+          </div>
+          <div class="slide__mock">
+            <div class="mock mock--grid9">
+              <div class="toolchip">🤖 ChatGPT</div>
+              <div class="toolchip">✦ Gemini</div>
+              <div class="toolchip">⚡ Grok</div>
+              <div class="toolchip">🎬 Kling</div>
+              <div class="toolchip">🌱 Seedance</div>
+              <div class="toolchip">🧠 Qwen</div>
+              <div class="toolchip">🎨 Krea</div>
+              <div class="toolchip">🌊 Hailuo</div>
+              <div class="toolchip">🐙 GitHub</div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 05 -->
+        <article class="slide" data-slide="4">
+          <div class="slide__meta">
+            <span class="slide__index">05 / 06 — Automation System</span>
+            <h3>n8n Workflow Automation</h3>
+            <p>Hệ thống tự động hoá kết nối Zalo OA + Facebook Messenger + Email + CRM. Khách nhắn tin → AI phân loại intent → trả lời tự động + gửi catalogue → chuyển hot lead cho sale team.</p>
+            <div class="tags"><span>n8n</span><span>Zalo OA</span><span>FB Messenger</span><span>CRM Sync</span></div>
+          </div>
+          <div class="slide__mock">
+            <div class="mock mock--flow">
+              <svg viewBox="0 0 320 190" class="flow" role="img" aria-label="Sơ đồ luồng automation">
+                <path class="flow__line" d="M40 40 H110 M110 40 V95 M110 95 H180 M180 95 V40 H250" />
+                <path class="flow__line flow__line--2" d="M110 95 V150 H250" />
+                <g class="flow__node"><rect x="12" y="26" width="60" height="28" rx="14" /><text x="42" y="44">Zalo</text></g>
+                <g class="flow__node"><rect x="12" y="136" width="72" height="28" rx="14" /><text x="48" y="154">Messenger</text></g>
+                <g class="flow__node flow__node--accent"><rect x="110" y="81" width="70" height="28" rx="14" /><text x="145" y="99">AI intent</text></g>
+                <g class="flow__node"><rect x="180" y="26" width="70" height="28" rx="14" /><text x="215" y="44">CRM lead</text></g>
+                <g class="flow__node" opacity=".85"><rect x="180" y="136" width="90" height="28" rx="14" /><text x="225" y="154">Catalogue</text></g>
+                <circle class="flow__pulse" r="4">
+                  <animateMotion dur="3.2s" repeatCount="indefinite" path="M40 40 H110 V95 H250" />
+                </circle>
+                <circle class="flow__pulse" r="4">
+                  <animateMotion dur="4.1s" begin="1.2s" repeatCount="indefinite" path="M48 150 H110 V95 H225 V150" />
+                </circle>
+              </svg>
+            </div>
+          </div>
+        </article>
+
+        <!-- 06 -->
+        <article class="slide" data-slide="5">
+          <div class="slide__meta">
+            <span class="slide__index">06 / 06 — SEO &amp; Analytics</span>
+            <h3>SEO &amp; Data Dashboard</h3>
+            <p>Hệ thống tracking toàn diện — GA4, Search Console, Looker Studio dashboard custom theo KPI doanh nghiệp. Kết hợp local SEO, Google Business Profile và citation building cho thị trường Việt Nam.</p>
+            <div class="tags"><span>GA4</span><span>Search Console</span><span>Looker Studio</span><span>Local SEO</span></div>
+          </div>
+          <div class="slide__mock">
+            <div class="mock mock--dash">
+              <div class="dash__tiles">
+                <div class="dash__tile"><span>Organic</span><b>12.480</b><i class="up">▲ 18%</i></div>
+                <div class="dash__tile"><span>CVR</span><b>3,4%</b><i class="up">▲ 0,6đ</i></div>
+                <div class="dash__tile"><span>CPA</span><b>62K</b><i class="down">▼ 21%</i></div>
+              </div>
+              <div class="dash__chart" aria-hidden="true">
+                <span style="--h:38%"></span><span style="--h:52%"></span><span style="--h:44%"></span>
+                <span style="--h:68%"></span><span style="--h:80%"></span><span style="--h:72%"></span>
+                <span style="--h:96%"></span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+
+      <div class="carousel__ui">
+        <button class="nav-btn" id="prevBtn" type="button" aria-label="Sản phẩm trước">‹</button>
+        <div class="dots" id="dots" role="tablist" aria-label="Chọn sản phẩm"></div>
+        <button class="nav-btn" id="nextBtn" type="button" aria-label="Sản phẩm tiếp theo">›</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ AI TOOLS ═══════════════ -->
+<section class="section" id="cong-cu">
+  <div class="container">
+    <header class="sec-head reveal">
+      <span class="chip">Xu hướng mới</span>
+      <h2>AI không chỉ là công cụ.<br /><span class="grad-text">AI là nhân viên.</span></h2>
+      <p class="sec-head__lead">
+        Một nhân viên CSKH giỏi biết sản phẩm, biết giá, biết tình trạng kho, biết chính sách đổi trả — và trả lời ngay lập tức.
+        Bây giờ AI làm được tất cả những điều đó: <strong>24/7, không nghỉ phép, không nhảy việc, không đòi tăng lương.</strong>
+      </p>
+    </header>
+
+    <div class="grid grid--3 tools">
+      <article class="tool reveal">
+        <span class="tool__icon">🤖</span>
+        <h3>ChatGPT</h3>
+        <p>Viết copy, dựng strategy, chuỗi prompt phức tạp nhiều bước.</p>
+        <span class="tool__vendor">OpenAI</span>
+      </article>
+      <article class="tool reveal">
+        <span class="tool__icon">✦</span>
+        <h3>Gemini Omni</h3>
+        <p>Multimodal — đọc ảnh, video, tài liệu cùng lúc và bóc thành dữ liệu.</p>
+        <span class="tool__vendor">Google</span>
+      </article>
+      <article class="tool reveal">
+        <span class="tool__icon">⚡</span>
+        <h3>Grok</h3>
+        <p>Real-time search, bám dữ liệu mới nhất từ X và tin tức thị trường.</p>
+        <span class="tool__vendor">xAI</span>
+      </article>
+      <article class="tool reveal">
+        <span class="tool__icon">🎬</span>
+        <h3>Kling AI</h3>
+        <p>Text/Image-to-video chất lượng cao, dựng video ads dọc 9:16.</p>
+        <span class="tool__vendor">Video Gen</span>
+      </article>
+      <article class="tool reveal">
+        <span class="tool__icon">🌱</span>
+        <h3>Seedance</h3>
+        <p>Video generation với motion control tinh tế, chuyển động mượt.</p>
+        <span class="tool__vendor">Video Gen</span>
+      </article>
+      <article class="tool reveal">
+        <span class="tool__icon">🧠</span>
+        <h3>Qwen</h3>
+        <p>Mạnh về code, xử lý tiếng Việt tốt — hữu ích cho tác vụ nội địa.</p>
+        <span class="tool__vendor">Alibaba</span>
+      </article>
+      <article class="tool reveal">
+        <span class="tool__icon">🎨</span>
+        <h3>Krea</h3>
+        <p>Real-time image, upscale, style transfer cho creative &amp; mockup.</p>
+        <span class="tool__vendor">Image Gen</span>
+      </article>
+      <article class="tool reveal">
+        <span class="tool__icon">🌊</span>
+        <h3>Hailuo</h3>
+        <p>Video AI stable motion, avatar presenter cho video giới thiệu.</p>
+        <span class="tool__vendor">Video Gen</span>
+      </article>
+      <article class="tool reveal">
+        <span class="tool__icon">🐙</span>
+        <h3>GitHub</h3>
+        <p>Copilot, Actions, deploy tự động — không cần thuê dev riêng.</p>
+        <span class="tool__vendor">Dev Platform</span>
+      </article>
+    </div>
+
+    <p class="note note--center reveal">
+      Nguyên tắc chọn tool của tôi: <strong>một tool chỉ được vào quy trình khi nó trả về thời gian nhiều hơn thời gian bỏ ra để học.</strong>
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════ CHATBOT DEMO ═══════════════ -->
+<section class="section section--alt" id="chatbot">
+  <div class="container">
+    <header class="sec-head reveal">
+      <span class="chip chip--gold">Demo trực tiếp</span>
+      <h2>Đây là cách AI làm việc như một <span class="grad-text">nhân viên CSKH thực thụ</span></h2>
+      <p class="sec-head__lead">Hiểu sản phẩm, tự gửi ảnh, xử lý hàng nghìn mã hàng, biết chuyển sale đúng lúc. Bạn có thể thử ngay — gõ vào ô tin nhắn hoặc bấm câu hỏi gợi ý bên dưới.</p>
+    </header>
+
+    <div class="chat-layout">
+      <!-- KHUNG CHAT TƯƠNG TÁC -->
+      <div class="chatphone reveal">
+        <div class="chatphone__head">
+          <span class="chatphone__avatar" aria-hidden="true">🤖</span>
+          <div class="chatphone__id">
+            <b>AI Assistant — Nội Thất Minh Phát</b>
+            <small><span class="pulse-dot"></span> Online 24/7 — phản hồi tức thì</small>
+          </div>
+          <span class="chatphone__badge">RAG · 50.000+ SKU</span>
+        </div>
+
+        <div class="chatphone__body" id="chatBody" aria-live="polite" aria-label="Nội dung hội thoại demo"></div>
+
+        <div class="chatphone__quick" id="chatQuick">
+          <button type="button" data-q="Sofa phòng khách 20m2 ngân sách 15 triệu">Sofa 20m² · 15 triệu</button>
+          <button type="button" data-q="Có bảo hành không?">Bảo hành thế nào?</button>
+          <button type="button" data-q="Xem màu kem trắng và navy">Xem màu khác</button>
+          <button type="button" data-q="Mình muốn đặt hàng">Đặt hàng luôn</button>
+        </div>
+
+        <form class="chatphone__input" id="chatForm" autocomplete="off">
+          <input type="text" id="chatInput" placeholder="Nhập tin nhắn..." aria-label="Nhập tin nhắn để thử chatbot" />
+          <button type="submit" class="chatphone__send" aria-label="Gửi tin nhắn">➤</button>
+        </form>
+
+        <div class="chatphone__foot">
+          <button class="link-btn" id="chatReplay" type="button">↺ Xem lại kịch bản mẫu</button>
+          <span class="mono js-typing-note">Demo mô phỏng phía trình duyệt · không gửi dữ liệu đi đâu</span>
+        </div>
+      </div>
+
+      <!-- GIẢI THÍCH CÔNG NGHỆ -->
+      <div class="chat-tech reveal">
+        <h3>🧠 Công nghệ đằng sau chatbot</h3>
+        <ul class="tech-list">
+          <li>
+            <b>◆ RAG (Retrieval-Augmented Generation)</b>
+            <p>AI được kết nối với toàn bộ database sản phẩm, giá, kho, chính sách. Hỏi gì về sản phẩm nào — AI biết ngay, không bịa (hallucinate).</p>
+          </li>
+          <li>
+            <b>◆ Intent Classification</b>
+            <p>Tự phân loại: khách hỏi giá, khách complain, khách ready-to-buy → xử lý đúng workflow của từng loại.</p>
+          </li>
+          <li>
+            <b>◆ Auto Image Sending</b>
+            <p>Khi khách hỏi màu sắc/mẫu mã → AI tự tìm ảnh đúng SKU trong thư viện và gửi kèm.</p>
+          </li>
+          <li>
+            <b>◆ Handoff thông minh</b>
+            <p>Khi phát hiện hot lead hoặc complaint nghiêm trọng → tự chuyển sang nhân viên thật kèm tóm tắt context cuộc hội thoại.</p>
+          </li>
+          <li>
+            <b>◆ Multi-channel</b>
+            <p>Một AI, chạy đồng thời Zalo OA + Facebook Messenger + Website Widget + Shopee Chat — một knowledge base duy nhất.</p>
+          </li>
+        </ul>
+
+        <div class="mini-kpis">
+          <div><b>50.241</b><span>SKU trong knowledge base</span></div>
+          <div><b>1,8s</b><span>Thời gian trả lời trung bình</span></div>
+          <div><b>4</b><span>Kênh chạy song song</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HAI DEMO MULTIMODAL -->
+    <div class="grid grid--2 multimodal">
+      <figure class="terminal reveal" data-terminal>
+        <figcaption class="terminal__bar">
+          <span class="dot dot--r"></span><span class="dot dot--y"></span><span class="dot dot--g"></span>
+          <span class="terminal__name">Gemini Omni — Multimodal Product Analysis</span>
+          <span class="pill">2.0 Flash</span>
+        </figcaption>
+        <div class="terminal__chat mono">
+          <p class="tline"><span class="tuser">Q</span>[Upload: ảnh catalogue 200 trang] Đọc toàn bộ và tạo structured database JSON cho chatbot</p>
+          <pre class="tcode mono" data-term-lines><code><span class="tkey">G</span>// Processing 200-page catalogue...
+Detected: 2.847 products · 12 categories · 8 color variants avg
+Extracting: SKU · Name · Price · Colors · Dimensions · Stock · Warranty
+→ Output: products.json (2.847 items) — Ready for RAG injection
+→ Estimated setup time: 45 phút thay vì 2 tuần nhập tay</code></pre>
+        </div>
+      </figure>
+
+      <figure class="terminal reveal" data-terminal>
+        <figcaption class="terminal__bar">
+          <span class="dot dot--r"></span><span class="dot dot--y"></span><span class="dot dot--g"></span>
+          <span class="terminal__name">Kling AI — Product Video for TikTok Ads</span>
+          <span class="pill">v1.6 Pro</span>
+        </figcaption>
+        <div class="terminal__chat mono">
+          <p class="tline">// Prompt — TikTok Ads 9:16</p>
+          <p class="tprompt">"Cinematic product reveal — cream sofa SF204 in a modern Vietnamese living room, warm morning light, slow zoom in, 8 seconds, no text overlay, 4K"</p>
+          <div class="render">
+            <div class="render__bar"><span id="renderFill"></span></div>
+            <span class="render__label mono">Render: <b id="renderPct">0%</b></span>
+          </div>
+          <pre class="tcode mono" data-term-lines><code>→ 1080×1920px · 8s · Pro mode · Est. 2 phút
+→ Chi phí: ~5.000đ/video thay vì thuê quay phim 3–5 triệu/ngày</code></pre>
+        </div>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ QUY TRÌNH ═══════════════ -->
+<section class="section" id="quy-trinh">
+  <div class="container">
+    <header class="sec-head reveal">
+      <span class="chip">Quy trình</span>
+      <h2>14 ngày từ dữ liệu thô đến <span class="grad-text">chatbot chạy thật</span></h2>
+      <p class="sec-head__lead">Phần lớn thời gian không nằm ở kỹ thuật, mà ở việc làm sạch dữ liệu và luyện cho AI trả lời đúng giọng của doanh nghiệp bạn.</p>
+    </header>
+
+    <ol class="timeline">
+      <li class="timeline__item reveal">
+        <span class="timeline__day">Ngày 0</span>
+        <h3>Audit &amp; tư vấn miễn phí</h3>
+        <p>30–45 phút cùng bạn: xem dữ liệu sản phẩm, các kênh đang dùng, điểm nghẽn lớn nhất. Kết thúc bằng một bản phác thảo phạm vi — không phải bản báo giá dài dòng.</p>
+        <span class="timeline__out">Nhận: bản phác thảo phạm vi + ước lượng thời gian</span>
+      </li>
+      <li class="timeline__item reveal">
+        <span class="timeline__day">Ngày 1 – 3</span>
+        <h3>Chuẩn hoá dữ liệu</h3>
+        <p>Bóc catalogue, file Excel, ảnh chụp, PDF thành database có cấu trúc: SKU, tên, giá, màu, kích thước, tồn kho, bảo hành. Ảnh được đặt tên theo SKU để AI gửi đúng.</p>
+        <span class="timeline__out">Nhận: products.json + thư viện ảnh chuẩn hoá</span>
+      </li>
+      <li class="timeline__item reveal">
+        <span class="timeline__day">Ngày 4 – 7</span>
+        <h3>Dựng chatbot &amp; luyện giọng</h3>
+        <p>Cấu hình RAG, viết system prompt theo giọng thương hiệu, thiết lập quy tắc chuyển sale. Test với 100+ câu hỏi thật của khách để tìm lỗ hổng trước khi chạy chính thức.</p>
+        <span class="timeline__out">Nhận: chatbot bản thử nghiệm + biên bản test</span>
+      </li>
+      <li class="timeline__item reveal">
+        <span class="timeline__day">Ngày 8 – 10</span>
+        <h3>Nối đa kênh &amp; automation</h3>
+        <p>Gắn vào Zalo OA, Facebook Messenger, website widget, Shopee. Dựng luồng n8n: phân loại intent → trả lời → gửi catalogue → đẩy lead vào CRM/Sheet.</p>
+        <span class="timeline__out">Nhận: 4 kênh chạy chung một knowledge base</span>
+      </li>
+      <li class="timeline__item reveal">
+        <span class="timeline__day">Ngày 11 – 14</span>
+        <h3>Đào tạo &amp; bàn giao</h3>
+        <p>Đào tạo team CSKH/marketing 1 buổi trực tiếp, ghi lại video, bàn giao toàn bộ quyền truy cập và tài liệu vận hành. Theo dõi 30 ngày đầu để tinh chỉnh.</p>
+        <span class="timeline__out">Nhận: tài liệu + video + quyền sở hữu dữ liệu</span>
+      </li>
+    </ol>
+
+    <div class="handover reveal">
+      <h3>Bàn giao gồm những gì?</h3>
+      <div class="handover__grid">
+        <div class="handover__item">
+          <b>Toàn bộ quyền truy cập</b>
+          <p>Tài khoản chatbot, knowledge base, workflow n8n nằm trong tài khoản của bạn — không phải của tôi.</p>
+        </div>
+        <div class="handover__item">
+          <b>Tài liệu vận hành</b>
+          <p>Hướng dẫn thêm sản phẩm, sửa giá, xem log, xử lý khi AI trả lời sai.</p>
+        </div>
+        <div class="handover__item">
+          <b>Video đào tạo</b>
+          <p>Bản ghi buổi đào tạo để nhân viên mới vào sau vẫn tự học được.</p>
+        </div>
+        <div class="handover__item">
+          <b>30 ngày theo dõi</b>
+          <p>Tinh chỉnh câu trả lời, bổ sung dữ liệu thiếu trong tháng đầu vận hành.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ KẾT QUẢ MỤC TIÊU ═══════════════ -->
+<section class="section section--alt" id="ket-qua">
+  <div class="container">
+    <header class="sec-head reveal">
+      <span class="chip">Trước &amp; sau</span>
+      <h2>Điều thay đổi khi vận hành bằng hệ thống</h2>
+      <p class="sec-head__lead">
+        Đây là <strong>chỉ số vận hành mục tiêu</strong> tôi dùng làm thước đo khi triển khai — kết quả thực tế phụ thuộc vào dữ liệu,
+        ngành và tốc độ phản hồi của từng doanh nghiệp. Tôi không bán những con số tôi không kiểm chứng được.
+      </p>
+    </header>
+
+    <div class="compare" role="table" aria-label="So sánh vận hành thủ công và vận hành bằng hệ thống">
+      <div class="compare__head" role="row">
+        <span role="columnheader">Hạng mục</span>
+        <span role="columnheader">Làm thủ công</span>
+        <span role="columnheader">Có hệ thống AI</span>
+      </div>
+      <div class="compare__row reveal" role="row">
+        <span role="cell">Thời gian trả lời khách</span>
+        <span role="cell" class="bad">15 – 60 phút (giờ hành chính)</span>
+        <span role="cell" class="good">1 – 3 giây · 24/7</span>
+      </div>
+      <div class="compare__row reveal" role="row">
+        <span role="cell">Hội thoại xử lý đồng thời</span>
+        <span role="cell" class="bad">1 – 2 nhân viên = 1 – 2 khách</span>
+        <span role="cell" class="good">Hàng trăm khách cùng lúc</span>
+      </div>
+      <div class="compare__row reveal" role="row">
+        <span role="cell">Tìm &amp; gửi ảnh đúng SKU</span>
+        <span role="cell" class="bad">Tìm thủ công, sai màu, gửi chậm</span>
+        <span role="cell" class="good">Tự động đúng mã, đúng màu</span>
+      </div>
+      <div class="compare__row reveal" role="row">
+        <span role="cell">Bỏ sót khách</span>
+        <span role="cell" class="bad">Không ai kiểm soát</span>
+        <span role="cell" class="good">Có log, có nhắc follow-up</span>
+      </div>
+      <div class="compare__row reveal" role="row">
+        <span role="cell">Báo cáo cuối tháng</span>
+        <span role="cell" class="bad">Tổng hợp tay 1 – 2 ngày</span>
+        <span role="cell" class="good">Dashboard tự cập nhật</span>
+      </div>
+      <div class="compare__row reveal" role="row">
+        <span role="cell">Khi nhân viên nghỉ</span>
+        <span role="cell" class="bad">Khách bị treo</span>
+        <span role="cell" class="good">Hệ thống vẫn chạy</span>
+      </div>
+    </div>
+
+    <div class="principles">
+      <h3>Nguyên tắc làm việc</h3>
+      <div class="grid grid--4">
+        <div class="principle reveal"><b>Không số liệu ảo</b><p>Chỉ báo cáo con số lấy được từ hệ thống bạn sở hữu.</p></div>
+        <div class="principle reveal"><b>Bàn giao kèm đào tạo</b><p>Mục tiêu là team bạn tự chạy được, không phụ thuộc tôi.</p></div>
+        <div class="principle reveal"><b>Dữ liệu thuộc về bạn</b><p>Kết thúc dự án, toàn bộ quyền truy cập thuộc về doanh nghiệp.</p></div>
+        <div class="principle reveal"><b>Không khoá chân</b><p>Không hợp đồng ràng buộc dài hạn, không phí ẩn.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ BẢNG GIÁ ═══════════════ -->
+<section class="section" id="bang-gia">
+  <div class="container">
+    <header class="sec-head reveal">
+      <span class="chip chip--gold">Bảng giá</span>
+      <h2>Ba gói triển khai — chọn theo mức độ bạn muốn tự động hoá</h2>
+      <p class="sec-head__lead">
+        Giá dưới đây là <strong>mức tham khảo</strong> cho phạm vi tiêu chuẩn. Báo giá chính xác được chốt sau buổi audit dữ liệu miễn phí,
+        vì khối lượng dữ liệu và số kênh là hai biến quyết định chi phí.
+      </p>
+    </header>
+
+    <div class="grid grid--3 pricing">
+      <article class="price reveal">
+        <h3>Starter</h3>
+        <p class="price__for">Cho cửa hàng mới bắt đầu, 1 kênh chính</p>
+        <p class="price__amount"><b>8.900.000₫</b><span>một lần</span></p>
+        <ul class="ticks">
+          <li>Chatbot RAG tới 500 SKU</li>
+          <li>1 kênh: Zalo OA <em>hoặc</em> Messenger <em>hoặc</em> website</li>
+          <li>Chuẩn hoá dữ liệu sản phẩm &amp; ảnh</li>
+          <li>Trả lời giá · tồn kho · bảo hành · chính sách</li>
+          <li>Chuyển hot lead qua Telegram/Email</li>
+          <li>Đào tạo 1 buổi + video ghi lại</li>
+          <li>30 ngày theo dõi, tinh chỉnh</li>
+        </ul>
+        <a class="btn btn--outline btn--block" href="#lien-he" data-plan="Starter">Chọn gói Starter</a>
+      </article>
+
+      <article class="price price--featured reveal">
+        <span class="price__ribbon">Được chọn nhiều nhất</span>
+        <h3>Professional</h3>
+        <p class="price__for">Doanh nghiệp bán đa kênh, cần tự động hoá thật</p>
+        <p class="price__amount"><b>18.900.000₫</b><span>một lần</span></p>
+        <ul class="ticks">
+          <li>Chatbot RAG tới <b>5.000 SKU</b></li>
+          <li>4 kênh: Zalo OA · Messenger · Website · Shopee</li>
+          <li>Automation n8n: phân loại intent → trả lời → gửi catalogue → đẩy CRM</li>
+          <li>Auto gửi ảnh theo màu/SKU</li>
+          <li>Dashboard GA4/Looker Studio theo KPI</li>
+          <li>Báo cáo tự động hằng ngày qua Telegram/Sheet</li>
+          <li>Đào tạo 2 buổi + tài liệu vận hành</li>
+          <li>60 ngày theo dõi &amp; tối ưu</li>
+        </ul>
+        <a class="btn btn--gold btn--block" href="#lien-he" data-plan="Professional">Chọn gói Professional</a>
+      </article>
+
+      <article class="price reveal">
+        <h3>Enterprise</h3>
+        <p class="price__for">Chuỗi, nhiều chi nhánh, dữ liệu lớn</p>
+        <p class="price__amount"><b>34.000.000₫</b><span>từ — theo phạm vi</span></p>
+        <ul class="ticks">
+          <li>Không giới hạn SKU theo thiết kế riêng</li>
+          <li>Tất cả kênh + tích hợp CRM/ERP nội bộ</li>
+          <li>Multi-brand / multi-chi nhánh, phân quyền theo kho</li>
+          <li>Chatbot Agent (đặt hàng, tra đơn, xử lý ticket)</li>
+          <li>Human-in-the-loop: duyệt trước khi AI gửi</li>
+          <li>Đào tạo toàn team + SOP vận hành</li>
+          <li>Hỗ trợ ưu tiên, SLA phản hồi 4 giờ</li>
+        </ul>
+        <a class="btn btn--outline btn--block" href="#lien-he" data-plan="Enterprise">Đặt lịch trao đổi</a>
+      </article>
+    </div>
+
+    <div class="price-notes reveal">
+      <div class="price-note">
+        <b>Phí duy trì (tuỳ chọn)</b>
+        <p>1.500.000₫/tháng cho gói Care: cập nhật sản phẩm mới, tinh chỉnh câu trả lời, giám sát chất lượng và báo cáo tháng. Không bắt buộc.</p>
+      </div>
+      <div class="price-note">
+        <b>Chi phí vận hành hằng tháng</b>
+        <p>Chủ yếu là phí API model theo lượng tin nhắn. Cửa hàng nhỏ thường trong khoảng vài trăm nghìn đồng/tháng — tôi sẽ ước tính theo số liệu thật của bạn.</p>
+      </div>
+      <div class="price-note">
+        <b>Không muốn triển khai ngay?</b>
+        <p>Buổi tư vấn và audit dữ liệu vẫn miễn phí. Nhiều doanh nghiệp bắt đầu từ đó rồi tự làm theo tài liệu tôi gợi ý.</p>
+      </div>
+    </div>
+
+    <p class="note note--center reveal">
+      <strong>Cam kết:</strong> phạm vi, thời gian và tiêu chí nghiệm thu được ghi rõ trong báo giá trước khi bắt đầu. Không phát sinh phí ngoài phạm vi đã chốt.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════ FAQ ═══════════════ -->
+<section class="section section--alt" id="faq">
+  <div class="container container--narrow">
+    <header class="sec-head reveal">
+      <span class="chip">Câu hỏi thường gặp</span>
+      <h2>Những điều doanh nghiệp hay hỏi tôi nhất</h2>
+    </header>
+
+    <div class="faq">
+      <details class="faq__item reveal">
+        <summary>Triển khai mất bao lâu?</summary>
+        <p>Starter thường 7–10 ngày, Professional 14–21 ngày, Enterprise 4–6 tuần. Phần lớn thời gian dành cho chuẩn hoá dữ liệu sản phẩm và kiểm thử câu trả lời — không phải phần cài đặt kỹ thuật.</p>
+      </details>
+      <details class="faq__item reveal">
+        <summary>Doanh nghiệp có cần nhân sự IT không?</summary>
+        <p>Không. Toàn bộ hạ tầng chạy trên cloud. Tôi bàn giao kèm tài liệu, video hướng dẫn và một buổi đào tạo trực tiếp cho team CSKH/marketing — thao tác thường ngày chỉ là thêm sản phẩm và sửa giá.</p>
+      </details>
+      <details class="faq__item reveal">
+        <summary>Dữ liệu sản phẩm của tôi có bị chia sẻ không?</summary>
+        <p>Không. Knowledge base nằm trong tài khoản của bạn. Kết thúc dự án tôi bàn giao toàn bộ quyền truy cập, không dùng dữ liệu của bạn cho khách hàng khác và không lưu bản sao ngoài phạm vi vận hành.</p>
+      </details>
+      <details class="faq__item reveal">
+        <summary>Nếu AI trả lời sai thì sao?</summary>
+        <p>Hệ thống dùng RAG trên chính catalogue của bạn nên chỉ trả lời trong phạm vi dữ liệu đã nạp. Câu hỏi ngoài phạm vi hoặc có dấu hiệu khiếu nại sẽ được chuyển sang nhân viên thật kèm tóm tắt hội thoại. Mọi câu trả lời đều có log để bạn kiểm tra lại.</p>
+      </details>
+      <details class="faq__item reveal">
+        <summary>Chi phí vận hành hàng tháng gồm những gì?</summary>
+        <p>Ba phần: phí API model (tính theo lượng tin nhắn), hạ tầng chạy automation và phí duy trì nếu bạn dùng gói Care. Tôi sẽ ước tính bằng số tin nhắn thật của bạn để bạn biết trước khi quyết định.</p>
+      </details>
+      <details class="faq__item reveal">
+        <summary>Tôi đã có website rồi, có tích hợp được không?</summary>
+        <p>Được. Chatbot nhúng vào website hiện tại bằng một đoạn script, không cần đổi nền tảng. Hỗ trợ WordPress, Shopify, Haravan, Sapo, LadiPage và website code tay.</p>
+      </details>
+      <details class="faq__item reveal">
+        <summary>AI viết nội dung thì có bị “giọng máy” không?</summary>
+        <p>Giọng thương hiệu được cấu hình riêng trong system prompt và bổ sung mẫu câu của bạn. Với chatbot CSKH, mục tiêu là <em>rõ ràng, đúng thông tin, đúng chính sách</em> — bớt văn hoa, đúng việc.</p>
+      </details>
+      <details class="faq__item reveal">
+        <summary>Sau khi hết hợp đồng, tôi có tự chạy được không?</summary>
+        <p>Đó là mục tiêu của tôi. Bàn giao gồm tài liệu vận hành, video đào tạo và quyền truy cập đầy đủ. Nếu bạn muốn tiếp tục, gói Care là tuỳ chọn — không phải điều kiện bắt buộc để hệ thống chạy tiếp.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ LIÊN HỆ ═══════════════ -->
+<section class="section" id="lien-he">
+  <div class="container">
+    <div class="contact">
+      <div class="contact__copy reveal">
+        <span class="chip chip--gold">🎯 Bắt đầu</span>
+        <h2>Triển khai AI cho doanh nghiệp của bạn</h2>
+        <p>
+          Từ chatbot CSKH biết toàn bộ catalogue, đến hệ thống automation Zalo + Facebook chạy 24/7 —
+          tôi sẽ build và đào tạo team bạn tự vận hành. <strong>Buổi tư vấn đầu tiên miễn phí.</strong>
+        </p>
+
+        <div class="contact__actions">
+          <a class="btn btn--gold btn--lg" href="https://zalo.me/0763123992" target="_blank" rel="noopener">💬 Nhắn Zalo — 0763 123 992</a>
+          <a class="btn btn--outline btn--lg" href="tel:0763123992">📞 Gọi trực tiếp</a>
+        </div>
+
+        <p class="contact__meta">
+          Phản hồi trong 30 phút · 8:00–21:00 · Chỉ nhận 10 slot/tháng · Khu vực TP.HCM và toàn quốc (online)
+        </p>
+
+        <div class="contact__counters">
+          <div class="counter"><span class="counter__dot"></span><b id="readingNow">47</b><span>người đang xem trang này</span></div>
+          <div class="counter"><span class="counter__dot counter__dot--gold"></span><b id="totalReads">8.448</b><span>lượt đọc</span></div>
+        </div>
+      </div>
+
+      <!-- Form nhận tư vấn: mặc định lưu cục bộ, có thể nối endpoint [SỬA Ở ĐÂY] -->
+      <form class="contact__form reveal" id="leadForm" novalidate>
+        <h3>Gửi yêu cầu tư vấn</h3>
+        <p class="form__hint">Điền 4 thông tin — tôi sẽ phản hồi trong 30 phút (giờ làm việc).</p>
+
+        <label class="field">
+          <span>Tên của bạn *</span>
+          <input type="text" name="name" id="fName" autocomplete="name" placeholder="VD: Anh Minh — Nội thất Minh Phát" required />
+          <em class="field__err" data-err-for="fName"></em>
+        </label>
+
+        <label class="field">
+          <span>Số điện thoại / Zalo *</span>
+          <input type="tel" name="phone" id="fPhone" inputmode="tel" autocomplete="tel" placeholder="VD: 0901 234 567" required />
+          <em class="field__err" data-err-for="fPhone"></em>
+        </label>
+
+        <label class="field">
+          <span>Bạn quan tâm điều gì? *</span>
+          <select name="need" id="fNeed" required>
+            <option value="">— Chọn nhu cầu —</option>
+            <option>AI Chatbot CSKH 24/7</option>
+            <option>Automation đa kênh (Zalo + Facebook + CRM)</option>
+            <option>Quảng cáo đa nền tảng</option>
+            <option>SEO &amp; Local SEO</option>
+            <option>Đo lường &amp; Dashboard (GA4, Looker Studio)</option>
+            <option>Đào tạo AI cho team</option>
+            <option>Chưa rõ — cần tư vấn hướng đi</option>
+          </select>
+          <em class="field__err" data-err-for="fNeed"></em>
+        </label>
+
+        <label class="field">
+          <span>Mô tả ngắn tình hình hiện tại</span>
+          <textarea name="note" id="fNote" rows="3" placeholder="VD: Shop có ~800 SKU, đang bán Shopee + Zalo, 2 bạn trả lời tin nhắn mà vẫn quá tải..."></textarea>
+        </label>
+
+        <button class="btn btn--gold btn--block btn--lg" type="submit" id="submitBtn">Nhận tư vấn miễn phí</button>
+
+        <p class="form__privacy">
+          Thông tin chỉ dùng để liên hệ tư vấn. Không chia sẻ cho bên thứ ba.
+          <span class="mono">Demo tĩnh: dữ liệu lưu trong trình duyệt của bạn và có thể gửi kèm qua Zalo.</span>
+        </p>
+      </form>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer class="footer">
+  <div class="container footer__grid">
+    <div class="footer__brand">
+      <span class="brand__mark" aria-hidden="true">QQ</span>
+      <b>Nguyễn Quang Quý</b>
+      <p>AI Creator · Digital Marketing CMO<br />TP. Hồ Chí Minh · 8+ năm thực chiến</p>
+      <p class="footer__quote">“Lúa chín cúi đầu. Sông sâu tĩnh lặng.”</p>
+    </div>
+
+    <div class="footer__col">
+      <b>Dịch vụ</b>
+      <a href="#dich-vu">AI Chatbot CSKH 24/7</a>
+      <a href="#dich-vu">Automation đa kênh (n8n)</a>
+      <a href="#dich-vu">Quảng cáo đa nền tảng</a>
+      <a href="#dich-vu">SEO &amp; Local SEO</a>
+      <a href="#dich-vu">Đào tạo AI cho team</a>
+      <a href="#dich-vu">Dashboard &amp; đo lường</a>
+    </div>
+
+    <div class="footer__col">
+      <b>Trang</b>
+      <a href="#san-pham">Sản phẩm đã thiết kế</a>
+      <a href="#chatbot">Demo chatbot AI</a>
+      <a href="#cong-cu">AI tools đang dùng</a>
+      <a href="#quy-trinh">Quy trình triển khai</a>
+      <a href="#bang-gia">Bảng giá</a>
+      <a href="#faq">Câu hỏi thường gặp</a>
+    </div>
+
+    <div class="footer__col">
+      <b>Liên hệ</b>
+      <a href="tel:0763123992">📞 0763 123 992</a>
+      <a href="https://zalo.me/0763123992" target="_blank" rel="noopener">💬 Zalo OA</a>
+      <a href="mailto:hello@quangquy.ai">✉️ hello@quangquy.ai</a>
+      <span>🕗 8:00 – 21:00 hằng ngày</span>
+      <span>🎟 10 slot / tháng</span>
+    </div>
+  </div>
+
+  <div class="container footer__tags">
+    <span>AI Chatbot</span><span>RAG System</span><span>FB Ads</span><span>TikTok Ads</span><span>SEO</span>
+    <span>n8n Automation</span><span>ChatGPT</span><span>Kling</span><span>Gemini</span><span>Zalo OA</span>
+  </div>
+
+  <div class="container footer__bottom">
+    <small>© <span id="year">2026</span> NGUYỄN QUANG QUÝ · AI CREATOR · DIGITAL MARKETING CMO · 0763 123 992</small>
+    <small class="mono">Built in ZEUS · <a href="#top">Lên đầu trang ↑</a></small>
+  </div>
+</footer>
+
+<!-- Nút liên hệ nổi -->
+<div class="fab" aria-label="Liên hệ nhanh">
+  <a class="fab__btn fab__btn--zalo" href="https://zalo.me/0763123992" target="_blank" rel="noopener" aria-label="Nhắn Zalo">
+    <span aria-hidden="true">💬</span><em>Zalo</em>
+  </a>
+  <a class="fab__btn fab__btn--call" href="tel:0763123992" aria-label="Gọi điện">
+    <span aria-hidden="true">📞</span><em>Gọi</em>
+  </a>
+  <button class="fab__btn fab__btn--top" id="toTop" type="button" aria-label="Lên đầu trang">
+    <span aria-hidden="true">↑</span><em>Top</em>
+  </button>
+</div>
+
+<!-- Thông báo nổi -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/js/chat-demo.js" defer></script>
+<script src="assets/js/app.js" defer></script>
+</body>
+</html>

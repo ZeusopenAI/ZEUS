@@ -28,6 +28,16 @@ Cập nhật: 2026-09-17
 - [ ] Tích hợp Google Colab notebook với Google Drive để lưu ảnh/video sinh ra từ ComfyUI.
 - [ ] Theo dõi chi phí model qua dashboard OpenRouter và thiết lập giới hạn ngân sách hàng tháng.
 
+## P3 — Website thương hiệu cá nhân (`site/`)
+
+- [x] Code lại landing page từ Google Sites thành site tĩnh trong `site/` (HTML/CSS/JS thuần, không build step) — xem `docs/QUANGQUY_WEBSITE.md`.
+- [x] Mở rộng nội dung: 6 dịch vụ kèm KPI, timeline 14 ngày, bảng trước/sau, 3 gói giá, 8 FAQ, demo chatbot tương tác.
+- [x] Thêm SEO đầy đủ (canonical, OG image 1200×630, JSON-LD Person + Service + FAQPage), favicon, robots.txt, sitemap.xml.
+- [ ] Chốt nội dung cuối: tên miền thật, email, giá 3 gói (danh sách trong `site/content.md` mục 16).
+- [ ] Bật GitHub Pages (Settings → Pages → Source: GitHub Actions) rồi chạy workflow `deploy-quangquy-site.yml` — cần Quý xác nhận vì là deploy public.
+- [ ] (Tuỳ chọn) Nối form tư vấn vào webhook nhận lead tự động qua `CONFIG.formEndpoint`.
+- [x] Viết smoke test jsdom (`scripts/site-smoke-test.mjs`) + CI `site-check.yml` cho `site/**`; test đã phát hiện và sửa 2 lỗi UX ở demo chatbot.
+
 ## Quy tắc hoàn thành
 
 Một mục chỉ được đánh dấu xong khi có kết quả thực tế hoặc lệnh kiểm tra chứng minh. Tuyệt đối không commit credential, không tự động hóa hành động phát sinh chi phí mà không có xác nhận của người quản trị.

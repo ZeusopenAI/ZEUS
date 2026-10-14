@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Nguyễn Quang Quý — QQ">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6e2ad"/>
+      <stop offset=".55" stop-color="#e6c176"/>
+      <stop offset="1" stop-color="#a97c33"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="0%" r="80%">
+      <stop offset="0" stop-color="#e6c176" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#e6c176" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#0b0b11"/>
+  <rect width="64" height="64" rx="14" fill="url(#glow)"/>
+  <rect x="1.2" y="1.2" width="61.6" height="61.6" rx="13" fill="none" stroke="url(#gold)" stroke-opacity=".55"/>
+  <text x="32" y="43" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="30" font-weight="700" fill="url(#gold)">QQ</text>
+</svg>
