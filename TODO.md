@@ -24,7 +24,10 @@ Cập nhật: 2026-09-17
 
 - [ ] Lập lịch tải export định kỳ từ Google Takeout / ChatGPT để nạp tự động vào Second Brain.
 - [ ] Thiết lập quy tắc điều phối đa model (Multi-Model Routing) trong prompt hệ thống của Hermes.
-- [ ] Chạy Hermes Gateway 24/7 trên VPS Ubuntu (hoặc Termux dự phòng).
+- [x] Chuẩn bị bộ 24/7 cho Hermes Gateway: `deploy/vps/install-hermes-vps.sh` (cài tự động, đã chạy thật trên Linux: unit `hermes-gateway.service` sinh chuẩn — `User=hermes`, `Restart=always`, enable boot-start, `systemd-analyze verify` pass), `deploy/vps/healthcheck.sh`, `deploy/vps/backup-hermes.sh` (đã chạy thật), runbook `docs/RUNBOOK_247.md` (14/10/2026).
+- [x] Chạy Hermes + test suite trên Linux: `pip install agents/hermes` OK, `hermes --version` OK, bộ test nhanh memory/gateway/skills **154/154 pass** (pytest + pytest-asyncio); CI `.github/workflows/hermes-runtime-ci.yml` chạy lại tự động trên Python 3.11/3.12 (14/10/2026).
+- [ ] Triển khai lên VPS Ubuntu thật: mua VPS → chạy `deploy/vps/install-hermes-vps.sh` → điền `.env` → vượt 4 gate kiểm chứng trong `docs/RUNBOOK_247.md` (healthcheck HEALTHY, round-trip Telegram, reboot drill, crash drill).
+- [ ] Cài Termux:Boot + reboot thật trên Android (con đường dự phòng, 3 bằng chứng trong `docs/RUNBOOK_247.md` phần B).
 - [ ] Tích hợp Google Colab notebook với Google Drive để lưu ảnh/video sinh ra từ ComfyUI.
 - [ ] Theo dõi chi phí model qua dashboard OpenRouter và thiết lập giới hạn ngân sách hàng tháng.
 
