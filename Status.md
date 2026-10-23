@@ -16,6 +16,10 @@ Cập nhật: 2026-10-23
   (`exit 3`, cần `--force` nếu chủ ý) — tránh `git reset --hard` nuốt mất việc đang làm.
 - CI `hermes-skill-sync.yml` validate frontmatter (`--strict`) và chạy sync 2 lần để bắt
   lỗi không idempotent; không gọi LLM nên không tốn credit.
+- **Vercel (chia đôi)**: `site/vercel.json` (static) và `flowkit/dashboard/vercel.json`
+  (Vite + `api/[...path].ts` proxy về backend) đã sẵn sàng; dashboard hỗ trợ
+  `VITE_WS_BASE` để realtime trỏ thẳng VPS. Hermes vẫn ở VPS vì cần process 24/7,
+  `state.db` và long-polling — serverless không đáp ứng. Xem `docs/VERCEL_DEPLOY.md`.
 
 ## Nhịp trước (14/10/2026)
 

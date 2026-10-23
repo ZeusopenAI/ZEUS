@@ -1,0 +1,167 @@
+name: Deploy Vercel (thủ công)
+
+# Deploy CHỦ ĐỘNG lên Vercel — không tự chạy khi push.
+# Lý do: AGENTS.md yêu cầu deploy production phải do chủ tài khoản xác nhận.
+# (Sau khi đã import project trên vercel.com, Vercel tự build mỗi lần push main —
+#  workflow này dùng khi cần deploy/rollback tay hoặc tạo preview.)
+#
+# Secrets cần (Settings → Secrets and variables → Actions):
+#   VERCEL_TOKEN              token từ vercel.com → Account Settings → Tokens
+#   VERCEL_ORG_ID             trong .vercel/project.json sau khi `vercel link`
+#   VERCEL_PROJECT_ID_SITE    id project của site/
+#   VERCEL_PROJECT_ID_DASHBOARD  id project của flowkit/dashboard
+#
+# Xem docs/VERCEL_DEPLOY.md
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Project cần deploy"
+        required: true
+        default: "both"
+        type: choice
+        options: [site, dashboard, both]
+      environment:
+        description: "preview (URL tạm) hay production (domain thật)"
+        required: true
+        default: "preview"
+        type: choice
+        options: [preview, production]
+      ref:
+        description: "Nhánh/commit cần deploy"
+        required: true
+        default: "main"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vercel-deploy-${{ inputs.target }}-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Kiểm tra secret bắt buộc
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          ORG: ${{ secrets.VERCEL_ORG_ID }}
+          P_SITE: ${{ secrets.VERCEL_PROJECT_ID_SITE }}
+          P_DASH: ${{ secrets.VERCEL_PROJECT_ID_DASHBOARD }}
+          TARGET: ${{ inputs.target }}
+        run: |
+          missing=""
+          [ -z "$VERCEL_TOKEN" ] && missing="$missing VERCEL_TOKEN"
+          [ -z "$ORG" ] && missing="$missing VERCEL_ORG_ID"
+          if [ "$TARGET" = "site" ] || [ "$TARGET" = "both" ]; then
+            [ -z "$P_SITE" ] && missing="$missing VERCEL_PROJECT_ID_SITE"
+          fi
+          if [ "$TARGET" = "dashboard" ] || [ "$TARGET" = "both" ]; then
+            [ -z "$P_DASH" ] && missing="$missing VERCEL_PROJECT_ID_DASHBOARD"
+          fi
+          if [ -n "$missing" ]; then
+            echo "::error::Thiếu secret:$missing"
+            echo "Xem docs/VERCEL_DEPLOY.md mục 3."
+            exit 1
+          fi
+          echo "Đủ secret cho target=$TARGET."
+
+      - name: Xác nhận deploy production
+        if: ${{ inputs.environment == 'production' }}
+        run: |
+          echo "::notice::Đang deploy PRODUCTION từ nhánh ${{ inputs.ref }} — do người dùng chủ động chạy workflow này."
+          echo "Repo: ${{ github.repository }} · Commit: ${{ github.sha }}"
+
+  deploy-site:
+    needs: guard
+    if: ${{ inputs.target == 'site' || inputs.target == 'both' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Cài Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Pull cấu hình Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_SITE }}
+        working-directory: site
+        run: vercel pull --yes --environment=${{ inputs.environment == 'production' && 'production' || 'preview' }} --token="$VERCEL_TOKEN"
+
+      - name: Build
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_SITE }}
+        working-directory: site
+        run: vercel build ${{ inputs.environment == 'production' && '--prod' || '' }} --token="$VERCEL_TOKEN"
+
+      - name: Deploy
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_SITE }}
+        working-directory: site
+        run: |
+          url=$(vercel deploy --prebuilt ${{ inputs.environment == 'production' && '--prod' || '' }} --token="$VERCEL_TOKEN")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "### Site: $url" >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-dashboard:
+    needs: guard
+    if: ${{ inputs.target == 'dashboard' || inputs.target == 'both' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Cài Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Pull cấu hình Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_DASHBOARD }}
+        working-directory: flowkit/dashboard
+        run: vercel pull --yes --environment=${{ inputs.environment == 'production' && 'production' || 'preview' }} --token="$VERCEL_TOKEN"
+
+      - name: Build
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_DASHBOARD }}
+          # VITE_* được nhúng vào bundle lúc build → phải có TRƯỚC bước này.
+          VITE_WS_BASE: ${{ secrets.VITE_WS_BASE }}
+        working-directory: flowkit/dashboard
+        run: vercel build ${{ inputs.environment == 'production' && '--prod' || '' }} --token="$VERCEL_TOKEN"
+
+      - name: Deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_DASHBOARD }}
+        working-directory: flowkit/dashboard
+        run: |
+          url=$(vercel deploy --prebuilt ${{ inputs.environment == 'production' && '--prod' || '' }} --token="$VERCEL_TOKEN")
+          echo "### Dashboard: $url" >> "$GITHUB_STEP_SUMMARY"
