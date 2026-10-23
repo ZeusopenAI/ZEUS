@@ -20,7 +20,9 @@ Không framework, không server, không thư viện ngoài: chỉ Python 3.11+ v
 ├── verify/                 ← Verifier ghi DUY NHẤT ở đây
 ├── log/                    ← append-only JSONL: chứng minh việc gì đã chạy thật
 ├── reports/                ← Human ghi báo cáo ngày, kết thúc bằng "Ngày mai"
+├── scripts/check_state.py  ← kiểm state không có 0 giả (dùng trong CI + scaffolder)
 ├── prompts/                ← prompt mẫu cho từng vai
+├── examples/               ← demo-output/demo-log dùng cho step CI thật
 └── .github/workflows/verify.yml   ← Verifier chạy trên runner sạch
 ```
 
@@ -106,11 +108,15 @@ Template không import nội bộ — copy là chạy.
 ## Test
 
 ```bash
-python3 -m unittest discover -s templates/multi-agent-loop/tests -v   # 60 test
+python3 -m unittest discover -s templates/multi-agent-loop/tests -v   # 76 test
 ```
 
-- `tests/test_checks.py` (21) — mỗi test là một bẫy: 0 giả, 0 có evidence bịa, null thiếu reason,
+- `tests/test_checks.py` (25) — mỗi test là một bẫy: 0 giả, 0 có evidence bịa, null thiếu reason,
   trùng lặp, throughput 643 record/0.23s, mẫu nhỏ phải `null`, drift ngày, báo cáo cũ, ghi sai cửa I/O.
 - `tests/test_loop.py` (25) — máy trạng thái của vòng planner→executor→verifier→human.
-- `tests/test_new_loop.py` (14) — scaffolder: 3 preset đều tự kiểm chứng, loop sinh ra tự chạy test,
-  state không có 0 giả, example hỏng thì bị xoá chứ không giao hàng lỗi.
+- `tests/test_new_loop.py` (18) — scaffolder: 3 preset đều tự kiểm chứng, loop sinh ra tự chạy test,
+  state không có 0 giả, example hỏng thì bị xoá chứ không giao hàng lỗi, và validator của
+  `checks.py` phải cho **cùng kết luận** với JSON Schema chuẩn.
+- `tests/test_ci_workflow.py` (8) — CI cũng là code: không heredoc, mọi khối `run:` phải qua `bash -n`,
+  mọi `uses:` phải pin SHA, file mà workflow nhắc tới phải tồn tại.
+  *Vì sao có:* một step từng **pass mà không chạy gì** vì heredoc lồng trong YAML bị shell nuốt.

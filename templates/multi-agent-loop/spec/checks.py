@@ -195,8 +195,14 @@ def validate(value: Any, schema: dict[str, Any], root: dict[str, Any], path: str
             if key in value:
                 errors.extend(validate(value[key], sub, root, f"{path}.{key}"))
         extra = [k for k in value if k not in properties and not k.startswith("_")]
-        if schema.get("additionalProperties") is False and extra:
+        additional = schema.get("additionalProperties")
+        if additional is False and extra:
             errors.append(f"{path}: trường lạ {extra}")
+        elif isinstance(additional, dict):
+            # vd "metrics": {"additionalProperties": {"$ref": "#/$defs/metric"}}
+            # Bỏ nhánh này thì mọi metric nằm trong map đều KHÔNG được kiểm.
+            for key in extra:
+                errors.extend(validate(value[key], additional, root, f"{path}.{key}"))
         if "maxProperties" in schema and len(value) > int(schema["maxProperties"]):
             errors.append(f"{path}: nhiều hơn {schema['maxProperties']} trường")
         if "minProperties" in schema and len(value) < int(schema["minProperties"]):

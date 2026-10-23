@@ -41,6 +41,7 @@ COPY_ALWAYS = (
     "scripts/verify_gate.py",
     "scripts/README.md",
     "scripts/new_loop.py",
+    "scripts/check_state.py",
     "prompts",
     "tests/test_loop.py",
     ".github/workflows/verify.yml",
@@ -204,9 +205,19 @@ Loop này đã được scaffolder tự chạy `checks.py` trên example và đ�
 
 
 def build_schema_test(meta: dict[str, Any]) -> str:
-    """Test riêng của loop: example phải khớp schema, và 0 giả phải bị chặn."""
+    """Test riêng của loop: example phải khớp schema, và 0 giả phải bị chặn.
+
+    Test này bắt hai lỗi từng xảy ra thật:
+      - validator bỏ qua `additionalProperties` dạng schema ⇒ metric trong map không được kiểm;
+      - schema có `minProperties` nhưng bộ kiểm không đọc ⇒ record rỗng vẫn "pass".
+    """
+    guard = (meta.get("checks") or {}).get("zero_guard_fields") or [
+        "score", "grade", "count", "total", "errors", "violation_count",
+    ]
+    guard_literal = ", ".join(f'"{f}"' for f in guard)
+    name = meta.get("name")
     return f'''#!/usr/bin/env python3
-"""Test của loop '{meta.get("name")}' — example phải khớp spec/schema.json.
+"""Test của loop '{name}' — example phải khớp spec/schema.json.
 
     python3 -m unittest discover -s tests -v
 
@@ -215,37 +226,78 @@ Test này KHÔNG phụ thuộc template gốc: nó dùng chính spec/checks.py c
 
 from __future__ import annotations
 
+import copy
 import importlib.util
 import json
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("checks", ROOT / "spec" / "checks.py")
-checks = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(checks)  # type: ignore[union-attr]
+_spec = importlib.util.spec_from_file_location("checks", ROOT / "spec" / "checks.py")
+checks = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(checks)  # type: ignore[union-attr]
+
+ZERO_GUARD_FIELDS = [{guard_literal}]
+
+
+def load_schema() -> dict:
+    return json.loads((ROOT / "spec" / "schema.json").read_text(encoding="utf-8"))
+
+
+def example_records() -> list[dict]:
+    path = ROOT / "examples" / "example-output.jsonl"
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
 class ExampleSchemaTest(unittest.TestCase):
     def test_example_output_matches_schema(self) -> None:
-        schema = json.loads((ROOT / "spec" / "schema.json").read_text(encoding="utf-8"))
-        example = ROOT / "examples" / "example-output.jsonl"
-        self.assertTrue(example.exists(), "thiếu examples/example-output.jsonl")
-        for number, line in enumerate(example.read_text(encoding="utf-8").splitlines(), 1):
-            if not line.strip():
-                continue
-            record = json.loads(line)
+        schema = load_schema()
+        records = example_records()
+        self.assertTrue(records, "thiếu examples/example-output.jsonl")
+        for number, record in enumerate(records, 1):
             errors = checks.validate(record, schema, schema)
             self.assertEqual(errors, [], f"dòng {{number}} sai schema: {{errors}}")
 
     def test_fake_zero_is_detected(self) -> None:
-        schema = json.loads((ROOT / "spec" / "schema.json").read_text(encoding="utf-8"))
-        record = json.loads(
-            (ROOT / "examples" / "example-output.jsonl").read_text(encoding="utf-8").splitlines()[0]
+        """0 không có evidence phải bị chặn — ở schema VÀ ở check_fake_zero."""
+        schema = load_schema()
+        record = copy.deepcopy(example_records()[0])
+
+        metrics = record.get("metrics") or {{}}
+        if metrics:
+            key = next(iter(metrics))
+            metrics[key] = {{"value": 0, "measured_by": "ai do"}}  # 0 giả: không evidence
+            record["metrics"] = metrics
+            where = f"metrics.{{key}}"
+        else:  # loop không dùng metrics: bơm 0 vào trường số cấp record
+            field = ZERO_GUARD_FIELDS[0]
+            record[field] = 0
+            record.pop("measured_by", None)
+            record.pop("evidence", None)
+            where = field
+
+        self.assertTrue(
+            checks.validate(record, schema, schema),
+            f"schema phải chặn 0 thiếu evidence ở {{where}}",
         )
-        record["metrics"] = {{"x": {{"value": 0, "measured_by": "ai do"}}}}
+
+        result = checks.check_fake_zero(
+            [dict(record, _file="examples/example-output.jsonl")],
+            {{"root": ROOT, "log_dir": ROOT / "log", "zero_guard_fields": ZERO_GUARD_FIELDS}},
+        )
+        self.assertEqual(result["status"], checks.FAIL,
+                         f"check_fake_zero phải bắt 0 giả ở {{where}}: {{result['problems']}}")
+
+    def test_zero_with_real_evidence_passes(self) -> None:
+        """0 hợp lệ (có measured_by + evidence trỏ log thật) phải qua — tránh chặn nhầm."""
+        schema = load_schema()
+        record = copy.deepcopy(example_records()[0])
+        record["metrics"] = {{"errors": {{"value": 0, "measured_by": "ci",
+                                       "evidence": "log/bootstrap.jsonl#L1"}}}}
+        for field in ZERO_GUARD_FIELDS:
+            record.pop(field, None)
         errors = checks.validate(record, schema, schema)
-        self.assertTrue(errors, "schema phải chặn 0 thiếu evidence")
+        self.assertEqual([e for e in errors if "errors" in e], [], errors)
 
 
 if __name__ == "__main__":
@@ -409,6 +461,16 @@ def self_verify(target: Path, meta: dict[str, Any], args: argparse.Namespace) ->
     if not example.exists():
         print("⚠ preset không có example-output.jsonl → bỏ qua tự kiểm chứng", file=sys.stderr)
         return EXIT_OK
+    state_check = subprocess.run(
+        [sys.executable, str(target / "scripts" / "check_state.py"),
+         "--state", str(target / "state" / "state.json")],
+        capture_output=True, text=True, timeout=60,
+    )
+    if state_check.returncode != 0:
+        print("   — state không hợp lệ —", file=sys.stderr)
+        print((state_check.stdout + state_check.stderr).strip(), file=sys.stderr)
+        return EXIT_SELFTEST
+
     with tempfile.TemporaryDirectory() as tmp:
         sandbox = Path(tmp) / "loop"
         shutil.copytree(target, sandbox)

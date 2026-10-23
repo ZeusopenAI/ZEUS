@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import subprocess
 import sys
@@ -17,6 +18,10 @@ HERE = Path(__file__).resolve()
 TEMPLATE = HERE.parents[1]
 CHECKS = TEMPLATE / "spec" / "checks.py"
 SCHEMA = TEMPLATE / "spec" / "schema.json"
+
+_spec = importlib.util.spec_from_file_location("checks_mod", CHECKS)
+checks = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(checks)  # type: ignore[union-attr]
 
 
 def run_checks(*args: str) -> subprocess.CompletedProcess[str]:
@@ -284,6 +289,46 @@ class ChecksTest(unittest.TestCase):
         bad = run_checks("ownership", "--root", str(repo), "--role", "executor")
         self.assertEqual(bad.returncode, 4, bad.stdout + bad.stderr)
         self.assertIn("spec/rules.md", bad.stdout)
+
+
+class ValidatorDepthTest(unittest.TestCase):
+    """`validate()` phải khớp schema ở mọi độ lồng, không chỉ ở tầng ngoài.
+
+    Lỗi từng xảy ra thật: `additionalProperties` dạng schema bị bỏ qua ⇒ mọi metric nằm
+    trong map (vd `metrics`) không được kiểm gì, nên 0 giả lọt qua check_schema.
+    """
+
+    def setUp(self) -> None:
+        self.schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+
+    def record(self) -> dict:
+        return {
+            "id": "r-1",
+            "created_at": "2026-10-23T08:00:01Z",
+            "source": "input/raw.jsonl#L1",
+            "status": "ok",
+            "content": "x",
+            "metrics": {"latency_ms": {"value": 120, "measured_by": "ci", "unit": "ms"}},
+        }
+
+    def test_nested_metric_is_validated(self) -> None:
+        record = self.record()
+        record["metrics"]["latency_ms"] = {"value": 0, "measured_by": "ai do"}  # thiếu evidence
+        errors = checks.validate(record, self.schema, self.schema)
+        self.assertTrue(any("metrics.latency_ms" in e for e in errors), errors)
+
+    def test_nested_metric_bad_type_is_validated(self) -> None:
+        record = self.record()
+        record["metrics"] = {"latency_ms": "nhanh lắm"}
+        self.assertTrue(checks.validate(record, self.schema, self.schema))
+
+    def test_nested_metric_without_provenance_is_validated(self) -> None:
+        record = self.record()
+        record["metrics"] = {"latency_ms": {"value": 120}}  # thiếu measured_by
+        self.assertTrue(checks.validate(record, self.schema, self.schema))
+
+    def test_nested_metric_valid_passes(self) -> None:
+        self.assertEqual(checks.validate(self.record(), self.schema, self.schema), [])
 
 
 if __name__ == "__main__":

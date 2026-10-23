@@ -178,3 +178,23 @@ Fail nằm ở `spec/` (luật sai, schema sai) thì người sửa là **Planne
   `not_measured` — đúng như nó phải thế — và bạn đừng ép nó thành điểm số.
 - **Không phải orchestrator.** Không có scheduler. Ai gọi từng bước là việc của bạn (cron, workflow,
   hay chính tay bạn).
+
+## 10. CI là code, cũng phải bị kiểm
+
+`tests/test_ci_workflow.py` kiểm chính các workflow: không heredoc, mọi khối `run:` qua `bash -n`,
+mọi `uses:` pin SHA, và **file mà workflow nhắc tới phải tồn tại**.
+
+Lý do tồn tại: một step CI đã từng xanh trong khi chưa chạy dòng `checks.py` nào — heredoc
+`cat > f <<'EOF'` lồng trong YAML bị shell nuốt phần sau. Đó đúng là lỗi mà template này
+sinh ra để chặn: *báo cáo xanh không chứng minh việc đã làm*. Cùng họ với 0 giả.
+
+Vì vậy fixture cho CI nằm trong repo (`examples/demo-output.jsonl`, `examples/demo-log.jsonl`),
+không sinh bằng heredoc trong workflow.
+
+## 11. `scripts/check_state.py`
+
+Kiểm `state/state.json`: `system_day` đúng dạng và không ở tương lai, `timezone` là `UTC`,
+đủ 4 vai, executor ≠ verifier, mọi `null` có `reason`, mọi `0` có `measured_by` + `evidence`,
+`task.done_criteria` không rỗng. Exit `0` sạch · `2` lỗi dùng · `4` state vi phạm.
+
+Scaffolder chạy nó trên state vừa sinh; CI chạy nó trên loop sinh ra cho cả 3 preset.

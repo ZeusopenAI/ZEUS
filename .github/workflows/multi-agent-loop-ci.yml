@@ -41,15 +41,15 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Cài jsonschema để đối chiếu validator chuẩn
-        run: python -m pip install --quiet jsonschema
+      - name: Cài jsonschema và pyyaml để đối chiếu schema và kiểm workflow
+        run: python -m pip install --quiet jsonschema pyyaml
 
       - name: Cú pháp
         run: |
           python -m compileall -q templates/multi-agent-loop/scripts templates/multi-agent-loop/tests
           echo "OK: cú pháp hợp lệ"
 
-      - name: Unit test 64 test (máy trạng thái + bộ kiểm + scaffolder + đối chiếu schema)
+      - name: Unit test 76 test (máy trạng thái + bộ kiểm + scaffolder + schema + workflow)
         working-directory: templates/multi-agent-loop
         run: python3 -m unittest discover -s tests -v
 
@@ -80,16 +80,8 @@ jobs:
             echo "=== preset: $preset ==="
             python3 scripts/new_loop.py create --preset "$preset" \
               --dir "$D/$preset" --slug "ci-$preset" --owner ci
+            python3 "$D/$preset/scripts/check_state.py" --state "$D/$preset/state/state.json"
             ( cd "$D/$preset" && python3 -m unittest discover -s tests -q )
-            # loop sinh ra phải có state không chứa 0 giả
-            python3 - "$D/$preset/state/state.json" <<'PY'
-          import json, sys
-          state = json.load(open(sys.argv[1], encoding="utf-8"))
-          for name, spec in state["counters"].items():
-              assert spec["value"] is None, f"{name} phải null khi chưa chạy"
-              assert str(spec.get("reason") or "").strip(), f"{name} thiếu reason"
-          print("OK: state không có 0 giả")
-          PY
           done
 
       - name: Bộ kiểm thật trên output mẫu (verifier chạy lại từ đầu)
@@ -97,12 +89,9 @@ jobs:
         run: |
           set -euo pipefail
           D="$(mktemp -d)"
-          cp -r spec state log input "$D/"
+          cp -r spec state log input examples "$D/"
           mkdir -p "$D/output" "$D/verify"
-          cat > "$D/output/batch-0001.jsonl" <<'EOF'
-          {"id": "r-0001", "created_at": "2026-10-23T08:00:01Z", "source": "input/raw.jsonl#L1", "status": "ok", "content": "kết quả một", "metrics": {"latency_ms": {"value": 120, "measured_by": "ci", "unit": "ms"}}}
-          {"id": "r-0002", "created_at": "2026-10-23T08:00:02Z", "source": "input/raw.jsonl#L2", "status": "partial", "reason": "thiếu address", "metrics": {"confidence": {"value": null, "reason": "model không trả score"}}}
-          EOF
+          cp "$D/examples/demo-output.jsonl" "$D/output/batch-0001.jsonl"
           python3 spec/checks.py run --root "$D" --report "$D/verify/checks-ci.json" --by ci
           python3 spec/checks.py freshness --root "$D" --report "$D/verify/checks-ci.json"
 
@@ -114,12 +103,12 @@ jobs:
           cp -r spec state log input "$D/"
           mkdir -p "$D/output" "$D/verify"
           # record có 0 nhưng thiếu evidence -> phải FAIL
-          echo '{"id": "r-1", "created_at": "2026-10-23T08:00:01Z", "source": "input/raw.jsonl#L1", "status": "ok", "content": "x", "metrics": {"errors": {"value": 0, "measured_by": "ci"}}}' > "$D/output/batch-0001.jsonl"
+          echo '{"id": "r-1", "created_at": "2026-10-23T08:00:01Z", "source": "input/raw.example.jsonl#L1", "status": "ok", "content": "x", "metrics": {"errors": {"value": 0, "measured_by": "ci"}}}' > "$D/output/batch-0001.jsonl"
           if python3 spec/checks.py run --root "$D" --report "$D/verify/zero-gia.json" --by ci; then
             echo "::error::0 giả không bị chặn"; exit 1
           fi
           # null thiếu reason -> phải FAIL
-          echo '{"id": "r-1", "created_at": "2026-10-23T08:00:01Z", "source": "input/raw.jsonl#L1", "status": "ok", "content": "x", "metrics": {"confidence": {"value": null}}}' > "$D/output/batch-0001.jsonl"
+          echo '{"id": "r-1", "created_at": "2026-10-23T08:00:01Z", "source": "input/raw.example.jsonl#L1", "status": "ok", "content": "x", "metrics": {"confidence": {"value": null}}}' > "$D/output/batch-0001.jsonl"
           if python3 spec/checks.py run --root "$D" --report "$D/verify/null-khong-reason.json" --by ci; then
             echo "::error::null thiếu reason không bị chặn"; exit 1
           fi
