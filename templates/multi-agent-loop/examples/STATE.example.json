@@ -1,0 +1,89 @@
+{
+  "schema": "multi-agent-loop/1",
+  "task": {
+    "slug": "va-loi-sync",
+    "goal": "Đồng bộ skill không mất dữ liệu",
+    "created_at": "2026-10-23T09:00:00Z",
+    "created_by": "hermes"
+  },
+  "roles": {
+    "planner": "hermes",
+    "executor": "arena",
+    "verifier": "ci",
+    "human": "operator"
+  },
+  "phase": "verified_pass",
+  "plan": {
+    "source": "plan.md",
+    "planned_at": "2026-10-23T09:02:00Z",
+    "planned_by": "hermes",
+    "steps": [
+      {
+        "id": 1,
+        "text": "Sửa scripts/hermes-sync.sh để không xoá skill khi backup lỗi",
+        "check": "bash -n scripts/hermes-sync.sh"
+      },
+      {
+        "id": 2,
+        "text": "Thêm test cho trường hợp backup lỗi",
+        "check": "python3 -m unittest discover -s scripts/tests -q"
+      }
+    ]
+  },
+  "attempts": [
+    {
+      "n": 1,
+      "submitted_at": "2026-10-23T10:15:00Z",
+      "submitted_by": "arena",
+      "summary": "Sửa nhánh backup lỗi; thêm 3 test. Chưa đo được p95 vì máy sandbox không có tải thật.",
+      "evidence_ids": ["ev_0001"],
+      "metrics": {
+        "tests_passed": {
+          "value": 24,
+          "measured_by": "arena",
+          "evidence": "ev_0001",
+          "at": "2026-10-23T10:15:00Z"
+        },
+        "regressions": {
+          "value": 0,
+          "measured_by": "ci",
+          "evidence": "ev_0004",
+          "note": "0 lỗi mới; evidence là lần chạy CI đầy đủ, exit 0",
+          "at": "2026-10-23T10:15:00Z"
+        },
+        "latency_p95_ms": {
+          "value": null,
+          "reason": "sandbox không có môi trường đo tải thật — không ước lượng"
+        }
+      },
+      "verification": {
+        "result": "pass",
+        "verified_at": "2026-10-23T10:31:00Z",
+        "verified_by": "ci",
+        "fresh_evidence": 2,
+        "ignored_stale_evidence": 1,
+        "commands": [
+          {
+            "evidence_id": "ev_0002",
+            "command": "bash -n scripts/hermes-sync.sh",
+            "exit_code": 0,
+            "started_at": "2026-10-23T10:30:20Z",
+            "finished_at": "2026-10-23T10:30:20Z",
+            "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "evidence_id": "ev_0003",
+            "command": "python3 -m unittest discover -s scripts/tests -q",
+            "exit_code": 0,
+            "started_at": "2026-10-23T10:30:31Z",
+            "finished_at": "2026-10-23T10:30:44Z",
+            "stdout_sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+          }
+        ]
+      }
+    }
+  ],
+  "decisions": [],
+  "updated_at": "2026-10-23T10:31:00Z",
+  "updated_by": "ci"
+}

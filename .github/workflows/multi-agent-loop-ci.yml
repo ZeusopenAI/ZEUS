@@ -1,0 +1,95 @@
+name: Multi-agent loop template CI
+
+# Kiểm thử template Planner/Executor/Verifier/State/Human.
+# Không gọi LLM, không tốn credit. Mỗi test ứng với một luật bất biến của contract.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "templates/multi-agent-loop/**"
+      - ".github/workflows/multi-agent-loop-ci.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "templates/multi-agent-loop/**"
+      - ".github/workflows/multi-agent-loop-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: multi-agent-loop-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  template:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cú pháp
+        run: |
+          python -m compileall -q templates/multi-agent-loop/scripts templates/multi-agent-loop/tests
+          echo "OK: cú pháp hợp lệ"
+
+      - name: Unit test (25 test = 25 luật)
+        working-directory: templates/multi-agent-loop
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Chạy trọn một vòng thật (planner → executor → verifier → human)
+        working-directory: templates/multi-agent-loop
+        run: |
+          set -euo pipefail
+          D="$(mktemp -d)"
+          python3 scripts/loop_state.py init --dir "$D/loop" --slug ci \
+            --planner planner --executor exec --verifier check --human human
+          printf '1. tồn tại README → test -f README.md\n' > "$D/plan.md"
+          python3 scripts/loop_state.py plan --dir "$D/loop" --by planner --file "$D/plan.md"
+          python3 scripts/loop_state.py submit --dir "$D/loop" --by exec --summary "ci smoke"
+          python3 scripts/verify_gate.py run --dir "$D/loop" --label b1 -- test -f README.md
+          python3 scripts/loop_state.py verify --dir "$D/loop" --by check \
+            --evidence-glob "$D/loop/evidence/ev_*.json"
+          python3 scripts/loop_state.py decide --dir "$D/loop" --by human --accept --note "ci"
+          python3 scripts/loop_state.py status --dir "$D/loop" --json | python3 -c \
+            "import json,sys; s=json.load(sys.stdin); assert s['phase']=='accepted', s['phase']; print('OK: vòng chạy trọn vẹn')"
+
+      - name: Luật phải chặn được (âm tính)
+        working-directory: templates/multi-agent-loop
+        run: |
+          set -euo pipefail
+          D="$(mktemp -d)"
+          # 1) executor ≡ verifier phải bị từ chối
+          if python3 scripts/loop_state.py init --dir "$D/a" --slug x \
+               --planner p --executor same --verifier same --human h; then
+            echo "::error::executor ≡ verifier không bị chặn"; exit 1
+          fi
+          # 2) 0 giả phải bị từ chối
+          python3 scripts/loop_state.py init --dir "$D/b" --slug x \
+            --planner p --executor e --verifier v --human h
+          printf '1. a → true\n' > "$D/plan.md"
+          python3 scripts/loop_state.py plan --dir "$D/b" --by p --file "$D/plan.md"
+          echo '{"loi": {"value": 0, "measured_by": "e"}}' > "$D/m.json"
+          if python3 scripts/loop_state.py submit --dir "$D/b" --by e \
+               --summary x --metrics-json "$D/m.json"; then
+            echo "::error::0 thiếu evidence không bị chặn"; exit 1
+          fi
+          # 3) verify không có evidence phải bị từ chối
+          python3 scripts/loop_state.py submit --dir "$D/b" --by e --summary x
+          if python3 scripts/loop_state.py verify --dir "$D/b" --by v; then
+            echo "::error::verify không evidence không bị chặn"; exit 1
+          fi
+          echo "OK: các luật âm tính đều chặn đúng"
