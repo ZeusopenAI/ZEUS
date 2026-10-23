@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ZeusOpenAI/ZEUS/templates/multi-agent-loop/spec/schema.json",
+  "title": "Executor output record",
+  "description": "Mỗi dòng trong output/<batch>.jsonl phải khớp schema này. Số liệu dùng dạng metric: đã đo {value, measured_by[, evidence]}, chưa đo {value: null, reason}.",
+  "type": "object",
+  "required": ["id", "created_at", "source", "status", "metrics"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.:-]+$"
+    },
+    "created_at": {
+      "type": "string",
+      "description": "UTC bắt buộc, dạng YYYY-MM-DDTHH:MM:SSZ",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Trỏ tới file/dòng gốc trong input/"
+    },
+    "status": {
+      "enum": ["ok", "partial", "skipped"]
+    },
+    "reason": {
+      "type": ["string", "null"],
+      "description": "Bắt buộc khi status khác 'ok'"
+    },
+    "content": {
+      "type": ["string", "null"],
+      "description": "Nội dung do executor sinh ra (nếu có)"
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/metric" }
+    },
+    "evidence": {
+      "type": "string",
+      "description": "Con trỏ tới dòng log chứng minh record này được xử lý thật"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "enum": ["partial", "skipped"] } },
+        "required": ["status"]
+      },
+      "then": {
+        "required": ["reason"],
+        "properties": { "reason": { "type": "string", "minLength": 1 } }
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "const": "skipped" } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": { "metrics": { "maxProperties": 0 } }
+      }
+    }
+  ],
+  "$defs": {
+    "metric": {
+      "oneOf": [
+        {
+          "title": "Đã đo",
+          "type": "object",
+          "required": ["value", "measured_by"],
+          "additionalProperties": false,
+          "properties": {
+            "value": { "type": ["number", "integer", "boolean"] },
+            "measured_by": { "type": "string", "minLength": 1 },
+            "evidence": {
+              "type": "string",
+              "description": "Bắt buộc khi value = 0 (luật không ghi 0 giả)."
+            },
+            "unit": { "type": "string" }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": { "value": { "const": 0 } },
+                "required": ["value"]
+              },
+              "then": { "required": ["evidence"] }
+            }
+          ]
+        },
+        {
+          "title": "Chưa đo được",
+          "type": "object",
+          "required": ["value", "reason"],
+          "additionalProperties": false,
+          "properties": {
+            "value": { "type": "null" },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    }
+  }
+}

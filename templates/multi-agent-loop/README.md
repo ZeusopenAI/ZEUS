@@ -1,131 +1,114 @@
-# Multi-Agent Loop — template 5 vai
+# Multi-Agent Loop — Planner / Executor / Verifier / State / Human
 
-Template tối thiểu, chạy được ngay, để nhiều AI (hoặc AI + CI + người) phối hợp mà **không tự khen nhau**.
-Không phụ thuộc framework, không cần server: chỉ Python 3.11+ và git.
+Template chạy được ngay để nhiều AI (hoặc AI + CI + người) phối hợp mà **không tự khen nhau**.
+Không framework, không server, không thư viện ngoài: chỉ Python 3.11+ và git.
+
+> **Một câu chốt:** cái chưa đo được thì không được biến thành số; cái đã đo được thì phải được
+> kiểm lại bằng một tầng độc lập.
+
+## Bộ khung
 
 ```
-Planner ──plan──▶ State(file) ──▶ Executor ──submit──▶ State
-                                     ▲                    │
-                                     │                    ▼
-                                  retry            Verifier (chạy lại từ đầu)
-                                                          │
-                                                          ▼
-                                                       Human ──accept/reject──▶ State
+.
+├── spec/                   ← Planner ghi. LUẬT CHƠI + máy kiểm
+│   ├── rules.md            # luật người đọc được (RFC 2119)
+│   ├── schema.json         # JSON Schema cho output
+│   └── checks.py           # BỘ KIỂM THẬT — verifier chạy file này
+├── state/state.json        ← State Keeper. ngày hệ thống, quota, đã làm, còn lại, "xong" là gì
+├── input/                  ← dữ liệu gốc, chỉ đọc
+├── output/                 ← Executor ghi DUY NHẤT ở đây (+ log/)
+├── verify/                 ← Verifier ghi DUY NHẤT ở đây
+├── log/                    ← append-only JSONL: chứng minh việc gì đã chạy thật
+├── reports/                ← Human ghi báo cáo ngày, kết thúc bằng "Ngày mai"
+├── prompts/                ← prompt mẫu cho từng vai
+└── .github/workflows/verify.yml   ← Verifier chạy trên runner sạch
 ```
 
-| Vai | Làm gì | Không được làm |
-|---|---|---|
-| **Planner** | Đặt mục tiêu, cắt bước, viết lệnh kiểm chứng cho **từng** bước | Tự sửa code của executor |
-| **Executor** | Làm đúng plan, gửi kết quả kèm metric có nguồn | Tự chấm điểm, tự chuyển sang `accepted` |
-| **Verifier** | Chạy lại lệnh từ đầu, sinh evidence mới | Đọc báo cáo cũ của executor để kết luận |
-| **State** | `STATE.json` + `journal.jsonl` (append-only) | Nằm trong prompt / trong đầu model |
-| **Human** | `accept` / `reject` có lý do | Bị thay bằng "agent tự duyệt" |
+Cửa I/O tách biệt để **không ai ghi đè lên nhau**, và `checks.py ownership` kiểm được điều đó bằng git diff.
 
-## 5 luật được CODE cưỡng chế
+## 5 luật — cưỡng chế bằng code
 
 | Luật | Cơ chế |
 |---|---|
-| State lưu trên file, không trong prompt | Mọi chuyển pha ghi `STATE.json` nguyên tử + 1 dòng `journal.jsonl` |
-| Executor không tự chấm | `init` từ chối nếu executor ≡ verifier; `verify` từ chối nếu người chấm là executor hoặc chính người vừa submit |
-| Verification chạy lại từ đầu | `verify` chỉ nhận evidence có `started_at >= submitted_at`; evidence cũ bị đếm vào `ignored_stale_evidence` |
-| `null` + reason khi chưa đo được | Metric `{"value": null}` thiếu `reason` ⇒ từ chối |
-| Không ghi 0 giả | Metric `0` bắt buộc có `measured_by` + `evidence` trỏ tới lệnh đã chạy thật |
+| **State trên file, không trong prompt** | `state/state.json` + `log/*.jsonl`; phiên mới đọc là biết đang ở đâu. `system_day` theo UTC. |
+| **Executor không tự chấm** | Executor chỉ ghi `output/` + `log/`; `checks.py ownership --role executor` fail nếu đụng `spec/`, `verify/`, `reports/`. Verifier là danh tính khác, chạy ở runner sạch. |
+| **Verification chạy lại từ đầu** | `checks.py run` **từ chối ghi đè** báo cáo cũ (exit 5); mỗi báo cáo có `output_snapshot` (hash của `output/`), `checks.py freshness` phát hiện báo cáo đã lạc hậu. |
+| **`null` + reason khi chưa đo được** | `check_null_reason`: giá trị `null` thiếu `reason` ⇒ fail. Mẫu < 30 ⇒ median/outlier ghi `null` + reason, **không** ghi 0. |
+| **Không ghi 0 giả** | `check_fake_zero`: `value == 0` bắt buộc `measured_by` + `evidence`, và `evidence` phải trỏ tới dòng log **có thật** (`log/*.jsonl#LN`). Bịa đường dẫn ⇒ fail. |
 
-Kết quả kiểm chứng do **lệnh** quyết định, không do lời khai: verifier muốn nói `pass` mà evidence có
-`exit_code != 0` thì bị từ chối (`--result pass` ≠ kết quả suy ra từ evidence).
+## Ba bẫy được kiểm riêng
 
-Executor cũng được dùng `verify_gate.py` để tự chạy lệnh và lấy `evidence_id` chứng minh cho metric
-của mình. Những file đó có `started_at` **trước** `submit` nên verifier sẽ tự động bỏ qua —
-chúng là provenance cho số liệu, không phải bằng chứng kiểm chứng.
+| Bẫy | Check | Ngưỡng |
+|---|---|---|
+| Múi giờ / ranh giới ngày | `utc_format`, `day_boundary` | mọi timestamp phải UTC `…Z`; `system_day` lệch ngày UTC ⇒ **warn** (quota có thể reset sai) |
+| Sinh hàng loạt đáng ngờ | `throughput`, `duplicates`, `length_distribution` | > 50 record/giây ⇒ fail; trùng lặp > 5% ⇒ fail; outlier > 3×IQR ⇒ warn; mẫu < 30 ⇒ `null` |
+| Số 0 giả | `fake_zero` | 0 thiếu `measured_by`/`evidence` hoặc evidence không tồn tại ⇒ fail |
 
 ## Quickstart (60 giây)
 
 ```bash
 cd templates/multi-agent-loop
+mkdir -p verify
 
-# 1) Planner mở loop
-python3 scripts/loop_state.py init --dir .loop --slug "va-loi-sync" \
-  --goal "Đồng bộ skill không mất dữ liệu" \
-  --planner hermes --executor arena --verifier ci --human operator
-
-# 2) Planner viết plan: mỗi bước BẮT BUỘC có "→ lệnh kiểm chứng"
-cat > plan.md <<'EOF'
-1. Sửa scripts/hermes-sync.sh → bash -n scripts/hermes-sync.sh
-2. Chạy doctor → bash scripts/hermes-doctor.sh --quiet
-3. Unit test → python3 -m unittest discover -s scripts/tests -q
+# 1) Executor: xử lý input → output (ghi đúng schema, số liệu có nguồn)
+cat > output/batch-0001.jsonl <<'EOF'
+{"id": "r-0001", "created_at": "2026-10-23T08:00:01Z", "source": "input/raw.jsonl#L1", "status": "ok", "content": "kết quả một", "evidence": "log/run-2026-10-23.jsonl#L1", "metrics": {"latency_ms": {"value": 120, "measured_by": "executor", "unit": "ms"}}}
+{"id": "r-0002", "created_at": "2026-10-23T08:00:02Z", "source": "input/raw.jsonl#L2", "status": "partial", "reason": "thiếu trường address", "metrics": {"confidence": {"value": null, "reason": "model không trả score"}}}
 EOF
-python3 scripts/loop_state.py plan --dir .loop --by hermes --file plan.md
 
-# 3) Executor làm việc rồi submit (metric do CHÍNH nó đo cũng phải có evidence)
-cat > metrics.json <<'EOF'
-{
-  "tests_passed": {"value": 24, "measured_by": "arena", "evidence": "ev_0001"},
-  "latency_p95_ms": {"value": null, "reason": "chưa có môi trường đo tải"}
-}
-EOF
-python3 scripts/loop_state.py submit --dir .loop --by arena \
-  --summary "Sửa sync, thêm test" --metrics-json metrics.json
+# 2) Executor: log chứng minh đã chạy thật
+mkdir -p log
+echo '{"at": "2026-10-23T08:00:00Z", "started_at": "2026-10-23T08:00:00Z", "finished_at": "2026-10-23T08:00:12Z", "records": 2}' > log/run-2026-10-23.jsonl
 
-# 4) Verifier chạy lại từ đầu — luôn tạo evidence MỚI
-python3 scripts/verify_gate.py run --dir .loop --label "unit" -- python3 -m unittest discover -s scripts/tests -q
-python3 scripts/loop_state.py verify --dir .loop --by ci --evidence-glob ".loop/evidence/ev_*.json"
+# 3) Verifier: chạy lại từ đầu, sinh báo cáo MỚI
+python3 spec/checks.py run --root . --report "verify/checks-$(date -u +%Y%m%dT%H%M%SZ).json"
 
-# 5) Human quyết định
-python3 scripts/loop_state.py decide --dir .loop --by operator --accept --note "ổn, merge"
-python3 scripts/loop_state.py status --dir .loop
+# 4) Verifier: chứng minh báo cáo không phải của lần trước
+python3 spec/checks.py freshness --root . --report verify/checks-*.json
+
+# 5) Human: ghi reports/YYYY-MM-DD.md kết thúc bằng mục "Ngày mai"
 ```
 
-## Nội dung
-
-```
-templates/multi-agent-loop/
-├── CONTRACT.md              # đặc tả chuẩn (MUST / MUST NOT), bảng chuyển pha
-├── state.schema.json        # JSON Schema cho STATE.json
-├── prompts/                 # prompt mẫu cho từng vai (dán vào agent nào cũng được)
-│   ├── planner.md
-│   ├── executor.md
-│   ├── verifier.md
-│   └── human.md
-├── scripts/
-│   ├── loop_state.py        # máy trạng thái + cưỡng chế luật
-│   └── verify_gate.py       # chạy lệnh thật → sinh evidence
-├── examples/STATE.example.json
-└── tests/test_loop.py       # 25 test, mỗi test = 1 luật
-```
-
-Chạy test: `python3 -m unittest discover -s templates/multi-agent-loop/tests -v`
+Kết quả mẫu: `✅ PASS — 2 record`, từng check `ok / warn / n/a`, mỗi metric trong báo cáo đều có
+`measured_by`, và mọi giá trị `0` đều kèm `evidence`.
 
 ## Gắn vào repo khác
 
 ```bash
-# copy nguyên thư mục rồi bỏ .loop/ (dữ liệu chạy) trước khi commit
-cp -r templates/multi-agent-loop /duong/dan/repo-moi/loop
-cd /duong/dan/repo-moi/loop && rm -rf .loop
-printf '\n# dữ liệu chạy của loop\n.loop/\n' >> .gitignore
+cp -r templates/multi-agent-loop/ /duong/dan/repo-moi/loop
+cd /duong/dan/repo-moi/loop && rm -rf verify/*.json
+printf '\n# dữ liệu chạy của loop\nverify/*.json\n!verify/README.md\n' >> .gitignore
 ```
 
-Hoặc clone repo này rồi `git subtree`/`cp` — template không có import nội bộ, copy là chạy.
+Template không import nội bộ — copy là chạy.
 
 ## Áp vào ZEUS
 
-| Vai | Ai |
+| Vai | Ai trong ZEUS |
 |---|---|
 | Planner | **Hermes** (workflow `hermes-owner-loop.yml` ban hành mệnh lệnh) |
-| Executor | **Arena agent / Codespaces** (phiên làm việc) |
-| Verifier | **CI** (`hermes-owner-protocol-ci.yml`, `hermes-runtime-ci.yml`) hoặc một agent khác |
-| State | `.ai/handoff/STATE.json` + `OUTBOX.md` của Hermes Owner Protocol |
+| Executor | **Phiên Arena / Codespaces** |
+| Verifier | **CI** (`multi-agent-loop-ci.yml`, `hermes-runtime-ci.yml`) — runner sạch |
+| State Keeper | `.ai/handoff/STATE.json` + `log/` |
 | Human | **Operator Nguyễn Quang Quý** |
 
-Template này là bản tổng quát hoá của Hermes Owner Protocol: cùng luật "chủ ra lệnh — thợ thi hành —
-trọng tài chạy lại từ đầu", nhưng dùng được cho repo bất kỳ và gắn trực tiếp với CI.
+## Giới hạn — nói thẳng
 
-## Giới hạn (nói thẳng)
+- **Không chống được executor gian lận có chủ đích** nếu nó có quyền ghi file: nó vẫn tạo được
+  `log/*.jsonl` giả để "chứng minh" số 0. Chặn thật bằng cách: chạy `checks.py` trên runner sạch
+  (workflow có sẵn), hoặc ký log bằng key CI. Template giữ đơn giản có chủ ý.
+- **Không phải orchestrator chạy nền.** Đây là *hợp đồng + bộ kiểm*; ai gọi từng bước là việc của bạn
+  (người, cron, workflow).
+- **Kiểu công việc phù hợp**: lặp lại, có dữ liệu gốc, có tiêu chí kiểm bằng máy.
+  Viết sáng tạo / luận chiến lược thì đừng ép vào khuôn này — `checks.py` sẽ không đo được gì
+  và template sẽ nói thẳng `not_measured` thay vì bịa điểm.
 
-- **Không chống được agent nói dối hoàn toàn.** Nếu executor tự tay viết file `ev_*.json` giả thay vì
-  chạy `verify_gate.py`, state sẽ tin. Chặn thật bằng cách: chỉ cho verifier chạy trong CI sạch
-  (`evidence` sinh trên runner), hoặc ký evidence bằng key CI. Template giữ đơn giản có chủ ý.
-- **Không phải orchestrator chạy nền.** Nó là *hợp đồng + máy trạng thái*; ai gọi từng bước là việc
-  của bạn (người, cron, hay workflow).
-- **Không tự sửa code.** Mọi thay đổi file do executor làm; template chỉ ghi nhận và chặn.
-- `journal.jsonl` là append-only ở mức quy ước — ai có quyền ghi file vẫn sửa được. Muốn bất biến
-  thật thì đẩy journal lên nơi chỉ-ghi (S3 object-lock, git tag ký, …).
+## Test
+
+```bash
+python3 -m unittest discover -s templates/multi-agent-loop/tests -v   # 46 test
+```
+
+- `tests/test_checks.py` (21) — mỗi test là một bẫy: 0 giả, 0 có evidence bịa, null thiếu reason,
+  trùng lặp, throughput 643 record/0.23s, mẫu nhỏ phải `null`, drift ngày, báo cáo cũ, ghi sai cửa I/O.
+- `tests/test_loop.py` (25) — máy trạng thái của vòng planner→executor→verifier→human.

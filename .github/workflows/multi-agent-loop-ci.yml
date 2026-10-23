@@ -46,7 +46,7 @@ jobs:
           python -m compileall -q templates/multi-agent-loop/scripts templates/multi-agent-loop/tests
           echo "OK: cú pháp hợp lệ"
 
-      - name: Unit test (25 test = 25 luật)
+      - name: Unit test 46 test (máy trạng thái + bộ kiểm)
         working-directory: templates/multi-agent-loop
         run: python3 -m unittest discover -s tests -v
 
@@ -66,6 +66,43 @@ jobs:
           python3 scripts/loop_state.py decide --dir "$D/loop" --by human --accept --note "ci"
           python3 scripts/loop_state.py status --dir "$D/loop" --json | python3 -c \
             "import json,sys; s=json.load(sys.stdin); assert s['phase']=='accepted', s['phase']; print('OK: vòng chạy trọn vẹn')"
+
+      - name: Bộ kiểm thật trên output mẫu (verifier chạy lại từ đầu)
+        working-directory: templates/multi-agent-loop
+        run: |
+          set -euo pipefail
+          D="$(mktemp -d)"
+          cp -r spec state log input "$D/"
+          mkdir -p "$D/output" "$D/verify"
+          cat > "$D/output/batch-0001.jsonl" <<'EOF'
+          {"id": "r-0001", "created_at": "2026-10-23T08:00:01Z", "source": "input/raw.jsonl#L1", "status": "ok", "content": "kết quả một", "metrics": {"latency_ms": {"value": 120, "measured_by": "ci", "unit": "ms"}}}
+          {"id": "r-0002", "created_at": "2026-10-23T08:00:02Z", "source": "input/raw.jsonl#L2", "status": "partial", "reason": "thiếu address", "metrics": {"confidence": {"value": null, "reason": "model không trả score"}}}
+          EOF
+          python3 spec/checks.py run --root "$D" --report "$D/verify/checks-ci.json" --by ci
+          python3 spec/checks.py freshness --root "$D" --report "$D/verify/checks-ci.json"
+
+      - name: Bộ kiểm phải chặn được (âm tính)
+        working-directory: templates/multi-agent-loop
+        run: |
+          set -euo pipefail
+          D="$(mktemp -d)"
+          cp -r spec state log input "$D/"
+          mkdir -p "$D/output" "$D/verify"
+          # record có 0 nhưng thiếu evidence -> phải FAIL
+          echo '{"id": "r-1", "created_at": "2026-10-23T08:00:01Z", "source": "input/raw.jsonl#L1", "status": "ok", "content": "x", "metrics": {"errors": {"value": 0, "measured_by": "ci"}}}' > "$D/output/batch-0001.jsonl"
+          if python3 spec/checks.py run --root "$D" --report "$D/verify/zero-gia.json" --by ci; then
+            echo "::error::0 giả không bị chặn"; exit 1
+          fi
+          # null thiếu reason -> phải FAIL
+          echo '{"id": "r-1", "created_at": "2026-10-23T08:00:01Z", "source": "input/raw.jsonl#L1", "status": "ok", "content": "x", "metrics": {"confidence": {"value": null}}}' > "$D/output/batch-0001.jsonl"
+          if python3 spec/checks.py run --root "$D" --report "$D/verify/null-khong-reason.json" --by ci; then
+            echo "::error::null thiếu reason không bị chặn"; exit 1
+          fi
+          # ghi đè báo cáo cũ -> phải bị từ chối
+          if python3 spec/checks.py run --root "$D" --report "$D/verify/zero-gia.json" --by ci; then
+            echo "::error::cho phép ghi đè báo cáo cũ"; exit 1
+          fi
+          echo "OK: bộ kiểm chặn đúng 0 giả, null thiếu reason, và báo cáo cũ"
 
       - name: Luật phải chặn được (âm tính)
         working-directory: templates/multi-agent-loop

@@ -101,7 +101,7 @@ Mọi chuyển pha trái bảng ⇒ lỗi (exit 3), không "cố gắng hiểu �
 
 ## 4. Định dạng state
 
-Xem `state.schema.json`. Tóm tắt:
+Xem `spec/state.schema.json` (schema của loop) và `spec/schema.json` (schema của record output). Tóm tắt:
 
 ```json
 {
@@ -125,7 +125,15 @@ Xem `state.schema.json`. Tóm tắt:
 | 4 | vi phạm nguyên tắc (tự chấm, 0 giả, null thiếu reason, evidence cũ) |
 | 5 | state hỏng / sai schema |
 
-## 6. Điều contract này KHÔNG bảo đảm
+## 6. Ba bẫy kiểm riêng
+
+| Bẫy | Check trong `spec/checks.py` | Ngưỡng / hành vi |
+|---|---|---|
+| Múi giờ / ranh giới ngày | `utc_format` (bắt buộc), `day_boundary` (bắt buộc) | timestamp không phải `…Z` ⇒ fail; thiếu `system_day` ⇒ fail; lệch ngày UTC ⇒ warn |
+| Sinh hàng loạt đáng ngờ | `throughput`, `duplicates`, `length_distribution` | > 50 record/giây ⇒ fail; trùng lặp > 5% ⇒ fail; outlier > 3×IQR ⇒ warn; mẫu < 30 ⇒ `null` + reason |
+| Số 0 giả | `fake_zero` (bắt buộc) | `0` thiếu `measured_by`/`evidence`, hoặc `evidence` không trỏ tới `log/*.jsonl#LN` có thật ⇒ fail |
+
+## 7. Điều contract này KHÔNG bảo đảm
 
 - Không chặn được executor giả mạo evidence nếu nó có quyền ghi file.
 - Không bảo đảm plan *đúng* — chỉ bảo đảm plan *có kiểm chứng cho từng bước*.
