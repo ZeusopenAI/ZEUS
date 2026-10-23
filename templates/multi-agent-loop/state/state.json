@@ -1,0 +1,50 @@
+{
+  "schema": "multi-agent-loop-state/1",
+  "system_day": "2026-10-23",
+  "timezone": "UTC",
+  "task": {
+    "slug": "demo",
+    "goal": "Mô tả ngắn mục tiêu của vòng vận hành này",
+    "done_criteria": [
+      "mọi record trong output/ khớp spec/schema.json",
+      "không có metric 0 nào thiếu evidence",
+      "không có null nào thiếu reason",
+      "checks.py overall = pass"
+    ]
+  },
+  "quota": {
+    "max_records_per_day": 500,
+    "used_records_today": 0,
+    "remaining_records": 500,
+    "reset_at": "2026-10-24T00:00:00Z"
+  },
+  "progress": {
+    "done": [],
+    "in_progress": null,
+    "blocked": null
+  },
+  "roles": {
+    "planner": "planner",
+    "executor": "executor",
+    "verifier": "verifier",
+    "human": "human"
+  },
+  "counters": {
+    "records_processed": {
+      "value": 0,
+      "measured_by": "state/state.json (bootstrap)",
+      "evidence": "log/bootstrap.jsonl#L1"
+    },
+    "records_failed": {
+      "value": null,
+      "reason": "chưa có lần chạy nào — chưa đo được, không ghi 0"
+    },
+    "avg_ms_per_record": {
+      "value": null,
+      "reason": "chưa có log xử lý để tính trung bình"
+    }
+  },
+  "last_verified": null,
+  "updated_at": "2026-10-23T00:00:00Z",
+  "updated_by": "bootstrap"
+}

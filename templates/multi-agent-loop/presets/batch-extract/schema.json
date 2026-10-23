@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "batch-extract record",
+  "description": "Một bản ghi trích xuất: trường trích được là string, không trích được là null + reason ở cấp trường.",
+  "type": "object",
+  "required": [
+    "id",
+    "created_at",
+    "source",
+    "status",
+    "fields",
+    "metrics"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.:-]+$"
+    },
+    "created_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "ok",
+        "partial",
+        "skipped"
+      ]
+    },
+    "reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "fields": {
+      "type": "object",
+      "description": "Giá trị trích xuất. Trường không đọc được: null + reason_fields.<tên>. Record không phải 'skipped' phải có ít nhất 1 trường (xem allOf)."
+    },
+    "reason_fields": {
+      "type": "object",
+      "description": "Lý do cho từng trường null. Không được bỏ trống khi fields có null.",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "extraction_coverage"
+      ],
+      "additionalProperties": {
+        "$ref": "#/$defs/metric"
+      },
+      "properties": {
+        "extraction_coverage": {
+          "$ref": "#/$defs/metric"
+        }
+      }
+    },
+    "evidence": {
+      "type": "string"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "partial",
+              "skipped"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "ok",
+              "partial"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "fields": {
+            "minProperties": 1
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "metric": {
+      "oneOf": [
+        {
+          "title": "Đã đo",
+          "type": "object",
+          "required": [
+            "value",
+            "measured_by"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "type": [
+                "number",
+                "integer",
+                "boolean"
+              ]
+            },
+            "measured_by": {
+              "type": "string",
+              "minLength": 1
+            },
+            "evidence": {
+              "type": "string"
+            },
+            "unit": {
+              "type": "string"
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "value": {
+                    "const": 0
+                  }
+                },
+                "required": [
+                  "value"
+                ]
+              },
+              "then": {
+                "required": [
+                  "evidence"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "title": "Chưa đo được",
+          "type": "object",
+          "required": [
+            "value",
+            "reason"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "type": "null"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    }
+  }
+}

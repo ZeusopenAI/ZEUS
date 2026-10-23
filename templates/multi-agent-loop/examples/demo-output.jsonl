@@ -1,0 +1,2 @@
+{"id": "r-0001", "created_at": "2026-10-23T08:00:01Z", "source": "input/raw.example.jsonl#L1", "status": "ok", "content": "kết quả một", "metrics": {"latency_ms": {"value": 120, "measured_by": "ci", "unit": "ms"}}}
+{"id": "r-0002", "created_at": "2026-10-23T08:00:02Z", "source": "input/raw.example.jsonl#L2", "status": "partial", "reason": "thiếu address", "metrics": {"confidence": {"value": null, "reason": "model không trả score"}}}

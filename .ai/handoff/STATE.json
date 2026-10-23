@@ -3,7 +3,15 @@
   "schema": 1,
   "active_directive": null,
   "history": [],
-  "last_report": null,
-  "updated_at": "2026-10-23T00:00:00Z",
-  "updated_by": "bootstrap"
+  "last_report": {
+    "id": "arena-20261023T2010Z-0b18",
+    "at": "2026-10-23T20:10:16Z",
+    "status": "DONE",
+    "directive_id": "không xác định",
+    "branch": "arena/f2e9eb0f-zeus",
+    "head": "2748b2a",
+    "summary": "Hoàn tất nhánh 'template repo architecture' (follow-up 3): 3 preset (batch-extract, bulk-grading, data-validation), scaffolder scripts/new_loop.py tự kiểm chứng trước khi giao, scripts/check_state.py, ARCHITECTURE.md 11 mục, và 2 fix lỗi thật (CI xanh nhưng không chạy checks.py do heredoc trong YAML; validate() bỏ qua additionalProperties dạng schema nên 0 giả lọt). PR #13 cập nhật, CI 4/4 xanh."
+  },
+  "updated_at": "2026-10-23T20:10:16Z",
+  "updated_by": "arena(closeout)"
 }

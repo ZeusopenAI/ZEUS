@@ -1,0 +1,1 @@
+{"at": "2026-10-23T00:00:00Z", "event": "bootstrap", "by": "bootstrap", "records": 0, "started_at": "2026-10-23T00:00:00Z", "finished_at": "2026-10-23T00:00:00Z", "note": "Dòng log gốc, chứng minh counter records_processed=0 trong state/state.json"}

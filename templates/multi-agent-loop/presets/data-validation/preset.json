@@ -1,0 +1,20 @@
+{
+  "name": "data-validation",
+  "title": "Kiểm tra dữ liệu",
+  "description": "Kiểm từng bản ghi theo bộ luật, ghi lại vi phạm. Phù hợp: kiểm danh mục sản phẩm, kiểm hoá đơn, kiểm dữ liệu CRM trước khi import.",
+  "owner_note": "0 vi phạm là kết quả tốt nhưng phải chứng minh được: cần evidence của lần chạy validator. Không chạy thì null + reason.",
+  "state": {
+    "quota": { "max_records_per_day": 5000, "metric": "records" },
+    "done_criteria": [
+      "mọi record có valid + violations",
+      "valid=false thì violations phải có ít nhất 1 mục",
+      "violation_count 0 có evidence",
+      "checks.py overall = pass"
+    ]
+  },
+  "checks": {
+    "max_duplicate_rate": 0.5,
+    "max_records_per_second": 200.0,
+    "zero_guard_fields": ["violation_count", "errors", "count", "total"]
+  }
+}

@@ -56,3 +56,14 @@ agents/hermes/.cache/
 # Hermes Owner Protocol — runtime scratch (không commit)
 .ai/handoff/.cache/
 .ai/handoff/.tmp/
+
+# Template multi-agent-loop — dữ liệu chạy, không commit
+templates/multi-agent-loop/verify/*.json
+!templates/multi-agent-loop/verify/README.md
+templates/multi-agent-loop/output/*.jsonl
+!templates/multi-agent-loop/output/README.md
+templates/multi-agent-loop/log/*.jsonl
+!templates/multi-agent-loop/log/bootstrap.jsonl
+templates/multi-agent-loop/input/*.jsonl
+!templates/multi-agent-loop/input/raw.example.jsonl
+templates/multi-agent-loop/.loop/

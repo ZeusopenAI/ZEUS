@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ZeusopenAI/ZEUS/templates/multi-agent-loop/state.schema.json",
+  "title": "Multi-Agent Loop state",
+  "type": "object",
+  "required": ["schema", "task", "roles", "phase", "attempts"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "const": "multi-agent-loop/1" },
+    "task": {
+      "type": "object",
+      "required": ["slug", "created_at"],
+      "properties": {
+        "slug": { "type": "string", "minLength": 1 },
+        "goal": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "created_by": { "type": "string" }
+      }
+    },
+    "roles": {
+      "type": "object",
+      "required": ["planner", "executor", "verifier", "human"],
+      "properties": {
+        "planner": { "type": "string", "minLength": 1 },
+        "executor": { "type": "string", "minLength": 1 },
+        "verifier": { "type": "string", "minLength": 1 },
+        "human": { "type": "string", "minLength": 1 }
+      }
+    },
+    "phase": {
+      "enum": ["planned", "submitted", "verified_pass", "verified_fail", "accepted", "rejected"]
+    },
+    "plan": {
+      "type": ["object", "null"],
+      "required": ["steps"],
+      "properties": {
+        "planned_at": { "type": "string", "format": "date-time" },
+        "planned_by": { "type": "string" },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "text", "check"],
+            "properties": {
+              "id": { "type": "integer", "minimum": 1 },
+              "text": { "type": "string", "minLength": 1 },
+              "check": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Lệnh kiểm chứng bước này. Rỗng = plan không hợp lệ."
+              }
+            }
+          }
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/metric" },
+      "description": "Metric mới nhất (bản sao rút gọn từ attempt gần nhất)."
+    },
+    "attempts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["n", "submitted_at", "submitted_by", "summary"],
+        "properties": {
+          "n": { "type": "integer", "minimum": 1 },
+          "submitted_at": { "type": "string", "format": "date-time" },
+          "submitted_by": { "type": "string" },
+          "summary": { "type": "string" },
+          "evidence_ids": { "type": "array", "items": { "type": "string" } },
+          "metrics": {
+            "type": "object",
+            "additionalProperties": { "$ref": "#/$defs/metric" }
+          },
+          "verification": {
+            "type": ["object", "null"],
+            "required": ["result", "verified_at", "verified_by", "commands"],
+            "properties": {
+              "result": { "enum": ["pass", "fail"] },
+              "verified_at": { "type": "string", "format": "date-time" },
+              "verified_by": { "type": "string" },
+              "fresh_evidence": { "type": "integer", "minimum": 1 },
+              "ignored_stale_evidence": { "type": "integer", "minimum": 0 },
+              "commands": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["evidence_id", "command", "exit_code", "started_at"],
+                  "properties": {
+                    "evidence_id": { "type": "string" },
+                    "command": { "type": "string" },
+                    "exit_code": { "type": "integer" },
+                    "started_at": { "type": "string", "format": "date-time" },
+                    "finished_at": { "type": "string", "format": "date-time" },
+                    "stdout_sha256": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["at", "by", "action"],
+        "properties": {
+          "at": { "type": "string", "format": "date-time" },
+          "by": { "type": "string" },
+          "action": { "enum": ["accept", "reject"] },
+          "attempt": { "type": "integer", "minimum": 1 },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "updated_by": { "type": "string" }
+  },
+  "$defs": {
+    "metric": {
+      "oneOf": [
+        {
+          "title": "Đã đo",
+          "type": "object",
+          "required": ["value", "measured_by"],
+          "properties": {
+            "value": { "type": ["number", "integer", "boolean"] },
+            "measured_by": { "type": "string", "minLength": 1 },
+            "evidence": {
+              "type": "string",
+              "description": "Bắt buộc khi value = 0 (luật không ghi 0 giả)."
+            },
+            "unit": { "type": "string" },
+            "note": { "type": "string" },
+            "at": { "type": "string", "format": "date-time" }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": { "value": { "const": 0 } },
+                "required": ["value"]
+              },
+              "then": { "required": ["evidence"] }
+            }
+          ]
+        },
+        {
+          "title": "Chưa đo được",
+          "type": "object",
+          "required": ["value", "reason"],
+          "properties": {
+            "value": { "type": "null" },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    }
+  }
+}
