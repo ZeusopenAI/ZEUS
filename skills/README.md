@@ -83,6 +83,16 @@ Full guide: [skills/hermes-github-access/SKILL.md](hermes-github-access/SKILL.md
 
 ---
 
+### 7. hermes-media-tools
+
+**Purpose**: Xử lý ảnh/video hàng loạt (Pillow + ffmpeg) và đọc bài viết web thành văn bản sạch — offline, không tốn credit.
+
+**When to use**: Khi cần resize/crop/nén ảnh, cắt/nén video, xuất thumbnail, đóng watermark của chính mình, hoặc đọc/tóm tắt một bài viết từ URL.
+
+Full guide: [skills/hermes-media-tools/SKILL.md](hermes-media-tools/SKILL.md) & [docs/HERMES_FULL_CAPABILITY.md](../docs/HERMES_FULL_CAPABILITY.md)
+
+---
+
 ## Đồng bộ sang Hermes
 
 Mọi skill trong thư mục này được đẩy vào runtime Hermes bằng:

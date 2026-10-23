@@ -25,6 +25,12 @@ Cập nhật: 2026-10-23
   cấu hình `gh` làm credential helper; `--test-write` chứng minh quyền ghi bằng cách tạo/xoá
   nhánh test. `scripts/hermes-github-check.sh` chẩn đoán chỉ-đọc (token, scopes, quyền repo,
   git, thiết lập Actions). Kèm skill `hermes-github-access` + `docs/HERMES_GITHUB_TOKEN.md`.
+- **Năng lực media cho Hermes**: `scripts/hermes-power-setup.sh` cài + kiểm tra một lượt
+  (ffmpeg apt hoặc bản pip, Pillow, git/gh, token, parser đọc bài, media);
+  `scripts/media-batch.py` xử lý ảnh/video hàng loạt (resize/crop/nén/watermark của chính
+  mình, preset TikTok/Square/YouTube, trim, thumbnail, frames); `scripts/read-article.py`
+  đọc bài web thành Markdown (stdlib, bỏ menu/quảng cáo). Kèm skill `hermes-media-tools`
+  và `docs/HERMES_FULL_CAPABILITY.md`.
 
 ## Nhịp trước (14/10/2026)
 
