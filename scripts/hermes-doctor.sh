@@ -14,6 +14,7 @@ set -uo pipefail
 #   4. Gateway có active (nếu máy dùng systemd)
 #   5. .env có ít nhất một model key (chỉ kiểm tên, không in giá trị)
 #   6. Timer auto-sync có bật (nếu đã cài)
+#   7. GitHub token hợp lệ + đủ quyền ghi (nếu đã cấu hình)
 #
 # Mã thoát: 0 = khỏe, 1 = có drift/vấn đề, 2 = thiếu runtime
 # ============================================================================
@@ -149,6 +150,26 @@ if [ -f "$ENV_FILE" ]; then
   [ "$found" = "0" ] && bad "chưa có model key nào trong .env → Hermes không gọi được model"
 else
   warn "chưa có $ENV_FILE (chưa cấu hình model key)"
+fi
+
+# ── 6. GitHub token (nếu có) ────────────────────────────────────────────────
+head_ "GitHub token"
+# Chỉ kiểm khi token nằm trong .env của chính Hermes — đó là thứ gateway nạp.
+# (env var trong shell hiện tại có thể là token của công cụ khác, không liên quan Hermes.)
+if [ -x "$REPO_DIR/scripts/hermes-github-check.sh" ] && \
+   grep -qE '^(GITHUB_TOKEN|GH_TOKEN)=.+' "$HERMES_HOME/.env" 2>/dev/null; then
+  set +e
+  out="$(HERMES_HOME="$HERMES_HOME" bash "$REPO_DIR/scripts/hermes-github-check.sh" --quiet 2>&1)"
+  rc=$?
+  set -e
+  if [ "$rc" -eq 0 ]; then
+    ok "token hợp lệ và đủ quyền"
+  else
+    printf '%s\n' "$out" | sed 's/^/    /'
+    bad "token GitHub có vấn đề (chạy: bash scripts/hermes-github-check.sh)"
+  fi
+else
+  warn "chưa cấu hình GitHub token (Hermes không tự push/PR được)"
 fi
 
 # ── Kết luận ────────────────────────────────────────────────────────────────

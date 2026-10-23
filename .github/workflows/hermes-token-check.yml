@@ -1,0 +1,79 @@
+name: Kiểm tra quyền GitHub token
+
+# Chạy thủ công để biết token thực sự có quyền gì TRƯỚC khi gắn vào Hermes.
+# Không in giá trị token, chỉ in login + quyền.
+#
+# Cách dùng:
+#   1. Settings → Secrets and variables → Actions → New repository secret
+#        Name:  HERMES_GH_PAT
+#        Value: token fine-grained (xem docs/HERMES_GITHUB_TOKEN.md)
+#   2. Tab Actions → "Kiểm tra quyền GitHub token" → Run workflow
+#
+# Nếu để trống secret, workflow sẽ kiểm GITHUB_TOKEN của Actions (chỉ để tham khảo —
+# token này KHÔNG dùng được ngoài workflow).
+
+on:
+  workflow_dispatch:
+    inputs:
+      use_pat:
+        description: "Dùng secret HERMES_GH_PAT (bỏ chọn = kiểm GITHUB_TOKEN của Actions)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Chẩn đoán quyền token
+        env:
+          PAT: ${{ secrets.HERMES_GH_PAT }}
+          BOT: ${{ secrets.GITHUB_TOKEN }}
+          USE_PAT: ${{ inputs.use_pat }}
+          REPO_SLUG: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          mkdir -p "$RUNNER_TEMP/hh"
+          export HERMES_HOME="$RUNNER_TEMP/hh"
+
+          if [ "$USE_PAT" = "true" ]; then
+            if [ -z "${PAT:-}" ]; then
+              echo "::error::Chưa có secret HERMES_GH_PAT. Thêm ở Settings → Secrets and variables → Actions."
+              exit 1
+            fi
+            export GITHUB_TOKEN="$PAT"
+            echo "Đang kiểm: HERMES_GH_PAT (token bạn tự tạo)"
+          else
+            export GITHUB_TOKEN="$BOT"
+            echo "Đang kiểm: GITHUB_TOKEN của Actions (không dùng được ngoài workflow)"
+          fi
+
+          # Không truyền token qua tham số; nó chỉ nằm trong env của bước này.
+          set +e
+          bash scripts/hermes-github-check.sh --repo "$REPO_SLUG" | tee /tmp/out.txt
+          rc=${PIPESTATUS[0]}
+          set -e
+
+          {
+            echo "## Kết quả kiểm tra token"
+            echo '```'
+            cat /tmp/out.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$rc" -eq 0 ]; then
+            echo "::notice::Token OK, đủ quyền."
+          else
+            echo "::warning::Token thiếu quyền — xem bảng quyền trong docs/HERMES_GITHUB_TOKEN.md"
+          fi
+          exit 0

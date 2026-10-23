@@ -20,6 +20,11 @@ Cập nhật: 2026-10-23
   (Vite + `api/[...path].ts` proxy về backend) đã sẵn sàng; dashboard hỗ trợ
   `VITE_WS_BASE` để realtime trỏ thẳng VPS. Hermes vẫn ở VPS vì cần process 24/7,
   `state.db` và long-polling — serverless không đáp ứng. Xem `docs/VERCEL_DEPLOY.md`.
+- **Token GitHub cho Hermes**: `scripts/hermes-github-setup.sh` nhận token qua stdin
+  (không qua argv, không lưu history), kiểm quyền thật, ghi `~/.hermes/.env` mode 600 và
+  cấu hình `gh` làm credential helper; `--test-write` chứng minh quyền ghi bằng cách tạo/xoá
+  nhánh test. `scripts/hermes-github-check.sh` chẩn đoán chỉ-đọc (token, scopes, quyền repo,
+  git, thiết lập Actions). Kèm skill `hermes-github-access` + `docs/HERMES_GITHUB_TOKEN.md`.
 
 ## Nhịp trước (14/10/2026)
 

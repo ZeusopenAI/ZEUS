@@ -73,6 +73,16 @@ Full guide: [skills/edit-anh/SKILL.md](edit-anh/SKILL.md) & [skills/edit-anh/pro
 
 ---
 
+### 6. hermes-github-access
+
+**Purpose**: Quy trình để Hermes dùng GitHub token đã cấu hình — commit, push, mở PR, sửa workflow — kèm ranh giới an toàn.
+
+**When to use**: Khi Hermes được yêu cầu sửa/push code, mở PR, đổi file CI, hoặc xử lý ảnh/video trên máy.
+
+Full guide: [skills/hermes-github-access/SKILL.md](hermes-github-access/SKILL.md) & [docs/HERMES_GITHUB_TOKEN.md](../docs/HERMES_GITHUB_TOKEN.md)
+
+---
+
 ## Đồng bộ sang Hermes
 
 Mọi skill trong thư mục này được đẩy vào runtime Hermes bằng:
