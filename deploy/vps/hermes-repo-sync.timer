@@ -1,0 +1,13 @@
+[Unit]
+Description=Định kỳ kéo repo ZEUS và đồng bộ skill + ngữ cảnh cho Hermes
+Documentation=file:///opt/zeus/docs/HERMES_AUTO_SYNC.md
+
+[Timer]
+# Lần đầu sau khi boot 3 phút, sau đó mỗi 15 phút.
+OnBootSec=3min
+OnUnitActiveSec=15min
+# Nếu máy tắt/bỏ lỡ mốc thì chạy bù ngay khi bật lại.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

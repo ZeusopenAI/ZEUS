@@ -63,6 +63,55 @@ Full guide: [skills/flowkit-ai-filmmaker/SKILL.md](flowkit-ai-filmmaker/SKILL.md
 
 ---
 
+### 5. edit-anh
+
+**Purpose**: Danh mục 10 quy trình chỉnh sửa ảnh (4K, làm đẹp da, GTA, Minecraft, headshot, studio trắng, LEGO, dòng chảy, selfie nhóm, anime).
+
+**When to use**: Người dùng nói "edit ảnh" hoặc chọn số 1–10 trong menu.
+
+Full guide: [skills/edit-anh/SKILL.md](edit-anh/SKILL.md) & [skills/edit-anh/prompts.md](edit-anh/prompts.md)
+
+---
+
+### 6. hermes-github-access
+
+**Purpose**: Quy trình để Hermes dùng GitHub token đã cấu hình — commit, push, mở PR, sửa workflow — kèm ranh giới an toàn.
+
+**When to use**: Khi Hermes được yêu cầu sửa/push code, mở PR, đổi file CI, hoặc xử lý ảnh/video trên máy.
+
+Full guide: [skills/hermes-github-access/SKILL.md](hermes-github-access/SKILL.md) & [docs/HERMES_GITHUB_TOKEN.md](../docs/HERMES_GITHUB_TOKEN.md)
+
+---
+
+### 7. hermes-media-tools
+
+**Purpose**: Xử lý ảnh/video hàng loạt (Pillow + ffmpeg) và đọc bài viết web thành văn bản sạch — offline, không tốn credit.
+
+**When to use**: Khi cần resize/crop/nén ảnh, cắt/nén video, xuất thumbnail, đóng watermark của chính mình, hoặc đọc/tóm tắt một bài viết từ URL.
+
+Full guide: [skills/hermes-media-tools/SKILL.md](hermes-media-tools/SKILL.md) & [docs/HERMES_FULL_CAPABILITY.md](../docs/HERMES_FULL_CAPABILITY.md)
+
+---
+
+## Đồng bộ sang Hermes
+
+Mọi skill trong thư mục này được đẩy vào runtime Hermes bằng:
+
+```bash
+bash scripts/hermes-sync.sh          # hoặc --with-memory
+```
+
+Script còn sinh thêm skill **`zeus-context`** (tự động, đừng sửa tay) chứa trạng thái
+repo mới nhất: Status, TODO, Roadmap, quy tắc AGENTS, danh sách docs/skills.
+
+- Codespace: tự chạy mỗi lần mở (`.devcontainer/`).
+- VPS: systemd timer 15 phút (`deploy/vps/hermes-repo-sync.timer`).
+- CI: `.github/workflows/hermes-skill-sync.yml` validate + đóng gói.
+
+Chi tiết: [docs/HERMES_AUTO_SYNC.md](../docs/HERMES_AUTO_SYNC.md)
+
+---
+
 ## Skill Development Guidelines
 
 Each skill should:

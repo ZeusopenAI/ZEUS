@@ -1,0 +1,32 @@
+[Unit]
+Description=ZEUS → Hermes: kéo repo và đồng bộ skill + ngữ cảnh
+Documentation=file:///opt/zeus/docs/HERMES_AUTO_SYNC.md
+After=network-online.target hermes-gateway.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=hermes
+Group=hermes
+Environment=ZEUS_HOME=/opt/zeus
+Environment=HERMES_HOME=/home/hermes/.hermes
+Environment=VENV=/opt/zeus/hermes-env
+Environment=REPO_BRANCH=main
+ExecStart=/usr/bin/env bash /opt/zeus/deploy/vps/hermes-repo-sync.sh
+# 0 = không đổi, 10 = đã cập nhật → cả hai đều là thành công
+SuccessExitStatus=0 10
+TimeoutStartSec=15min
+Nice=10
+
+# Siết bảo mật: chỉ ghi được trong repo + runtime của Hermes
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/opt/zeus /home/hermes/.hermes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+
+[Install]
+WantedBy=multi-user.target

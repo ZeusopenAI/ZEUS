@@ -1,0 +1,97 @@
+name: Sync skills & context → Hermes
+
+# Khi main thay đổi skill/tài liệu/quy tắc:
+#   1. validate mọi SKILL.md (frontmatter, trùng tên, link nội bộ)
+#   2. nếu đã cấu hình secret HERMES_SYNC_WEBHOOK → gọi VPS cập nhật ngay
+#   3. luôn upload bản skill đã đóng gói để tải về cài tay khi cần
+#
+# Không đụng tới model/credit: job này không gọi LLM.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'skills/**'
+      - 'docs/**'
+      - 'Status.md'
+      - 'TODO.md'
+      - 'Roadmap.md'
+      - 'AGENTS.md'
+      - 'scripts/hermes-sync.sh'
+      - 'scripts/validate-skills.py'
+      - '.github/workflows/hermes-skill-sync.yml'
+  workflow_dispatch:
+    inputs:
+      notify_only:
+        description: "Chỉ gọi webhook VPS, không kiểm tra lại skill"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hermes-skill-sync
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    if: ${{ !inputs.notify_only }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate SKILL.md (frontmatter, giới hạn, link)
+        run: python3 scripts/validate-skills.py --strict
+
+      - name: Chạy thử đồng bộ vào thư mục tạm (không chạm Hermes thật)
+        run: |
+          export HERMES_HOME="$RUNNER_TEMP/hermes-home"
+          mkdir -p "$HERMES_HOME"
+          set +e
+          bash scripts/hermes-sync.sh --with-memory
+          rc=$?
+          set -e
+          if [ "$rc" -ne 0 ] && [ "$rc" -ne 10 ]; then
+            echo "::error::hermes-sync.sh lỗi (mã $rc)"
+            exit 1
+          fi
+          echo "== Skill sinh ra =="
+          ls -1 "$HERMES_HOME/skills"
+          head -20 "$HERMES_HOME/skills/zeus-context/SKILL.md"
+
+      - name: Đóng gói skill + context để tải về
+        uses: actions/upload-artifact@v4
+        with:
+          name: hermes-skills-${{ github.sha }}
+          path: ${{ runner.temp }}/hermes-home/skills
+          retention-days: 30
+
+  notify-vps:
+    needs: validate
+    if: ${{ always() && !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Gọi webhook cập nhật trên VPS
+        env:
+          WEBHOOK_URL: ${{ secrets.HERMES_SYNC_WEBHOOK }}
+          WEBHOOK_TOKEN: ${{ secrets.HERMES_SYNC_TOKEN }}
+        run: |
+          if [ -z "$WEBHOOK_URL" ]; then
+            echo "::notice::Chưa có secret HERMES_SYNC_WEBHOOK — bỏ qua. VPS sẽ tự cập nhật theo timer 15 phút."
+            exit 0
+          fi
+          curl -fsS -m 30 -X POST "$WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            ${WEBHOOK_TOKEN:+-H "Authorization: Bearer $WEBHOOK_TOKEN"} \
+            -d "{\"event\":\"push\",\"repo\":\"${{ github.repository }}\",\"sha\":\"${{ github.sha }}\"}" \
+            && echo "Đã báo VPS cập nhật." \
+            || echo "::warning::Webhook không phản hồi — VPS vẫn sẽ tự cập nhật theo timer."

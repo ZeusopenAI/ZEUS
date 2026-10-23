@@ -1,6 +1,38 @@
 # Status — Zeus / Quang Quý AI
 
-Cập nhật: 2026-10-14
+Cập nhật: 2026-10-23
+
+## Nhịp gần nhất (23/10/2026)
+
+- **Đường ống "repo → Hermes" khép kín**: `scripts/hermes-sync.sh` đẩy skill + sinh skill
+  `zeus-context` (Status/TODO/Roadmap/AGENTS/bản đồ repo/docs/git HEAD) vào runtime Hermes;
+  `scripts/gen-zeus-context.py` sinh nội dung tất định, có ngân sách ký tự, không cắt cụt.
+- **Ba kênh cập nhật**: Codespace tự sync mỗi lần mở (`.devcontainer/`), VPS tự sync mỗi 15 phút
+  (`deploy/vps/hermes-repo-sync.{service,timer}`), và GitHub Actions cập nhật ngay khi push
+  qua SSH/webhook (`.github/workflows/hermes-skill-sync.yml`).
+- **Kiểm tra drift**: `scripts/hermes-doctor.sh` so skill trên máy với repo, kiểm commit của
+  `zeus-context`, trạng thái gateway/timer và sự hiện diện của model key (chỉ đọc tên biến).
+- **Chốt an toàn**: script VPS từ chối chạy khi sai nhánh hoặc có thay đổi chưa commit
+  (`exit 3`, cần `--force` nếu chủ ý) — tránh `git reset --hard` nuốt mất việc đang làm.
+- CI `hermes-skill-sync.yml` validate frontmatter (`--strict`) và chạy sync 2 lần để bắt
+  lỗi không idempotent; không gọi LLM nên không tốn credit.
+- **Vercel (chia đôi)**: `site/vercel.json` (static) và `flowkit/dashboard/vercel.json`
+  (Vite + `api/[...path].ts` proxy về backend) đã sẵn sàng; dashboard hỗ trợ
+  `VITE_WS_BASE` để realtime trỏ thẳng VPS. Hermes vẫn ở VPS vì cần process 24/7,
+  `state.db` và long-polling — serverless không đáp ứng. Xem `docs/VERCEL_DEPLOY.md`.
+- **Token GitHub cho Hermes**: `scripts/hermes-github-setup.sh` nhận token qua stdin
+  (không qua argv, không lưu history), kiểm quyền thật, ghi `~/.hermes/.env` mode 600 và
+  cấu hình `gh` làm credential helper; `--test-write` chứng minh quyền ghi bằng cách tạo/xoá
+  nhánh test. `scripts/hermes-github-check.sh` chẩn đoán chỉ-đọc (token, scopes, quyền repo,
+  git, thiết lập Actions). Kèm skill `hermes-github-access` + `docs/HERMES_GITHUB_TOKEN.md`.
+- **Năng lực media cho Hermes**: `scripts/hermes-power-setup.sh` cài + kiểm tra một lượt
+  (ffmpeg apt hoặc bản pip, Pillow, git/gh, token, parser đọc bài, media);
+  `scripts/media-batch.py` xử lý ảnh/video hàng loạt (resize/crop/nén/watermark của chính
+  mình, preset TikTok/Square/YouTube, trim, thumbnail, frames); `scripts/read-article.py`
+  đọc bài web thành Markdown (stdlib, bỏ menu/quảng cáo). Kèm skill `hermes-media-tools`
+  và `docs/HERMES_FULL_CAPABILITY.md`.
+
+## Nhịp trước (14/10/2026)
 
 ## Nhịp gần nhất (14/10/2026)
 

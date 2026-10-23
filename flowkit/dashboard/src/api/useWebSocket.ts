@@ -12,8 +12,13 @@ export function useWebSocket(onMessage?: (event: WSEvent) => void) {
   useEffect(() => { onMessageRef.current = onMessage }, [onMessage])
 
   const connect = useCallback(() => {
+    // VITE_WS_BASE cho phép tách frontend (Vercel) khỏi backend (VPS):
+    //   VITE_WS_BASE=wss://flowkit.example.com
+    // Bỏ trống → dùng same-origin như trước (dev qua Vite proxy, hoặc self-host).
+    const configured = import.meta.env.VITE_WS_BASE as string | undefined
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const ws = new WebSocket(`${proto}//${window.location.host}/ws/dashboard`)
+    const wsBase = configured?.replace(/\/+$/, '') || `${proto}//${window.location.host}`
+    const ws = new WebSocket(`${wsBase}/ws/dashboard`)
     wsRef.current = ws
 
     ws.onopen = () => {
