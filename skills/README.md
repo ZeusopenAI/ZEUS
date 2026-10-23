@@ -63,6 +63,35 @@ Full guide: [skills/flowkit-ai-filmmaker/SKILL.md](flowkit-ai-filmmaker/SKILL.md
 
 ---
 
+### 5. edit-anh
+
+**Purpose**: Danh mục 10 quy trình chỉnh sửa ảnh (4K, làm đẹp da, GTA, Minecraft, headshot, studio trắng, LEGO, dòng chảy, selfie nhóm, anime).
+
+**When to use**: Người dùng nói "edit ảnh" hoặc chọn số 1–10 trong menu.
+
+Full guide: [skills/edit-anh/SKILL.md](edit-anh/SKILL.md) & [skills/edit-anh/prompts.md](edit-anh/prompts.md)
+
+---
+
+## Đồng bộ sang Hermes
+
+Mọi skill trong thư mục này được đẩy vào runtime Hermes bằng:
+
+```bash
+bash scripts/hermes-sync.sh          # hoặc --with-memory
+```
+
+Script còn sinh thêm skill **`zeus-context`** (tự động, đừng sửa tay) chứa trạng thái
+repo mới nhất: Status, TODO, Roadmap, quy tắc AGENTS, danh sách docs/skills.
+
+- Codespace: tự chạy mỗi lần mở (`.devcontainer/`).
+- VPS: systemd timer 15 phút (`deploy/vps/hermes-repo-sync.timer`).
+- CI: `.github/workflows/hermes-skill-sync.yml` validate + đóng gói.
+
+Chi tiết: [docs/HERMES_AUTO_SYNC.md](../docs/HERMES_AUTO_SYNC.md)
+
+---
+
 ## Skill Development Guidelines
 
 Each skill should:
