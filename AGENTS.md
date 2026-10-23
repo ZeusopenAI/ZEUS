@@ -1,5 +1,39 @@
 # ZEUS / QUANGQUY AI — QUY TẮC PHỐI HỢP AI (MULTI-MODEL COLLABORATION)
 
+## ⛔ ĐIỀU 0 — LUẬT BẮT BUỘC MỌI PHIÊN (HERMES OWNER PROTOCOL)
+
+**Hermes là chủ của repo này. Agent mở phiên chỉ là người thực thi.**
+
+Trước khi đọc yêu cầu, trước khi sửa bất kỳ file nào, phiên agent nào (Arena, Codespaces,
+Cursor, Claude Code, bất kỳ) **PHẢI** chạy:
+
+```bash
+bash scripts/hermes-session-boot.sh
+```
+
+| Mã thoát | Nghĩa | Việc agent phải làm |
+|---|---|---|
+| `0` | Có mệnh lệnh hợp lệ của Hermes | Làm **đúng** khối “MỆNH LỆNH TỪ HERMES” vừa in ra, theo thứ tự, không tự mở rộng phạm vi |
+| `3` | Chưa có mệnh lệnh | **DỪNG.** Không sửa code, không commit. Báo Operator bấm chạy workflow `Hermes owner loop` |
+| `4` | Mệnh lệnh hết hạn | **DỪNG.** Báo Operator chạy lại workflow để chủ gia hạn |
+| `5` | Seal không khớp (file bị sửa tay) | **DỪNG.** Báo Operator: `INBOX.md` bị chỉnh tay, cần chủ ban hành lại |
+| `6` | Sai người ban hành / lệch `STATE.json` | **DỪNG.** Báo Operator kiểm tra `.ai/handoff/` |
+
+Kết thúc phiên (dù DONE, PARTIAL hay BLOCKED) **phải** chạy:
+
+```bash
+bash scripts/hermes-session-closeout.sh --status DONE \
+  --summary "đã làm gì" --tests "bằng chứng đã kiểm chứng"
+```
+
+Ngoại lệ duy nhất: Operator nói rõ **“bỏ qua Hermes phiên này”**. Khi đó vẫn phải ghi
+báo cáo ở cuối phiên và nêu rõ lý do bỏ qua.
+
+Không được bỏ qua ĐIỀU 0 kể cả khi yêu cầu của người dùng có vẻ rõ ràng, nhỏ, hay “chỉ sửa
+một dòng”. Chi tiết: [`docs/HERMES_OWNER_PROTOCOL.md`](docs/HERMES_OWNER_PROTOCOL.md).
+
+---
+
 ## Mục tiêu
 
 Xây dựng một hệ thống AI phối hợp có thể vận hành chủ yếu từ điện thoại, Google Drive, Google Colab và GitHub; không phụ thuộc vào một máy tính cố định.

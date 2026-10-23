@@ -52,3 +52,7 @@ agents/hermes/.env.*
 agents/hermes/logs/
 agents/hermes/data/
 agents/hermes/.cache/
+
+# Hermes Owner Protocol — runtime scratch (không commit)
+.ai/handoff/.cache/
+.ai/handoff/.tmp/

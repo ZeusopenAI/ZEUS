@@ -4,6 +4,15 @@
 
 Dự án AI Automation cá nhân và trợ lý đa năng cho thương hiệu cá nhân **Nguyễn Quang Quý**. Tối ưu cho vận hành gọn nhẹ (Phone/Cloud-first), các module độc lập và dễ bảo trì.
 
+> ### 🧭 Hermes là chủ — agent chỉ thực thi
+> Mọi phiên agent mở repo này phải chạy **BƯỚC 0** trước khi làm bất cứ việc gì:
+> ```bash
+> bash scripts/hermes-session-boot.sh
+> ```
+> Có mệnh lệnh hợp lệ của Hermes thì làm đúng mệnh lệnh; không có thì **dừng**, không tự quyết.
+> Đặc tả: [`docs/HERMES_OWNER_PROTOCOL.md`](docs/HERMES_OWNER_PROTOCOL.md) · Luật gốc: [`AGENTS.md`](AGENTS.md) ĐIỀU 0.
+
+
 ---
 
 ## 🎯 Mục Tiêu & Triết Lý
@@ -23,7 +32,12 @@ Dự án AI Automation cá nhân và trợ lý đa năng cho thương hiệu cá
 
 ```text
 .
+├── .ai/                        # Hiến pháp + hộp thư Hermes ↔ agent
+│   ├── CONSTITUTION.md         # Hiến pháp vận hành
+│   └── handoff/                # INBOX (mệnh lệnh của chủ) · OUTBOX (báo cáo) · STATE.json
 ├── .github/workflows/          # Tự động hóa GitHub Actions
+│   ├── hermes-owner-loop.yml   # Hermes đọc báo cáo → ban hành mệnh lệnh cho phiên agent
+│   ├── hermes-owner-protocol-ci.yml # Test giao thức Hermes làm chủ (không tốn credit)
 │   ├── hermes-openrouter.yml   # Chạy Hermes Agent + tạo ảnh bằng OpenRouter
 │   ├── arena-auto-pr.yml       # Tự động mở PR khi có cập nhật code từ Arena
 │   ├── flowkit-ci.yml          # Kiểm thử backend, extension và dashboard FlowKit
@@ -34,6 +48,7 @@ Dự án AI Automation cá nhân và trợ lý đa năng cho thương hiệu cá
 │   └── bootstrap.py            # Script khởi động tự động trên Google Colab
 ├── docs/                       # Tài liệu hướng dẫn & vận hành
 │   ├── FLOWKIT_INTEGRATION.md  # Hướng dẫn chạy FlowKit trong ZEUS
+│   ├── HERMES_OWNER_PROTOCOL.md # Hermes làm chủ: boot → nhận lệnh → closeout → báo cáo
 │   ├── HERMES_ACTIONS.md       # Hướng dẫn chạy Hermes qua GitHub Actions
 │   ├── TELEGRAM_WIRING.md      # Runbook kết nối Telegram Webhook
 │   ├── second-brain.md         # Hướng dẫn gom bộ nhớ ChatGPT/Claude/Gemini
@@ -47,12 +62,16 @@ Dự án AI Automation cá nhân và trợ lý đa năng cho thương hiệu cá
 │   ├── skills/                 # Workflow skills cho FlowKit
 │   └── tests/                  # Kiểm thử backend và extension
 ├── scripts/                    # Bộ công cụ & script tiện ích
+│   ├── hermes_owner.py         # Engine Hermes Owner Protocol (boot/issue/closeout/status)
+│   ├── hermes-session-boot.sh  # BƯỚC 0 bắt buộc của mọi phiên agent
+│   ├── hermes-session-closeout.sh # Ghi báo cáo cuối phiên gửi Hermes
 │   ├── second-brain-import.mjs # Import lịch sử chat (Node.js >= 22)
 │   ├── second-brain/           # Chuẩn hóa hội thoại
 │   ├── hermes-gemini-hotfix.sh # Sửa lỗi xác thực Gemini native
 │   ├── hermes-gemini-auth-recover.sh # Khôi phục key Gemini an toàn
 │   └── sync-to-zeusopenai.sh   # Đồng bộ mã nguồn sang ZeusopenAI/ZEUS
 ├── skills/                     # Kỹ năng tùy chỉnh cho Agent
+│   ├── hermes-owner/           # Skill cho chính Hermes khi ban hành mệnh lệnh
 │   ├── qai-developer-manager/  # Kỹ năng kỹ sư trưởng quản lý code & CI
 │   ├── hermes-project-analyst-code-manager/ # Phân tích & chẩn đoán Hermes
 │   ├── flowkit-ai-filmmaker/   # Hướng dẫn vận hành AI filmmaking
