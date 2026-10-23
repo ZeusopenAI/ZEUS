@@ -261,6 +261,7 @@ cuối phiên và nêu lý do.
 | `boot` trả 5 | `INBOX.md` bị sửa tay | Ban hành lại lệnh; **đừng** sửa seal |
 | `boot` trả 6 | `STATE.json` lệch `INBOX.md` | `git checkout origin/hermes-owner/state -- .ai/handoff/` |
 | Workflow lỗi “không có khối ZEUS_DIRECTIVE” | Model không theo định dạng | Chạy lại; nếu lặp lại, đổi `model` sang `anthropic/claude-sonnet-4` |
+| Workflow `startup_failure`, annotation “action … is not allowed … must be pinned to a full-length commit SHA” | Policy của repo bắt buộc pin action bằng SHA đầy đủ | Dùng `uses: owner/action@<40 ký tự sha>  # vN`; toàn bộ `.github/workflows/` trong repo đã được pin |
 | Workflow lỗi 403 khi tạo PR | Thiếu quyền | Settings → Actions → General → *Read and write permissions* |
 | `push` nhánh trạng thái bị từ chối | Branch protection | Cho phép `hermes-owner/state` hoặc dùng ruleset riêng |
 | Muốn xem agent đã làm gì | — | `python3 scripts/hermes_owner.py status` + `OUTBOX.md` |

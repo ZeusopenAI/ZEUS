@@ -4,6 +4,10 @@ Cập nhật: 2026-10-23
 
 ## Nhịp gần nhất (23/10/2026)
 
+- **CI toàn repo được pin SHA**: policy của repo chuyển sang chế độ “chỉ cho phép action do GitHub
+  tạo / thuộc ZeusopenAI / verified Marketplace **và phải pin bằng commit SHA đầy đủ**”, khiến mọi
+  workflow dùng `actions/checkout@v4`… chết ngay ở bước khởi động (`startup_failure` 0s). Đã pin
+  toàn bộ `uses:` trong 14 workflow sang SHA 40 ký tự kèm comment phiên bản.
 - **Hermes làm chủ mọi phiên agent (Hermes Owner Protocol)**: `AGENTS.md` có **ĐIỀU 0** buộc
   phiên Arena/Codespaces chạy `bash scripts/hermes-session-boot.sh` trước khi làm bất cứ việc gì.
   Mệnh lệnh do Hermes ban hành nằm ở `.ai/handoff/INBOX.md` (front matter + seal SHA-256,
