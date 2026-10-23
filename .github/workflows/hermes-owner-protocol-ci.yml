@@ -1,0 +1,109 @@
+name: Hermes owner protocol CI
+
+# Kiểm thử giao thức "Hermes làm chủ" — không gọi LLM, không tốn credit.
+# Chạy trên mọi thay đổi liên quan để giao thức không bị phá âm thầm.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".ai/handoff/**"
+      - "scripts/hermes_owner.py"
+      - "scripts/hermes_owner_brief.py"
+      - "scripts/hermes-session-boot.sh"
+      - "scripts/hermes-session-closeout.sh"
+      - "scripts/tests/test_hermes_owner.py"
+      - "skills/hermes-owner/**"
+      - ".github/workflows/hermes-owner-loop.yml"
+      - ".github/workflows/hermes-owner-protocol-ci.yml"
+      - "AGENTS.md"
+      - "docs/HERMES_OWNER_PROTOCOL.md"
+  push:
+    branches:
+      - main
+    paths:
+      - ".ai/handoff/**"
+      - "scripts/hermes_owner.py"
+      - "scripts/hermes_owner_brief.py"
+      - "scripts/hermes-session-boot.sh"
+      - "scripts/hermes-session-closeout.sh"
+      - "scripts/tests/test_hermes_owner.py"
+      - "skills/hermes-owner/**"
+      - ".github/workflows/hermes-owner-loop.yml"
+      - ".github/workflows/hermes-owner-protocol-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hermes-owner-protocol-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  protocol:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cú pháp Python + shell
+        run: |
+          python -m compileall -q scripts/hermes_owner.py scripts/hermes_owner_brief.py scripts/tests/test_hermes_owner.py
+          bash -n scripts/hermes-session-boot.sh
+          bash -n scripts/hermes-session-closeout.sh
+          echo "OK: cú pháp hợp lệ"
+
+      - name: YAML của workflow hợp lệ
+        run: |
+          python -m pip install --quiet pyyaml
+          python - <<'PY'
+          import pathlib, sys, yaml
+          paths = [
+              ".github/workflows/hermes-owner-loop.yml",
+              ".github/workflows/hermes-owner-protocol-ci.yml",
+          ]
+          for p in paths:
+              data = yaml.safe_load(pathlib.Path(p).read_text(encoding="utf-8"))
+              assert "jobs" in data and data["jobs"], f"{p}: thiếu jobs"
+              print(f"OK: {p} ({len(data['jobs'])} job)")
+          PY
+
+      - name: Self-test engine
+        run: python3 scripts/hermes_owner.py selftest
+
+      - name: Unit test giao thức
+        run: python3 -m unittest discover -s scripts/tests -p 'test_hermes_owner.py' -v
+
+      - name: Smoke test bộ dựng bản giao ban
+        run: |
+          python3 scripts/hermes_owner_brief.py \
+            --out-brief /tmp/brief.md --out-prompt /tmp/prompt.txt
+          grep -q "ZEUS_DIRECTIVE" /tmp/prompt.txt
+          echo "OK: prompt có marker mệnh lệnh"
+
+      - name: Frontmatter skill Hermes owner
+        run: python3 scripts/validate-skills.py --strict skills/hermes-owner
+
+      - name: Từ chối bí mật trong .ai/handoff
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git grep -nEI \
+            -e 'AIza[0-9A-Za-z_-]{35}' \
+            -e 'sk-(proj-)?[A-Za-z0-9_-]{20,}' \
+            -e 'github_pat_[A-Za-z0-9_]{20,}' \
+            -e 'gh[pousr]_[A-Za-z0-9]{30,}' \
+            -e 'AKIA[0-9A-Z]{16}' \
+            -- .ai/handoff ; then
+            echo "::error::Phát hiện chuỗi giống bí mật trong .ai/handoff — file này được commit công khai."
+            exit 1
+          fi
+          echo "OK: .ai/handoff không chứa bí mật"

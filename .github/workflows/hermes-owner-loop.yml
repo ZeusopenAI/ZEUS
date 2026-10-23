@@ -1,0 +1,257 @@
+name: Hermes owner loop
+
+# ============================================================================
+# CHỦ THỨC DẬY: Hermes đọc báo cáo của các phiên Arena rồi ban hành mệnh lệnh mới.
+#
+# Luồng:
+#   OUTBOX.md (arena báo cáo) ──► workflow này ──► Hermes (OpenRouter)
+#        ──► INBOX.md + STATE.json trên nhánh hermes-owner/state
+#        ──► PR về main để Operator duyệt
+#        ──► phiên Arena sau chạy `scripts/hermes-session-boot.sh` và nhận lệnh
+#
+# Chạy tự động: chỉ khi biến repo HERMES_OWNER_AUTO = "on"
+#   Settings → Secrets and variables → Actions → Variables → New repository variable
+# Bấm tay bất cứ lúc nào: Actions → Hermes owner loop → Run workflow
+#
+# Tốn credit OpenRouter mỗi lượt. Model mặc định là bản rẻ, max_turns thấp.
+# ============================================================================
+
+on:
+  workflow_dispatch:
+    inputs:
+      operator_note:
+        description: "Ghi chú / ưu tiên của Operator cho lượt này"
+        required: false
+        default: ""
+        type: string
+      model:
+        description: "Model OpenRouter (mặc định: google/gemini-2.5-flash)"
+        required: false
+        default: "google/gemini-2.5-flash"
+        type: string
+      ttl_hours:
+        description: "Mệnh lệnh có hiệu lực bao nhiêu giờ"
+        required: false
+        default: "72"
+        type: string
+      toolsets:
+        description: "Toolset cấp cho Hermes khi ra lệnh (safe = không shell, không ghi file)"
+        required: false
+        default: "safe"
+        type: string
+      dry_run:
+        description: "Chỉ xem Hermes trả lời, không ghi mệnh lệnh"
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    # Mỗi 6 giờ — chỉ chạy khi HERMES_OWNER_AUTO = on.
+    - cron: "0 */6 * * *"
+  push:
+    branches:
+      - main
+    paths:
+      - ".ai/handoff/OUTBOX.md"
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+concurrency:
+  group: hermes-owner-loop
+  cancel-in-progress: false
+
+jobs:
+  summon:
+    # Tự động (schedule/push) cần bật cờ; bấm tay thì luôn chạy.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      vars.HERMES_OWNER_AUTO == 'on'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MODEL: ${{ inputs.model || 'google/gemini-2.5-flash' }}
+      TTL_HOURS: ${{ inputs.ttl_hours || '72' }}
+      TOOLSETS: ${{ inputs.toolsets || 'safe' }}
+      OPERATOR_NOTE: ${{ inputs.operator_note || '' }}
+      DRY_RUN: ${{ inputs.dry_run || 'false' }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Kiểm tra secret OPENROUTER_API_KEY
+        run: |
+          if [ -z "${OPENROUTER_API_KEY:-}" ]; then
+            echo "::error::Chưa có secret OPENROUTER_API_KEY. Settings → Secrets and variables → Actions → New repository secret."
+            exit 1
+          fi
+          echo "Secret đã sẵn sàng (không in giá trị)."
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-hermes-owner-${{ hashFiles('agents/hermes/uv.lock') }}
+
+      - name: Cài Hermes agent
+        run: |
+          python -m pip install --upgrade pip uv
+          uv pip install --system ./agents/hermes
+          hermes --version
+
+      - name: Giới hạn số vòng tool (tiết kiệm credit)
+        run: |
+          mkdir -p .ai/handoff/.tmp
+          hermes config set agent.max_turns 6 2>/dev/null || echo "Bỏ qua: không đặt được max_turns (dùng mặc định)."
+
+      - name: Dựng bản giao ban (không gọi LLM)
+        run: |
+          python3 scripts/hermes_owner_brief.py \
+            --repo . \
+            --operator-note "${OPERATOR_NOTE}" \
+            --out-brief .ai/handoff/.tmp/brief.md \
+            --out-prompt .ai/handoff/.tmp/prompt.txt
+
+      - name: Hermes ban hành mệnh lệnh
+        run: |
+          set +e
+          hermes -z "$(cat .ai/handoff/.tmp/prompt.txt)" \
+            -m "${MODEL}" \
+            --provider openrouter \
+            -t "${TOOLSETS}" \
+            --usage-file .ai/handoff/.tmp/usage.json \
+            > .ai/handoff/.tmp/raw.txt 2> .ai/handoff/.tmp/stderr.txt
+          rc=$?
+          set -e
+          echo "hermes exit=$rc"
+          tail -30 .ai/handoff/.tmp/stderr.txt || true
+          echo "::group::Output của Hermes"
+          cat .ai/handoff/.tmp/raw.txt
+          echo "::endgroup::"
+          exit $rc
+
+      - name: Tách khối mệnh lệnh
+        run: |
+          python3 scripts/hermes_owner.py extract \
+            --input .ai/handoff/.tmp/raw.txt \
+            --output .ai/handoff/.tmp/directive.md \
+            --title-out .ai/handoff/.tmp/title.txt
+          echo "Tiêu đề: $(cat .ai/handoff/.tmp/title.txt)"
+          echo "::group::Mệnh lệnh"
+          cat .ai/handoff/.tmp/directive.md
+          echo "::endgroup::"
+
+      - name: Chế độ xem trước (dry run)
+        if: ${{ env.DRY_RUN == 'true' }}
+        run: |
+          echo "Dry run — không ghi INBOX.md, không commit."
+          cp .ai/handoff/.tmp/directive.md /tmp/preview.md
+          echo "::notice::Dry run xong. Xem artifact để biết mệnh lệnh."
+
+      - name: Ghi mệnh lệnh vào nhánh trạng thái
+        if: ${{ env.DRY_RUN != 'true' }}
+        run: |
+          set -euo pipefail
+          git config user.name "hermes-owner[bot]"
+          git config user.email "hermes-owner[bot]@users.noreply.github.com"
+
+          # Nhánh trạng thái = main + lịch sử mệnh lệnh của các lượt trước
+          git fetch --depth=1 origin \
+            hermes-owner/state:refs/remotes/origin/hermes-owner/state 2>/dev/null || true
+          git checkout -B hermes-owner/state origin/main
+          if git rev-parse --verify --quiet origin/hermes-owner/state >/dev/null; then
+            git checkout origin/hermes-owner/state -- .ai/handoff/STATE.json 2>/dev/null || true
+            git checkout origin/hermes-owner/state -- .ai/handoff/archive 2>/dev/null || true
+          fi
+
+          python3 scripts/hermes_owner.py issue \
+            --body-file .ai/handoff/.tmp/directive.md \
+            --title "$(cat .ai/handoff/.tmp/title.txt)" \
+            --ttl-hours "${TTL_HOURS}" \
+            --model "${MODEL}" \
+            --source-run "${RUN_URL}"
+
+          NUMBER=$(python3 -c "import json;print((json.load(open('.ai/handoff/STATE.json')).get('active_directive') or {}).get('number','?'))")
+          git add .ai/handoff/INBOX.md .ai/handoff/STATE.json .ai/handoff/archive
+          git commit -m "chore(hermes-owner): mệnh lệnh #${NUMBER} (${MODEL})" \
+            -m "Nguồn: ${RUN_URL}"
+          git push --force origin hermes-owner/state
+
+      - name: Mở / cập nhật PR về main
+        if: ${{ env.DRY_RUN != 'true' }}
+        run: |
+          set -euo pipefail
+          NUMBER=$(python3 -c "import json;print((json.load(open('.ai/handoff/STATE.json')).get('active_directive') or {}).get('number','?'))")
+          TITLE=$(python3 -c "import json;print((json.load(open('.ai/handoff/STATE.json')).get('active_directive') or {}).get('title','Mệnh lệnh'))")
+          BODY=$(python3 scripts/hermes_owner.py extract --input .ai/handoff/.tmp/raw.txt 2>/dev/null || cat .ai/handoff/.tmp/directive.md)
+
+          existing=$(gh pr list --head hermes-owner/state --state open --json number --jq '.[0].number // empty')
+          {
+            echo "## 🧭 Mệnh lệnh #${NUMBER} — ${TITLE}"
+            echo
+            echo "Ban hành bởi Hermes qua workflow \`hermes-owner-loop.yml\`."
+            echo
+            echo "$BODY"
+            echo
+            echo "---"
+            echo "- Run: ${RUN_URL}"
+            echo "- Merge PR này để mệnh lệnh có trong \`main\`; **không merge cũng không sao** — \`scripts/hermes-session-boot.sh\` đọc trực tiếp nhánh \`hermes-owner/state\`."
+            echo "- Từ chối mệnh lệnh: đóng PR + chạy lại workflow với ghi chú mới."
+          } > /tmp/pr-body.md
+
+          if [ -n "$existing" ]; then
+            gh pr edit "$existing" --title "🧭 Mệnh lệnh Hermes #${NUMBER}: ${TITLE}" --body-file /tmp/pr-body.md
+            echo "Đã cập nhật PR #${existing}"
+          else
+            gh pr create --base main --head hermes-owner/state \
+              --title "🧭 Mệnh lệnh Hermes #${NUMBER}: ${TITLE}" \
+              --body-file /tmp/pr-body.md
+          fi
+
+      - name: Báo Telegram (tuỳ chọn)
+        if: ${{ always() && env.DRY_RUN != 'true' }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "${TELEGRAM_BOT_TOKEN:-}" ] || [ -z "${TELEGRAM_CHAT_ID:-}" ]; then
+            echo "Không có TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID — bỏ qua."
+            exit 0
+          fi
+          TEXT=$(python3 - <<'PY'
+          import json, pathlib
+          state = json.loads(pathlib.Path('.ai/handoff/STATE.json').read_text(encoding='utf-8'))
+          active = state.get('active_directive') or {}
+          print(f"🧭 Hermes đã ban hành mệnh lệnh #{active.get('number','?')}: {active.get('title','')}\nHết hạn: {active.get('valid_until','')}")
+          PY
+          )
+          curl -fsS --max-time 20 \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${TEXT}" \
+            --data-urlencode "disable_web_page_preview=true" >/dev/null \
+            && echo "Đã gửi Telegram." || echo "Gửi Telegram thất bại (không chặn workflow)."
+
+      - name: Lưu bằng chứng
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hermes-owner-${{ github.run_id }}
+          path: |
+            .ai/handoff/.tmp/
+            .ai/handoff/INBOX.md
+            .ai/handoff/STATE.json
+          retention-days: 30
+          if-no-files-found: warn

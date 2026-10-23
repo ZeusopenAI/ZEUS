@@ -9,3 +9,4 @@
 * **FlowKit AI Filmmaker (`flowkit/`, `memory/flowkit-ai-filmmaking.md`):** Ứng dụng độc lập gồm FastAPI/SQLite agent, Chrome MV3 bridge tới Google Flow, dashboard React, workflow skills và FFmpeg pipeline. Hướng dẫn chạy tại `docs/FLOWKIT_INTEGRATION.md`.
 * **Telegram Webhook Edge Proxy (`worker/telegram-proxy/`):** Proxy mỏng giải quyết triệt để lỗi xung đột 409 khi kết nối bot Telegram 24/7.
 * **Hermes OpenRouter Actions (`.github/workflows/hermes-openrouter.yml`):** Runner tạo ảnh và thực thi agent qua GitHub Actions miễn phí.
+* **Hermes Owner Protocol (2026-10-23):** Hermes là chủ repo; mọi phiên agent chạy `bash scripts/hermes-session-boot.sh` (ĐIỀU 0 trong `AGENTS.md`) để nhận mệnh lệnh có seal, hết hạn/không có lệnh thì dừng; kết phiên ghi `OUTBOX.md`; workflow `hermes-owner-loop.yml` ban hành lệnh mới qua OpenRouter. Đặc tả: `docs/HERMES_OWNER_PROTOCOL.md`.
