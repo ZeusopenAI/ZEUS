@@ -4,14 +4,14 @@
   "active_directive": null,
   "history": [],
   "last_report": {
-    "id": "arena-20261023T1942Z-c525",
-    "at": "2026-10-23T19:42:51Z",
-    "status": "PARTIAL",
+    "id": "arena-20261023T1951Z-0b61",
+    "at": "2026-10-23T19:51:03Z",
+    "status": "DONE",
     "directive_id": "không xác định",
     "branch": "arena/f2e9eb0f-zeus",
-    "head": "b6e1275",
-    "summary": "Dựng template multi-agent-loop (Planner/Executor/Verifier/State/Human) trong templates/multi-agent-loop: engine loop_state.py + verify_gate.py, CONTRACT.md, schema JSON, 4 prompt vai, 25 unit test + CI riêng; cập nhật README."
+    "head": "18a461d",
+    "summary": "Đổi template multi-agent-loop sang bộ khung spec/state/input/output/verify/log/reports đúng yêu cầu; viết spec/checks.py (bộ kiểm thật, 10 lệnh con) + spec/rules.md + spec/schema.json; thêm state/state.json (ngày UTC, quota, null khi chưa đo), README cho input/output/verify/reports, workflow verify.yml chạy trên runner sạch, 21 test bẫy mới."
   },
-  "updated_at": "2026-10-23T19:42:51Z",
+  "updated_at": "2026-10-23T19:51:03Z",
   "updated_by": "arena(closeout)"
 }
