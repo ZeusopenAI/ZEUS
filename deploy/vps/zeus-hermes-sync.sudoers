@@ -1,0 +1,14 @@
+# Cho phép user `hermes` chạy DUY NHẤT script đồng bộ bằng quyền root,
+# không cần mật khẩu. Cần cho việc GitHub Actions SSH vào và cập nhật ngay khi push.
+#
+# Cài:
+#   sudo install -m 0440 -o root -g root deploy/vps/zeus-hermes-sync.sudoers \
+#        /etc/sudoers.d/zeus-hermes-sync
+#   sudo visudo -c            # phải báo "parsed OK"
+#
+# Kiểm:
+#   sudo -u hermes sudo -n /opt/zeus/deploy/vps/hermes-repo-sync.sh --dry-run
+#
+# Gỡ:
+#   sudo rm /etc/sudoers.d/zeus-hermes-sync
+hermes ALL=(root) NOPASSWD: /opt/zeus/deploy/vps/hermes-repo-sync.sh

@@ -1,6 +1,23 @@
 # Status — Zeus / Quang Quý AI
 
-Cập nhật: 2026-10-14
+Cập nhật: 2026-10-23
+
+## Nhịp gần nhất (23/10/2026)
+
+- **Đường ống "repo → Hermes" khép kín**: `scripts/hermes-sync.sh` đẩy skill + sinh skill
+  `zeus-context` (Status/TODO/Roadmap/AGENTS/bản đồ repo/docs/git HEAD) vào runtime Hermes;
+  `scripts/gen-zeus-context.py` sinh nội dung tất định, có ngân sách ký tự, không cắt cụt.
+- **Ba kênh cập nhật**: Codespace tự sync mỗi lần mở (`.devcontainer/`), VPS tự sync mỗi 15 phút
+  (`deploy/vps/hermes-repo-sync.{service,timer}`), và GitHub Actions cập nhật ngay khi push
+  qua SSH/webhook (`.github/workflows/hermes-skill-sync.yml`).
+- **Kiểm tra drift**: `scripts/hermes-doctor.sh` so skill trên máy với repo, kiểm commit của
+  `zeus-context`, trạng thái gateway/timer và sự hiện diện của model key (chỉ đọc tên biến).
+- **Chốt an toàn**: script VPS từ chối chạy khi sai nhánh hoặc có thay đổi chưa commit
+  (`exit 3`, cần `--force` nếu chủ ý) — tránh `git reset --hard` nuốt mất việc đang làm.
+- CI `hermes-skill-sync.yml` validate frontmatter (`--strict`) và chạy sync 2 lần để bắt
+  lỗi không idempotent; không gọi LLM nên không tốn credit.
+
+## Nhịp trước (14/10/2026)
 
 ## Nhịp gần nhất (14/10/2026)
 
