@@ -41,12 +41,15 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Cài jsonschema để đối chiếu validator chuẩn
+        run: python -m pip install --quiet jsonschema
+
       - name: Cú pháp
         run: |
           python -m compileall -q templates/multi-agent-loop/scripts templates/multi-agent-loop/tests
           echo "OK: cú pháp hợp lệ"
 
-      - name: Unit test 46 test (máy trạng thái + bộ kiểm)
+      - name: Unit test 64 test (máy trạng thái + bộ kiểm + scaffolder + đối chiếu schema)
         working-directory: templates/multi-agent-loop
         run: python3 -m unittest discover -s tests -v
 
@@ -66,6 +69,28 @@ jobs:
           python3 scripts/loop_state.py decide --dir "$D/loop" --by human --accept --note "ci"
           python3 scripts/loop_state.py status --dir "$D/loop" --json | python3 -c \
             "import json,sys; s=json.load(sys.stdin); assert s['phase']=='accepted', s['phase']; print('OK: vòng chạy trọn vẹn')"
+
+      - name: Scaffolder sinh loop cho từng preset và loop tự chạy test
+        working-directory: templates/multi-agent-loop
+        run: |
+          set -euo pipefail
+          python3 scripts/new_loop.py list
+          D="$(mktemp -d)"
+          for preset in batch-extract bulk-grading data-validation; do
+            echo "=== preset: $preset ==="
+            python3 scripts/new_loop.py create --preset "$preset" \
+              --dir "$D/$preset" --slug "ci-$preset" --owner ci
+            ( cd "$D/$preset" && python3 -m unittest discover -s tests -q )
+            # loop sinh ra phải có state không chứa 0 giả
+            python3 - "$D/$preset/state/state.json" <<'PY'
+          import json, sys
+          state = json.load(open(sys.argv[1], encoding="utf-8"))
+          for name, spec in state["counters"].items():
+              assert spec["value"] is None, f"{name} phải null khi chưa chạy"
+              assert str(spec.get("reason") or "").strip(), f"{name} thiếu reason"
+          print("OK: state không có 0 giả")
+          PY
+          done
 
       - name: Bộ kiểm thật trên output mẫu (verifier chạy lại từ đầu)
         working-directory: templates/multi-agent-loop

@@ -106,9 +106,11 @@ Template không import nội bộ — copy là chạy.
 ## Test
 
 ```bash
-python3 -m unittest discover -s templates/multi-agent-loop/tests -v   # 46 test
+python3 -m unittest discover -s templates/multi-agent-loop/tests -v   # 60 test
 ```
 
 - `tests/test_checks.py` (21) — mỗi test là một bẫy: 0 giả, 0 có evidence bịa, null thiếu reason,
   trùng lặp, throughput 643 record/0.23s, mẫu nhỏ phải `null`, drift ngày, báo cáo cũ, ghi sai cửa I/O.
 - `tests/test_loop.py` (25) — máy trạng thái của vòng planner→executor→verifier→human.
+- `tests/test_new_loop.py` (14) — scaffolder: 3 preset đều tự kiểm chứng, loop sinh ra tự chạy test,
+  state không có 0 giả, example hỏng thì bị xoá chứ không giao hàng lỗi.

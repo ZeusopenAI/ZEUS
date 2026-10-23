@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "data-validation record",
+  "description": "Kết quả kiểm một bản ghi dữ liệu. valid=false phải kèm ít nhất 1 vi phạm cụ thể.",
+  "type": "object",
+  "required": ["id", "created_at", "source", "status", "valid", "violations", "metrics"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9_.:-]+$" },
+    "created_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$" },
+    "source": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["ok", "partial", "skipped"] },
+    "reason": { "type": ["string", "null"] },
+    "valid": { "type": "boolean" },
+    "violations": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Danh sách vi phạm cụ thể: '<trường>: <lý do>'. Rỗng chỉ khi valid=true."
+    },
+    "validator_version": { "type": "string" },
+    "measured_by": { "type": "string", "description": "Bắt buộc khi violation_count = 0" },
+    "evidence": { "type": "string", "description": "Bắt buộc khi violation_count = 0 — log/*.jsonl#LN" },
+    "metrics": {
+      "type": "object",
+      "required": ["violation_count"],
+      "additionalProperties": { "$ref": "#/$defs/metric" },
+      "properties": { "violation_count": { "$ref": "#/$defs/metric" } }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "valid": { "const": false } }, "required": ["valid"] },
+      "then": { "properties": { "violations": { "minItems": 1 } } }
+    },
+    {
+      "if": { "properties": { "valid": { "const": true } }, "required": ["valid"] },
+      "then": { "properties": { "violations": { "maxItems": 0 } } }
+    },
+    {
+      "if": { "properties": { "status": { "enum": ["partial", "skipped"] } }, "required": ["status"] },
+      "then": { "required": ["reason"], "properties": { "reason": { "type": "string", "minLength": 1 } } }
+    }
+  ],
+  "$defs": {
+    "metric": {
+      "oneOf": [
+        {
+          "title": "Đã đo",
+          "type": "object",
+          "required": ["value", "measured_by"],
+          "additionalProperties": false,
+          "properties": {
+            "value": { "type": ["number", "integer", "boolean"] },
+            "measured_by": { "type": "string", "minLength": 1 },
+            "evidence": { "type": "string" },
+            "unit": { "type": "string" }
+          },
+          "allOf": [
+            {
+              "if": { "properties": { "value": { "const": 0 } }, "required": ["value"] },
+              "then": { "required": ["evidence"] }
+            }
+          ]
+        },
+        {
+          "title": "Chưa đo được",
+          "type": "object",
+          "required": ["value", "reason"],
+          "additionalProperties": false,
+          "properties": {
+            "value": { "type": "null" },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    }
+  }
+}

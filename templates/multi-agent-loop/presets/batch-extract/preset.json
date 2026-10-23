@@ -1,0 +1,19 @@
+{
+  "name": "batch-extract",
+  "title": "Trích xuất hàng loạt",
+  "description": "Đọc input thô, trích xuất trường theo schema, ghi mỗi bản ghi một dòng. Phù hợp: lọc danh bạ, bóc tách hoá đơn, chuẩn hoá dữ liệu khách hàng.",
+  "owner_note": "Executor chỉ được ghi output/ và log/. Trường không trích xuất được phải là null + reason, không được bỏ trống.",
+  "state": {
+    "quota": { "max_records_per_day": 1000, "metric": "records" },
+    "done_criteria": [
+      "mọi record khớp spec/schema.json",
+      "trường không trích xuất được là null + reason",
+      "không có metric 0 nào thiếu evidence",
+      "checks.py overall = pass"
+    ]
+  },
+  "checks": {
+    "max_duplicate_rate": 0.2,
+    "max_records_per_second": 50.0
+  }
+}

@@ -199,6 +199,8 @@ def validate(value: Any, schema: dict[str, Any], root: dict[str, Any], path: str
             errors.append(f"{path}: trường lạ {extra}")
         if "maxProperties" in schema and len(value) > int(schema["maxProperties"]):
             errors.append(f"{path}: nhiều hơn {schema['maxProperties']} trường")
+        if "minProperties" in schema and len(value) < int(schema["minProperties"]):
+            errors.append(f"{path}: ít hơn {schema['minProperties']} trường")
     if isinstance(value, list):
         items = schema.get("items")
         if isinstance(items, dict):
@@ -206,6 +208,8 @@ def validate(value: Any, schema: dict[str, Any], root: dict[str, Any], path: str
                 errors.extend(validate(item, items, root, f"{path}[{index}]"))
         if "minItems" in schema and len(value) < int(schema["minItems"]):
             errors.append(f"{path}: ít hơn {schema['minItems']} phần tử")
+        if "maxItems" in schema and len(value) > int(schema["maxItems"]):
+            errors.append(f"{path}: nhiều hơn {schema['maxItems']} phần tử")
 
     for sub in schema.get("allOf", []) or []:
         errors.extend(validate(value, sub, root, path))
@@ -286,7 +290,13 @@ def check_null_reason(records, ctx) -> dict[str, Any]:
 
 
 def check_fake_zero(records, ctx) -> dict[str, Any]:
-    """Số 0 phải có measured_by + evidence trỏ tới dòng log có thật."""
+    """Số 0 phải có measured_by + evidence trỏ tới dòng log có thật.
+
+    Kiểm hai dạng:
+      1. metric dạng {"value": 0, ...} ở bất kỳ độ sâu nào;
+      2. trường số cấp record có tên trong --zero-guard-fields (vd "score": 0), khi đó
+         provenance lấy ở cấp record (measured_by + evidence).
+    """
     log_dir: Path = ctx["log_dir"]
     log_lines: set[str] = set()
     if log_dir.exists():
@@ -297,19 +307,38 @@ def check_fake_zero(records, ctx) -> dict[str, Any]:
 
     problems: list[str] = []
     zeros = 0
+    def _check_zero(label: str, measured_by: str, evidence: str) -> None:
+        nonlocal zeros
+        zeros += 1
+        measured_by = measured_by.strip()
+        evidence = evidence.strip()
+        if not measured_by:
+            problems.append(f"{label} = 0 nhưng thiếu measured_by")
+        if not evidence:
+            problems.append(f"{label} = 0 nhưng thiếu evidence (0 giả)")
+        elif log_lines and evidence not in log_lines:
+            problems.append(f"{label} = 0 trỏ tới evidence không tồn tại trong log: {evidence}")
+
+    guard_fields = set(ctx.get("zero_guard_fields") or [])
     for record in records:
         for path, metric in _walk_metrics(record):
             if metric.get("value") != 0 or isinstance(metric.get("value"), bool):
                 continue
-            zeros += 1
-            measured_by = str(metric.get("measured_by") or "").strip()
-            evidence = str(metric.get("evidence") or "").strip()
-            if not measured_by:
-                problems.append(f"{path} = 0 nhưng thiếu measured_by")
-            if not evidence:
-                problems.append(f"{path} = 0 nhưng thiếu evidence (0 giả)")
-            elif log_lines and evidence not in log_lines:
-                problems.append(f"{path} = 0 trỏ tới evidence không tồn tại trong log: {evidence}")
+            _check_zero(path, str(metric.get("measured_by") or ""), str(metric.get("evidence") or ""))
+
+        # Trường số cấp record (vd score, violation_count): provenance ở cấp record.
+        for field in guard_fields:
+            if field not in record:
+                continue
+            value = record[field]
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or value != 0:
+                continue
+            _check_zero(
+                f"{record.get('_file', '?')}:{field}",
+                str(record.get("measured_by") or ""),
+                str(record.get("evidence") or ""),
+            )
+
     return {
         "status": FAIL if problems else PASS,
         "metrics": {
@@ -542,6 +571,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         "input_dir": input_dir,
         "max_records_per_second": args.max_records_per_second,
         "max_duplicate_rate": args.max_duplicate_rate,
+        "zero_guard_fields": [f.strip() for f in (args.zero_guard_fields or "").split(",") if f.strip()],
     }
 
     started = utc_now()
@@ -700,6 +730,8 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--by", default="verifier")
     run.add_argument("--max-records-per-second", type=float, default=MAX_RECORDS_PER_SECOND)
     run.add_argument("--max-duplicate-rate", type=float, default=MAX_DUPLICATE_RATE)
+    run.add_argument("--zero-guard-fields", default="score,grade,count,total,errors,violation_count",
+                     help="Trường số cấp record mà 0 phải có measured_by + evidence")
     run.add_argument("--force", action="store_true", help="Ghi đè báo cáo đã tồn tại (không khuyến khích)")
     run.set_defaults(func=cmd_run)
 

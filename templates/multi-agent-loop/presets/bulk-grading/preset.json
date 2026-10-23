@@ -1,0 +1,20 @@
+{
+  "name": "bulk-grading",
+  "title": "Chấm hàng loạt",
+  "description": "Chấm điểm theo rubric cố định. Phù hợp: chấm bài, đánh giá phản hồi, phân loại chất lượng nội dung, kiểm duyệt theo tiêu chí.",
+  "owner_note": "Judge không được chấm bài của chính mình. Điểm 0 là điểm hợp lệ nhưng phải có bằng chứng; không chấm được thì null + reason.",
+  "state": {
+    "quota": { "max_records_per_day": 2000, "metric": "records" },
+    "done_criteria": [
+      "mọi record có rubric_version và judge_model",
+      "score null chỉ khi có reason",
+      "score 0 có measured_by + evidence",
+      "checks.py overall = pass"
+    ]
+  },
+  "checks": {
+    "max_duplicate_rate": 0.3,
+    "max_records_per_second": 20.0,
+    "zero_guard_fields": ["score", "grade", "count", "total", "errors"]
+  }
+}

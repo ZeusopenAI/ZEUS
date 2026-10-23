@@ -133,7 +133,16 @@ Xem `spec/state.schema.json` (schema của loop) và `spec/schema.json` (schema 
 | Sinh hàng loạt đáng ngờ | `throughput`, `duplicates`, `length_distribution` | > 50 record/giây ⇒ fail; trùng lặp > 5% ⇒ fail; outlier > 3×IQR ⇒ warn; mẫu < 30 ⇒ `null` + reason |
 | Số 0 giả | `fake_zero` (bắt buộc) | `0` thiếu `measured_by`/`evidence`, hoặc `evidence` không trỏ tới `log/*.jsonl#LN` có thật ⇒ fail |
 
-## 7. Điều contract này KHÔNG bảo đảm
+## 7. Preset và scaffolder
+
+Contract này là phần lõi. `presets/<tên>/` chỉ **thêm luật riêng** (mục 9 của `rules.md`) và
+**thay `spec/schema.json`** — không được làm yếu bất kỳ điều nào ở mục 2–6.
+
+`scripts/new_loop.py` sinh loop mới từ preset và **tự chạy `checks.py` trên example** trước khi giao.
+Loop hỏng ⇒ bị xoá, không để lại. Kiến trúc triển khai (repo riêng / thư mục con / nhiều loop song song):
+`ARCHITECTURE.md`.
+
+## 8. Điều contract này KHÔNG bảo đảm
 
 - Không chặn được executor giả mạo evidence nếu nó có quyền ghi file.
 - Không bảo đảm plan *đúng* — chỉ bảo đảm plan *có kiểm chứng cho từng bước*.

@@ -87,10 +87,13 @@ Dự án AI Automation cá nhân và trợ lý đa năng cho thương hiệu cá
 ## 🚀 Các Tính Năng Nổi Bật
 
 ### 0. Template phối hợp 5 vai (`templates/multi-agent-loop/`)
-- **Planner / Executor / Verifier / State / Human** — state lưu trên file, không trong prompt.
-- Executor **không tự chấm**; Verifier **chạy lại từ đầu**, evidence cũ bị loại theo mốc thời gian.
-- Chưa đo được thì `null` + `reason`; **không ghi 0 giả** (0 bắt buộc có evidence của lệnh đã chạy).
-- 25 unit test, mỗi test ứng với một luật; CI riêng `multi-agent-loop-ci.yml`. Không cần cài gì ngoài Python.
+- **Planner / Executor / Verifier / State / Human** — state lưu trên file (`state/state.json`), không trong prompt.
+- Bộ khung chuẩn: `spec/` (rules + schema + `checks.py`), `state/`, `input/`, `output/`, `verify/`, `log/`, `reports/`.
+- Executor **không tự chấm** (kiểm bằng `checks.py ownership`); Verifier **chạy lại từ đầu**, báo cáo cũ bị
+  `freshness` phát hiện. Chưa đo được thì `null` + `reason`; **không ghi 0 giả**.
+- **Scaffolder**: `python3 scripts/new_loop.py create --preset batch-extract --dir ../viec-moi` sinh loop
+  riêng cho việc mới, tự kiểm chứng trước khi giao. 3 preset: trích xuất · chấm hàng loạt · kiểm dữ liệu.
+- 60 unit test; CI riêng `multi-agent-loop-ci.yml`; kiến trúc chi tiết: `templates/multi-agent-loop/ARCHITECTURE.md`.
 
 ### 1. Chạy Hermes Agent trên GitHub Actions (`hermes-openrouter.yml`)
 - Chạy tác vụ AI theo yêu cầu, không cần máy tính bật 24/7.
