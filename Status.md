@@ -1,25 +1,18 @@
 # Status — Zeus / Quang Quý AI
 
-Cập nhật: 2026-10-23
+Cập nhật: 2026-10-24
 
-## Nhịp gần nhất (23/10/2026)
+## Nhịp gần nhất (24/10/2026)
+
+- **Arena hoạt động độc lập trở lại:** theo yêu cầu của Operator, đã gỡ toàn bộ cơ chế Hermes làm chủ repo, gồm lệnh boot/closeout bắt buộc, hộp thư handoff, owner loop, CI và skill chuyên dụng. Arena nhận yêu cầu và thứ tự ưu tiên trực tiếp từ Operator.
+- **Phạm vi giữ nguyên:** Hermes runtime, workflow OpenRouter, đồng bộ skill, bộ 24/7 và các module FlowKit/Second Brain/site không bị xóa hay thay đổi chức năng.
+
+## Nhịp trước (23/10/2026)
 
 - **CI toàn repo được pin SHA**: policy của repo chuyển sang chế độ “chỉ cho phép action do GitHub
   tạo / thuộc ZeusopenAI / verified Marketplace **và phải pin bằng commit SHA đầy đủ**”, khiến mọi
   workflow dùng `actions/checkout@v4`… chết ngay ở bước khởi động (`startup_failure` 0s). Đã pin
   toàn bộ `uses:` trong 14 workflow sang SHA 40 ký tự kèm comment phiên bản.
-- **Hermes làm chủ mọi phiên agent (Hermes Owner Protocol)**: `AGENTS.md` có **ĐIỀU 0** buộc
-  phiên Arena/Codespaces chạy `bash scripts/hermes-session-boot.sh` trước khi làm bất cứ việc gì.
-  Mệnh lệnh do Hermes ban hành nằm ở `.ai/handoff/INBOX.md` (front matter + seal SHA-256,
-  hạn dùng 72h); hết hạn / chưa có lệnh / seal lệch ⇒ boot trả mã 3/4/5/6 và **phiên dừng**,
-  không tự quyết. Báo cáo cuối phiên ghi vào `OUTBOX.md` để chủ đọc ở chu kỳ sau.
-  Workflow `hermes-owner-loop.yml` là nơi Hermes thức dậy: dựng brief từ Status/TODO/Roadmap/
-  OUTBOX/PR, gọi `hermes -z` qua OpenRouter (toolset `safe`), rồi ghi mệnh lệnh mới lên nhánh
-  `hermes-owner/state` + mở PR. Tự động chạy khi đặt biến repo `HERMES_OWNER_AUTO=on`
-  (mỗi 6 giờ + mỗi khi OUTBOX merge vào main); bấm tay thì luôn chạy được.
-  Engine thuần stdlib: `scripts/hermes_owner.py`; test: `scripts/tests/test_hermes_owner.py`
-  (14 test, gồm cả nhánh dự phòng đọc từ `hermes-owner/state`); CI riêng:
-  `hermes-owner-protocol-ci.yml` (không gọi LLM). Đặc tả: `docs/HERMES_OWNER_PROTOCOL.md`.
 - **Đường ống "repo → Hermes" khép kín**: `scripts/hermes-sync.sh` đẩy skill + sinh skill
   `zeus-context` (Status/TODO/Roadmap/AGENTS/bản đồ repo/docs/git HEAD) vào runtime Hermes;
   `scripts/gen-zeus-context.py` sinh nội dung tất định, có ngân sách ký tự, không cắt cụt.
