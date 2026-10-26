@@ -65,9 +65,11 @@ jobs:
             grep -nE '^e: |error:|FAILURE:|What went wrong|Caused by:|> Task .* FAILED' "$log" | head -40 || true
             echo "::endgroup::"
             # Annotation = cách duy nhất đọc được lỗi từ ngoài (log nằm ở blob storage).
+            # Ưu tiên lỗi javac (path.java:NN: error: … + symbol/location), rồi task hỏng.
             {
-              grep -E '> Task .* FAILED' "$log" | head -5
-              awk '/What went wrong/{flag=1} flag' "$log" | head -25
+              grep -E '\.java:[0-9]+: error:' "$log" | head -6
+              grep -E '^ *(symbol|location|required|found):' "$log" | head -6
+              grep -E '> Task .* FAILED' "$log" | head -2
             } | sed -e 's/%/%25/g' -e 's/\r$//' | while IFS= read -r line; do
               [ -n "$line" ] && echo "::error::${line}"
             done
