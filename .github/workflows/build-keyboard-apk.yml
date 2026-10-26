@@ -28,8 +28,20 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      # Ghim Gradle đúng phiên bản AGP 8.2.0 được test cùng (xem
+      # android-keyboard/gradle/wrapper/gradle-wrapper.properties). Runner dùng
+      # Gradle rất mới + AGP 8.2 gây:
+      #   "Cannot mutate the dependencies of configuration ':app:debugCompileClasspath'
+      #    after the configuration was resolved" -> :app:processDebugResources FAILED
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a  # v4
+        with:
+          gradle-version: "8.2"
+
+      - name: In phiên bản Gradle/Java (bằng chứng cho CI)
+        run: |
+          gradle --version
+          java -version
 
       # Bắt lỗi biên dịch/resource trước khi trả giá bằng một lượt Gradle đầy đủ.
       # Không cần Android SDK — thuần Python.
