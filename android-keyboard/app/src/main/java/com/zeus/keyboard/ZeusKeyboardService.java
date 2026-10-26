@@ -33,17 +33,16 @@ public class ZeusKeyboardService extends InputMethodService
 
     @Override
     public View onCreateInputView() {
-        mKeyboardView = new KeyboardView(this);
+        // KeyboardView không có constructor 1 tham số -> inflate từ XML.
+        // Màu phím (keyBackground/keyTextColor) chỉ đặt được qua style XML,
+        // xem res/values/styles.xml + res/layout/keyboard_view.xml.
+        mKeyboardView = (KeyboardView) getLayoutInflater().inflate(R.layout.keyboard_view, null);
         mMainKeyboard = new Keyboard(this, R.xml.keyboard_main);
         mSymbolsKeyboard = new Keyboard(this, R.xml.keyboard_symbols);
 
         mKeyboardView.setKeyboard(mMainKeyboard);
         mKeyboardView.setOnKeyboardActionListener(this);
-
-        // Apply Zeus theme
         mKeyboardView.setBackgroundColor(0xFF1A1A2E); // Dark navy background
-        mKeyboardView.setKeyBackgroundColor(0xFF16213E); // Key background
-        mKeyboardView.setKeyTextColor(0xFFE0E0E0); // Light text
 
         // Initialize AI
         mAIAssistant = new ZeusAIAssistant(this);
@@ -111,8 +110,9 @@ public class ZeusKeyboardService extends InputMethodService
             ic.commitText(String.valueOf((char) code), 1);
         }
 
-        // Auto-lowercase after one character
-        if (mIsShifted && !mMainKeyboard.isSticky()) {
+        // Auto-lowercase after one character.
+        // `Keyboard` không có isSticky(); shift một lần là quay về lowercase.
+        if (mIsShifted) {
             mIsShifted = false;
             updateShiftState();
         }

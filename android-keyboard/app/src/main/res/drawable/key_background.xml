@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Nền phím cho KeyboardView. Bắt buộc phải có: KeyboardView ném
+  RuntimeException("The keyBackground attribute is required") nếu thiếu,
+  nên không thể bỏ trống khi dùng android:keyBackground.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/zeus_key_pressed" />
+            <corners android:radius="6dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/zeus_key_bg" />
+            <corners android:radius="6dp" />
+        </shape>
+    </item>
+</selector>

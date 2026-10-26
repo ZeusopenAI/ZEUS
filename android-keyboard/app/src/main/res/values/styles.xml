@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Style cho android.inputmethodservice.KeyboardView.
+
+  Màu/nền phím của KeyboardView CHỈ đặt được qua XML attribute
+  (android:keyBackground, android:keyTextColor, ...). Không có setter
+  tương ứng trong API công khai — xem res/layout/keyboard_view.xml.
+-->
+<resources>
+    <style name="ZeusKeyboardView">
+        <item name="android:keyBackground">@drawable/key_background</item>
+        <item name="android:keyTextColor">@color/zeus_key_text</item>
+        <item name="android:keyTextSize">22sp</item>
+        <item name="android:labelTextSize">13sp</item>
+        <item name="android:verticalCorrection">-10dip</item>
+    </style>
+</resources>

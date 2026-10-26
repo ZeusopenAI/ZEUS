@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  KeyboardView được inflate từ XML (không dùng `new KeyboardView(context)`:
+  constructor đó không tồn tại — chỉ có (Context, AttributeSet[, int[, int]])).
+  Style ZeusKeyboardView cung cấp keyBackground/keyTextColor.
+-->
+<android.inputmethodservice.KeyboardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/keyboard_view"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/zeus_background"
+    style="@style/ZeusKeyboardView" />
