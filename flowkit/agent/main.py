@@ -69,6 +69,24 @@ async def run_ws_server():
 
 # ─── FastAPI App ─────────────────────────────────────────────
 
+
+def _install_sigterm_handler(loop: asyncio.AbstractEventLoop, callback) -> bool:
+    """Cài handler SIGTERM để tắt êm; trả về True nếu cài được.
+
+    ``add_signal_handler`` chỉ hoạt động ở main thread của main interpreter
+    (CPython dùng ``signal.set_wakeup_fd``). Khi app được nhúng — TestClient,
+    một số ASGI runner, hoặc chạy trong thread phụ — nó ném ``RuntimeError``.
+    Trước đây ngoại lệ này không được bắt nên **startup hỏng hoàn toàn**;
+    thiếu handler SIGTERM chỉ là mất tắt êm, không đáng để chặn khởi động.
+    """
+    try:
+        loop.add_signal_handler(signal.SIGTERM, callback)
+        return True
+    except (NotImplementedError, AttributeError, RuntimeError, ValueError) as exc:
+        logger.debug("Không cài được SIGTERM handler (%s) — bỏ qua.", exc)
+        return False
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
@@ -87,16 +105,15 @@ async def lifespan(app: FastAPI):
 
     ops = init_sdk(get_flow_client())
     logger.info("SDK initialized (OperationService ready)")
-    logger.info("Flow Kit starting on %s:%d", API_HOST, API_PORT)
+    logger.info(
+        "Cấu hình API mặc định: %s:%d (cổng thực tế do uvicorn quyết định khi truyền --host/--port)",
+        API_HOST, API_PORT,
+    )
 
     controller = get_worker_controller()
 
     # SIGTERM handler for graceful shutdown (Unix only)
-    try:
-        loop = asyncio.get_event_loop()
-        loop.add_signal_handler(signal.SIGTERM, controller.request_shutdown)
-    except (NotImplementedError, AttributeError):
-        pass
+    _install_sigterm_handler(asyncio.get_running_loop(), controller.request_shutdown)
 
     # Start background tasks
     ws_task = asyncio.create_task(run_ws_server())
