@@ -1,0 +1,61 @@
+name: Second Brain CI
+
+# Kiểm thử công cụ Second Brain (scripts/second-brain/ + scripts/second-brain-import.mjs).
+#
+# Trước đây bộ test 20 test không có runner và không workflow nào chạy:
+#   node --test scripts/second-brain/test/   -> ERR_MODULE_NOT_FOUND
+# nên hồi quy trong import-conversations.ts không bị bắt. Xem scripts/second-brain/package.json.
+
+on:
+  pull_request:
+    paths:
+      - "scripts/second-brain/**"
+      - "scripts/second-brain-import.mjs"
+      - ".github/workflows/second-brain-ci.yml"
+  push:
+    branches:
+      - main
+      - "arena/**"
+    paths:
+      - "scripts/second-brain/**"
+      - "scripts/second-brain-import.mjs"
+      - ".github/workflows/second-brain-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: second-brain-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+
+      - name: Cài Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version: "22"
+
+      - name: Chạy unit test (node:test + type stripping)
+        run: npm test --prefix scripts/second-brain
+
+      - name: Smoke test CLI (import .ts từ .mjs)
+        run: |
+          node scripts/second-brain-import.mjs list --out "$RUNNER_TEMP/sb-out"
+          node scripts/second-brain-import.mjs --help >/dev/null
+
+      - name: Không có credential trong mã nguồn
+        run: |
+          if git grep -nEI -e 'AIza[0-9A-Za-z_-]{35}' -e 'sk-[A-Za-z0-9_-]{20,}' \
+               -e 'gh[pousr]_[A-Za-z0-9]{30,}' -e '-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----' \
+               -- scripts/second-brain scripts/second-brain-import.mjs; then
+            echo "::error::Phát hiện mẫu credential trong mã nguồn Second Brain"
+            exit 1
+          fi
+          echo "OK: không có credential"

@@ -69,6 +69,18 @@ node scripts/second-brain-import.mjs list
 
 Mặc định ghi vào `~/.hermes/memory/imports`; có thể đổi đường dẫn bằng tham số `--out <thư mục>` hoặc biến môi trường `SECOND_BRAIN_IMPORTS_DIR`.
 
+### 3.3. Chạy test
+
+Bộ test dùng `node:test` và file `.ts` (Node tự strip type từ 22.18, không cần `tsc`):
+
+```bash
+npm test --prefix scripts/second-brain     # 20 test
+```
+
+CI: `.github/workflows/second-brain-ci.yml` (chạy khi `scripts/second-brain/**` đổi).
+Ghi chú: gọi `node --test scripts/second-brain/test/` (truyền **thư mục**) sẽ lỗi
+`ERR_MODULE_NOT_FOUND` — phải dùng script trong `package.json` để glob `.ts`.
+
 ## 4. Kết nối với các AI khác (hợp đồng bộ nhớ dùng chung)
 
 ChatGPT, Claude, Gemini tham gia phối hợp qua các tài liệu Markdown dùng chung:

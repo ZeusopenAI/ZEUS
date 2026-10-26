@@ -197,7 +197,16 @@ async function runIngest(flags) {
 
 async function main() {
   const { command, positional, flags } = parseArgs(process.argv);
-  if (flags.has("help") || command === undefined) {
+  // `node scripts/second-brain-import.mjs --help` / `-h` / `help` đều in usage
+  // (trước đây `--help` bị coi là command và báo lỗi "unknown command").
+  if (
+    flags.has("help") ||
+    flags.has("h") ||
+    command === undefined ||
+    command === "help" ||
+    command === "--help" ||
+    command === "-h"
+  ) {
     printUsage();
     return;
   }
