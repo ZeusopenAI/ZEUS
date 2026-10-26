@@ -7,6 +7,7 @@ import android.inputmethodservice.KeyboardView;
 import android.os.Build;
 import android.text.InputType;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
@@ -36,7 +37,7 @@ public class ZeusKeyboardService extends InputMethodService
         // KeyboardView không có constructor 1 tham số -> inflate từ XML.
         // Màu phím (keyBackground/keyTextColor) chỉ đặt được qua style XML,
         // xem res/values/styles.xml + res/layout/keyboard_view.xml.
-        mKeyboardView = (KeyboardView) getLayoutInflater().inflate(R.layout.keyboard_view, null);
+        mKeyboardView = (KeyboardView) LayoutInflater.from(this).inflate(R.layout.keyboard_view, null);
         mMainKeyboard = new Keyboard(this, R.xml.keyboard_main);
         mSymbolsKeyboard = new Keyboard(this, R.xml.keyboard_symbols);
 

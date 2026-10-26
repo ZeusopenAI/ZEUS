@@ -36,13 +36,31 @@ jobs:
       - name: Kiểm tra tĩnh (API KeyboardView/Keyboard, resource, XML)
         run: python3 scripts/check-android-keyboard.py
 
+      # Log Gradle bị GitHub lưu ở blob storage (không đọc được từ môi trường
+      # không có quyền), nên đẩy các dòng lỗi thành annotation để hiện ngay
+      # trong PR/Checks và đọc được qua API annotations.
       - name: Build Debug APK
         working-directory: android-keyboard
-        run: gradle assembleDebug --no-daemon
+        run: |
+          set -uo pipefail
+          log="$RUNNER_TEMP/gradle-debug.log"
+          set +e
+          gradle assembleDebug --no-daemon --console=plain 2>&1 | tee "$log"
+          rc=${PIPESTATUS[0]}
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            echo "::group::Lỗi Gradle (tóm tắt)"
+            grep -nE '^e: |error:|FAILURE:|What went wrong|Caused by:|> Task .* FAILED' "$log" | head -40 || true
+            echo "::endgroup::"
+            grep -E '^e: |error:|What went wrong|Caused by:' "$log" | head -25 | while IFS= read -r line; do
+              echo "::error::${line}"
+            done
+          fi
+          exit "$rc"
 
       - name: Build Release APK
         working-directory: android-keyboard
-        run: gradle assembleRelease --no-daemon
+        run: gradle assembleRelease --no-daemon --console=plain
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
