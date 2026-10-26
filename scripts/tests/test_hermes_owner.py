@@ -264,5 +264,65 @@ class RemoteFallbackTest(unittest.TestCase):
         self.assertEqual(payload["source"], "remote")
 
 
+class EndToEndTest(unittest.TestCase):
+    """Chuỗi thật của workflow: extract -> issue -> boot.
+
+    Khoá lại lỗi P0 đã làm `hermes-owner-loop` đỏ 2 lượt (40062072101,
+    40062270254): model trả khối mệnh lệnh với marker lệch chuẩn, extract thất
+    bại nên INBOX.md không bao giờ được ban hành và mọi phiên agent bị chặn.
+    """
+
+    MESSY_OUTPUT = (
+        "Đây là mệnh lệnh của phiên:\n\n"
+        "**<<< ZEUS_DIRECTIVE >>>**\n\n"
+        "```markdown\n"
+        "# MỆNH LỆNH #7 — Sửa lỗi tách khối\n\n"
+        "## Mục tiêu\nChứng minh chuỗi extract -> issue -> boot chạy được.\n\n"
+        "## Việc phải làm (theo thứ tự)\n"
+        "1. Chạy boot — kiểm chứng: `boot` -> exit 0\n\n"
+        "## Bằng chứng hoàn thành\n- boot exit 0\n"
+        "```\n\n"
+        "**<<< END_ZEUS_DIRECTIVE >>>**\n"
+    )
+
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        self.repo = Path(self._tmp.name)
+        handoff = self.repo / ".ai" / "handoff"
+        handoff.mkdir(parents=True)
+        (handoff / "STATE.json").write_text(json.dumps(hop.empty_state()), encoding="utf-8")
+        (handoff / "INBOX.md").write_text("# chưa có\n", encoding="utf-8")
+        self.raw = self.repo / "raw.txt"
+        self.raw.write_text(self.MESSY_OUTPUT, encoding="utf-8")
+
+    def tearDown(self) -> None:
+        self._tmp.cleanup()
+
+    def test_messy_llm_output_becomes_valid_inbox(self) -> None:
+        directive = self.repo / "directive.md"
+        title = self.repo / "title.txt"
+
+        extracted = run_engine(
+            "extract", "--input", str(self.raw), "--output", str(directive), "--title-out", str(title),
+        )
+        self.assertEqual(extracted.returncode, 0, extracted.stderr)
+        self.assertIn("MỆNH LỆNH #7", title.read_text(encoding="utf-8"))
+
+        issued = run_engine(
+            "issue", "--repo", str(self.repo),
+            "--body-file", str(directive),
+            "--title", title.read_text(encoding="utf-8").strip(),
+            "--ttl-hours", "24",
+        )
+        self.assertEqual(issued.returncode, 0, issued.stdout + issued.stderr)
+
+        inbox = self.repo / ".ai" / "handoff" / "INBOX.md"
+        self.assertTrue(inbox.read_text(encoding="utf-8").startswith("---"))
+
+        booted = run_engine("boot", "--repo", str(self.repo), "--offline")
+        self.assertEqual(booted.returncode, 0, booted.stdout + booted.stderr)
+        self.assertIn("MỆNH LỆNH #7", booted.stdout)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
