@@ -52,8 +52,12 @@ jobs:
             echo "::group::Lỗi Gradle (tóm tắt)"
             grep -nE '^e: |error:|FAILURE:|What went wrong|Caused by:|> Task .* FAILED' "$log" | head -40 || true
             echo "::endgroup::"
-            grep -E '^e: |error:|What went wrong|Caused by:' "$log" | head -25 | while IFS= read -r line; do
-              echo "::error::${line}"
+            # Annotation = cách duy nhất đọc được lỗi từ ngoài (log nằm ở blob storage).
+            {
+              grep -E '> Task .* FAILED' "$log" | head -5
+              awk '/What went wrong/{flag=1} flag' "$log" | head -25
+            } | sed -e 's/%/%25/g' -e 's/\r$//' | while IFS= read -r line; do
+              [ -n "$line" ] && echo "::error::${line}"
             done
           fi
           exit "$rc"
