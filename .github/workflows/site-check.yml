@@ -10,12 +10,14 @@ on:
   pull_request:
     paths:
       - "site/**"
+      - "vercel.json"
       - "scripts/site-smoke-test.mjs"
       - ".github/workflows/site-check.yml"
   push:
-    branches: ["main"]
+    branches: ["main", "arena/**"]
     paths:
       - "site/**"
+      - "vercel.json"
       - "scripts/site-smoke-test.mjs"
   workflow_dispatch:
 
@@ -60,6 +62,42 @@ jobs:
           print("hash link hỏng:", bad or "không có")
           print("file thiếu:", missing or "không có")
           sys.exit(1 if (dup or bad or missing) else 0)
+          PY
+
+      - name: Kiểm tra cấu hình Vercel (gốc repo + site/)
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          from pathlib import Path
+
+          errors = []
+          for name in ("vercel.json", "site/vercel.json"):
+              path = Path(name)
+              if not path.exists():
+                  errors.append(f"{name}: thiếu file")
+                  continue
+              try:
+                  cfg = json.loads(path.read_text(encoding="utf-8"))
+              except json.JSONDecodeError as exc:
+                  errors.append(f"{name}: JSON không hợp lệ — {exc}")
+                  continue
+              out = cfg.get("outputDirectory")
+              if out and not Path(out).is_dir():
+                  errors.append(f"{name}: outputDirectory '{out}' không tồn tại")
+              if name == "vercel.json":
+                  # Root = gốc repo: phải chỉ rõ output là site/ và preset Other,
+                  # nếu không Vercel sẽ cố build như một app Node.
+                  if cfg.get("framework") != None:
+                      errors.append("vercel.json: framework phải là null (preset Other)")
+                  if out != "site":
+                      errors.append("vercel.json: outputDirectory phải là 'site'")
+              print(f"OK {name}: outputDirectory={out or '.'}, framework={cfg.get('framework')!r}")
+
+          if errors:
+              print("LỖI cấu hình Vercel:")
+              for item in errors:
+                  print("  -", item)
+              sys.exit(1)
           PY
 
       - name: Smoke test bằng jsdom

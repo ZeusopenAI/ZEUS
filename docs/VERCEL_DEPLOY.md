@@ -145,6 +145,32 @@ curl -s -o /dev/null -w '%{http_code}\n' https://<dash>.vercel.app/api/health
 
 ---
 
+## 5b. Project cấu hình sai ở gốc repo (`vercel.json` gốc)
+
+Repo có **hai** `vercel.json`: `site/vercel.json` và `flowkit/dashboard/vercel.json`.
+Nếu một project trên Vercel để **Root Directory = gốc repo** (mặc định khi import
+mà không sửa), nó không thấy file cấu hình nào và build/deploy hỏng ngay (check
+`Vercel – <project>` đỏ trong 0s, không có log build).
+
+Để gốc repo cũng deploy được (phục vụ landing page trong `site/`), repo có thêm
+`vercel.json` ở gốc:
+
+```json
+{ "framework": null, "outputDirectory": "site", "cleanUrls": true, "trailingSlash": false }
+```
+
+`framework: null` = preset **Other** (Vercel không cố đoán framework), còn
+`outputDirectory: site` trỏ output về thư mục site tĩnh. Project nào đã đặt
+Root = `site` hoặc `flowkit/dashboard` thì file này **không ảnh hưởng** (Vercel
+chỉ đọc `vercel.json` nằm trong Root Directory của project).
+
+Nếu vẫn đỏ sau khi merge, nguyên nhân nằm phía Vercel (project bị pause, bị
+chặn deploy, hoặc chưa cấp quyền) — kiểm tra *Settings → General* của project
+đó, hoặc xoá project thừa: **mỗi repo chỉ nên có 2 project** (`site`,
+`flowkit/dashboard`).
+
+---
+
 ## 6. Checklist
 
 - [ ] Import project `site` (Root = `site`)
