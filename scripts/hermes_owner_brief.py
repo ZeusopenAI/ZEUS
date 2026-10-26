@@ -38,6 +38,10 @@ nhiệm vụ duy nhất của bạn là **ban hành đúng một mệnh lệnh**
 
 ## Định dạng đầu ra (BẮT BUỘC — chỉ in đúng khối này, không thêm lời dẫn)
 
+Quy tắc máy kiểm: hai dòng marker phải **đứng riêng một dòng**, viết đúng từng ký tự
+`<<<ZEUS_DIRECTIVE>>>` và `<<<END_ZEUS_DIRECTIVE>>>` — không thêm dấu cách bên trong,
+không bọc trong `**…**` hay ``` ``` ```, không đổi sang tiếng Việt.
+
 <<<ZEUS_DIRECTIVE>>>
 # MỆNH LỆNH #<số> — <tiêu đề ngắn, ≤ 60 ký tự>
 

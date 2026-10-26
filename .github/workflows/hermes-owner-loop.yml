@@ -144,10 +144,16 @@ jobs:
 
       - name: Tách khối mệnh lệnh
         run: |
-          python3 scripts/hermes_owner.py extract \
-            --input .ai/handoff/.tmp/raw.txt \
-            --output .ai/handoff/.tmp/directive.md \
-            --title-out .ai/handoff/.tmp/title.txt
+          if ! python3 scripts/hermes_owner.py extract \
+                --input .ai/handoff/.tmp/raw.txt \
+                --output .ai/handoff/.tmp/directive.md \
+                --title-out .ai/handoff/.tmp/title.txt; then
+            echo "::error::Hermes không trả về khối mệnh lệnh hợp lệ. INBOX.md KHÔNG được ban hành — mọi phiên agent sẽ bị chặn ở ĐIỀU 0 cho tới khi chạy lại workflow này."
+            echo "::group::40 dòng đầu output của Hermes (xem đầy đủ trong artifact)"
+            head -40 .ai/handoff/.tmp/raw.txt || true
+            echo "::endgroup::"
+            exit 1
+          fi
           echo "Tiêu đề: $(cat .ai/handoff/.tmp/title.txt)"
           echo "::group::Mệnh lệnh"
           cat .ai/handoff/.tmp/directive.md
@@ -225,18 +231,24 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          JOB_STATUS: ${{ job.status }}
         run: |
           if [ -z "${TELEGRAM_BOT_TOKEN:-}" ] || [ -z "${TELEGRAM_CHAT_ID:-}" ]; then
             echo "Không có TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID — bỏ qua."
             exit 0
           fi
-          TEXT=$(python3 - <<'PY'
+          if [ "${JOB_STATUS:-success}" != "success" ]; then
+            TEXT="❌ Hermes owner loop thất bại (${JOB_STATUS}) — chưa ban hành được mệnh lệnh, phiên agent sẽ bị chặn ở BƯỚC 0.
+          Run: ${RUN_URL}"
+          else
+            TEXT=$(python3 - <<'PY'
           import json, pathlib
           state = json.loads(pathlib.Path('.ai/handoff/STATE.json').read_text(encoding='utf-8'))
           active = state.get('active_directive') or {}
           print(f"🧭 Hermes đã ban hành mệnh lệnh #{active.get('number','?')}: {active.get('title','')}\nHết hạn: {active.get('valid_until','')}")
           PY
-          )
+            )
+          fi
           curl -fsS --max-time 20 \
             "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \

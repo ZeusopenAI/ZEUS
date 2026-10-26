@@ -144,6 +144,64 @@ class ProtocolTest(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(hop._extract_directive(raw).strip().splitlines()[0], "# MỆNH LỆNH #2 — abc")
 
+    # -- extract: chịu được biến thể marker của model ---------------------
+    # Bối cảnh: run 40062072101 / 40062270254 của `hermes-owner-loop.yml` chết ở bước
+    # "Tách khối mệnh lệnh" (exit 3) vì model in marker lệch chuẩn, khiến INBOX.md
+    # không bao giờ được ban hành và mọi phiên agent bị chặn ở ĐIỀU 0.
+
+    _DIRECTIVE_BODY = "# MỆNH LỆNH #7 — Thử\n\n## Mục tiêu\nLàm xong.\n"
+
+    def _extract_cli(self, raw: str) -> subprocess.CompletedProcess[str]:
+        with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as fh:
+            fh.write(raw)
+            path = fh.name
+        try:
+            return run_engine("extract", "--input", path)
+        finally:
+            os.unlink(path)
+
+    def test_extract_tolerates_spaced_markers(self) -> None:
+        raw = f"<<< ZEUS_DIRECTIVE >>>\n{self._DIRECTIVE_BODY}<<< END_ZEUS_DIRECTIVE >>>\n"
+        result = self._extract_cli(raw)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("# MỆNH LỆNH #7", result.stdout)
+
+    def test_extract_tolerates_bold_and_code_fence(self) -> None:
+        raw = (
+            "**<<<ZEUS_DIRECTIVE>>>**\n\n"
+            f"```markdown\n{self._DIRECTIVE_BODY}```\n\n"
+            "**<<<END_ZEUS_DIRECTIVE>>>**\n"
+        )
+        result = self._extract_cli(raw)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(result.stdout.startswith("# MỆNH LỆNH #7"), result.stdout)
+        self.assertNotIn("```", result.stdout)
+
+    def test_extract_tolerates_lowercase_and_underscore_markers(self) -> None:
+        raw = f"<<<zeus_directive>>>\n{self._DIRECTIVE_BODY}<<<end_zeus_directive>>>\n"
+        result = self._extract_cli(raw)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("# MỆNH LỆNH #7", result.stdout)
+
+    def test_extract_falls_back_to_heading_when_markers_missing(self) -> None:
+        raw = (
+            "Đây là mệnh lệnh của phiên này:\n\n"
+            f"{self._DIRECTIVE_BODY}\n## Việc phải làm\n1. Việc A — kiểm chứng: `x` → OK\n"
+        )
+        result = self._extract_cli(raw)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(result.stdout.startswith("# MỆNH LỆNH #7"), result.stdout)
+
+    def test_extract_rejects_prose_without_directive(self) -> None:
+        raw = "Tôi đã đọc báo cáo. MỆNH LỆNH sẽ được ban hành sau khi có thêm dữ liệu.\n"
+        result = self._extract_cli(raw)
+        self.assertEqual(result.returncode, hop.EXIT_MISSING)
+        self.assertIn("không có khối", result.stderr)
+
+    def test_extract_rejects_heading_without_required_sections(self) -> None:
+        result = self._extract_cli("# MỆNH LỆNH #8 — Thiếu mục\n\nChỉ có một dòng.\n")
+        self.assertEqual(result.returncode, hop.EXIT_MISSING)
+
     def test_selftest_command_passes(self) -> None:
         result = run_engine("selftest")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)

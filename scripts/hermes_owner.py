@@ -557,12 +557,79 @@ Hãy ban hành ĐÚNG MỘT mệnh lệnh, ngắn, kiểm chứng được, và 
 """
 
 
+# Model hay làm lệch marker: thêm dấu cách (<<< ZEUS_DIRECTIVE >>>), bọc đậm/nghiêng
+# (**<<<ZEUS_DIRECTIVE>>>**), đổi khoảng trắng thành gạch dưới, hoặc viết hoa/thường khác.
+# Parser phải chịu được các biến thể đó, nếu không cả phiên agent bị chặn (xem
+# docs/HERMES_OWNER_PROTOCOL.md — boot trả mã 3 khi không tách được khối).
+_DIRECTIVE_OPEN_RE = re.compile(
+    r"<<<[^<>\n]{0,8}ZEUS[ _-]{0,3}DIRECTIVE[^<>\n]{0,8}>>>",
+    re.IGNORECASE,
+)
+_DIRECTIVE_CLOSE_RE = re.compile(
+    r"<<<[^<>\n]{0,8}END[ _-]{0,3}ZEUS[ _-]{0,3}DIRECTIVE[^<>\n]{0,8}>>>",
+    re.IGNORECASE,
+)
+# Dự phòng khi model bỏ hẳn marker: lấy từ tiêu đề mệnh lệnh, nhưng chỉ khi có
+# ít nhất một mục bắt buộc — tránh nhặt nhầm câu văn xuôi có nhắc "MỆNH LỆNH".
+_DIRECTIVE_HEADING_RE = re.compile(
+    r"^[ \t]*#{1,3}[ \t]*\**[ \t]*M[ỆE]NH[ \t]+L[ỆE]NH\b",
+    re.IGNORECASE | re.MULTILINE,
+)
+_DIRECTIVE_REQUIRED_HINTS = ("## Mục tiêu", "## Việc phải làm", "## Bằng chứng")
+
+
+_MARKDOWN_FILLER_LINES = {"", "*", "**", "***", "_", "__", "___", "---", "***"}
+
+
+def _strip_code_fence(body: str) -> str:
+    """Bỏ hàng rào ``` và dòng trang trí markdown (** __ ---) ở hai đầu khối."""
+    lines = body.strip().splitlines()
+
+    def drop_edges(lines: list[str]) -> list[str]:
+        start = 0
+        while start < len(lines) and (
+            lines[start].strip() in _MARKDOWN_FILLER_LINES
+            or lines[start].strip().startswith("```")
+        ):
+            start += 1
+        end = len(lines)
+        while end > start and (
+            lines[end - 1].strip() in _MARKDOWN_FILLER_LINES
+            or lines[end - 1].strip().startswith("```")
+        ):
+            end -= 1
+        return lines[start:end]
+
+    return "\n".join(drop_edges(lines)).strip()
+
+
+def _has_directive_sections(text: str) -> bool:
+    return any(hint in text for hint in _DIRECTIVE_REQUIRED_HINTS)
+
+
 def _extract_directive(text: str) -> str | None:
-    match = re.search(r"<<<ZEUS_DIRECTIVE>>>(.*?)<<<END_ZEUS_DIRECTIVE>>>", text, re.S)
-    if not match:
+    """Tách thân mệnh lệnh khỏi output của Hermes.
+
+    Chấp nhận: marker chuẩn, marker có dấu cách/gạch dưới/bọc đậm, khối bọc trong
+    code fence, và (dự phòng) output không có marker nhưng có tiêu đề + mục bắt buộc.
+    """
+    if not text or not text.strip():
         return None
-    body = match.group(1).strip()
-    return body or None
+
+    open_match = _DIRECTIVE_OPEN_RE.search(text)
+    if open_match:
+        rest = text[open_match.end():]
+        close_match = _DIRECTIVE_CLOSE_RE.search(rest)
+        body = rest[: close_match.start()] if close_match else rest
+        body = _strip_code_fence(body)
+        return body or None
+
+    heading = _DIRECTIVE_HEADING_RE.search(text)
+    if heading:
+        candidate = _strip_code_fence(text[heading.start():])
+        if candidate and _has_directive_sections(candidate):
+            return candidate
+    return None
 
 
 def live_directive(repo: Path, args: argparse.Namespace) -> dict[str, Any] | None:
@@ -912,11 +979,14 @@ DIRECTIVE_END = "<<<END_ZEUS_DIRECTIVE>>>"
 
 def cmd_extract(args: argparse.Namespace) -> int:
     raw = Path(args.input).read_text(encoding="utf-8", errors="replace") if args.input != "-" else sys.stdin.read()
-    body = _extract_directive(raw.replace(DIRECTIVE_START, "<<<ZEUS_DIRECTIVE>>>"))
+    body = _extract_directive(raw)
     if not body:
+        preview = "\n".join(raw.strip().splitlines()[:15]) or "(rỗng)"
         raise ProtocolError(
             EXIT_MISSING,
-            f"output của Hermes không có khối {DIRECTIVE_START} … {DIRECTIVE_END}",
+            f"output của Hermes không có khối {DIRECTIVE_START} … {DIRECTIVE_END} "
+            "và cũng không có tiêu đề '# MỆNH LỆNH' kèm mục bắt buộc.\n"
+            f"--- 15 dòng đầu output ---\n{preview}",
         )
     if args.output:
         Path(args.output).write_text(normalize_body(body), encoding="utf-8")
