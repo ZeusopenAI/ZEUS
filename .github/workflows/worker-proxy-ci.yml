@@ -1,0 +1,57 @@
+name: Worker proxy CI
+
+# Kiểm thử Cloudflare Worker `worker/telegram-proxy` (Telegram webhook → Hermes).
+#
+# Worker trước đây KHÔNG có test nào: lỗi chuyển tiếp nguyên `content-encoding`
+# / `content-length` của upstream (body đã được giải nén) làm client nhận
+# response hỏng mà không ai bắt được.
+
+on:
+  pull_request:
+    paths:
+      - "worker/**"
+      - ".github/workflows/worker-proxy-ci.yml"
+  push:
+    branches:
+      - main
+      - "arena/**"
+    paths:
+      - "worker/**"
+      - ".github/workflows/worker-proxy-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: worker-proxy-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+
+      - name: Cài Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4
+        with:
+          node-version: "22"
+
+      - name: Cú pháp JS
+        run: node --check worker/telegram-proxy/src/index.js
+
+      - name: Unit test worker (stub fetch, không cần wrangler)
+        run: npm test --prefix worker/telegram-proxy
+
+      - name: Không hardcode secret trong worker
+        run: |
+          if git grep -nEI -e 'AIza[0-9A-Za-z_-]{35}' -e 'sk-[A-Za-z0-9_-]{20,}' \
+               -e 'gh[pousr]_[A-Za-z0-9]{30,}' -e '[0-9]{8,10}:[A-Za-z0-9_-]{35}' \
+               -- worker/telegram-proxy; then
+            echo "::error::Phát hiện mẫu credential trong worker"
+            exit 1
+          fi
+          echo "OK: không có credential"

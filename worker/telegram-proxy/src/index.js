@@ -23,6 +23,35 @@
 
 const TELEGRAM_SECRET_HEADER = "x-telegram-bot-api-secret-token";
 
+/**
+ * Header không được chuyển tiếp khi trả response về client.
+ *
+ * Bug cũ: worker trả `resp.body` kèm NGUYÊN `resp.headers` của upstream. Khi
+ * Cloudflare (hoặc Hermes) nén gzip, body đã được giải nén nhưng header vẫn ghi
+ * `content-encoding: gzip` + `content-length` cũ -> client nhận response hỏng
+ * (lỗi "ERR_CONTENT_DECODING_FAILED" / cắt cụt body).
+ */
+const DROP_RESPONSE_HEADERS = new Set([
+  "content-encoding",
+  "content-length",
+  "connection",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailer",
+  "transfer-encoding",
+  "upgrade",
+]);
+
+function sanitizeResponseHeaders(upstreamHeaders) {
+  const headers = new Headers();
+  for (const [key, value] of upstreamHeaders) {
+    if (!DROP_RESPONSE_HEADERS.has(key.toLowerCase())) headers.set(key, value);
+  }
+  return headers;
+}
+
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -92,7 +121,7 @@ export default {
       return new Response(resp.body, {
         status: resp.status,
         statusText: resp.statusText,
-        headers: resp.headers,
+        headers: sanitizeResponseHeaders(resp.headers),
       });
     } catch (err) {
       // Báo lỗi THẬT thay vì luôn trả 200 OK (lỗi cũ của worker cool-unit-a53f).

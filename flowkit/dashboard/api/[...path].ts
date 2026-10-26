@@ -67,7 +67,10 @@ export default async function handler(request: Request): Promise<Response> {
 
     const responseHeaders = new Headers();
     for (const [key, value] of upstream.headers) {
-      if (!HOP_BY_HOP.has(key.toLowerCase()) && key.toLowerCase() !== 'content-encoding') {
+      const name = key.toLowerCase();
+      // `content-length` của upstream không còn đúng sau khi fetch giải nén body
+      // (và có thể làm client cắt cụt response) -> bỏ, để runtime tự tính lại.
+      if (!HOP_BY_HOP.has(name) && name !== 'content-encoding' && name !== 'content-length') {
         responseHeaders.set(key, value);
       }
     }
