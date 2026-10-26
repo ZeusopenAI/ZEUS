@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Switch;
@@ -74,8 +75,13 @@ public class SettingsActivity extends AppCompatActivity {
 
         Button btnSelectKeyboard = findViewById(R.id.btn_select_keyboard);
         btnSelectKeyboard.setOnClickListener(v -> {
-            Intent intent = new Intent(Settings.ACTION_SHOW_INPUT_METHOD_PICKER);
-            startActivity(intent);
+            // Hằng ACTION_SHOW_INPUT_METHOD_PICKER không có trong lớp Settings;
+            // cách chuẩn là gọi InputMethodManager.showInputMethodPicker().
+            InputMethodManager imm =
+                    (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.showInputMethodPicker();
+            }
         });
 
         // Telex switch listener

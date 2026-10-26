@@ -41,6 +41,11 @@ BANNED_PATTERNS = [
         "đặt android:keyTextColor trong style XML",
     ),
     (
+        re.compile(r"Settings\.ACTION_SHOW_INPUT_METHOD_PICKER"),
+        "android.provider.Settings không có ACTION_SHOW_INPUT_METHOD_PICKER",
+        "dùng ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).showInputMethodPicker()",
+    ),
+    (
         re.compile(r"\.isSticky\s*\(\s*\)"),
         "Keyboard không có isSticky() (sticky là thuộc tính của Keyboard.Key)",
         "bỏ điều kiện, hoặc duyệt Keyboard.Key và đọc isSticky của key shift",
