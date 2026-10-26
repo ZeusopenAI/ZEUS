@@ -494,6 +494,20 @@ def cmd_boot(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _never_issued(state: dict[str, Any], reason: str) -> bool:
+    """True khi chưa từng có mệnh lệnh nào (khác với mệnh lệnh bị lỗi/hết hạn).
+
+    Phân biệt này quan trọng: thông báo cũ luôn nói "INBOX.md thiếu front matter",
+    khiến Operator tưởng file hỏng trong khi nguyên nhân thật là workflow
+    `hermes-owner-loop` chưa chạy thành công lần nào.
+    """
+    if (state or {}).get("active_directive"):
+        return False
+    if not (state or {}).get("history") and (state or {}).get("updated_by") in (None, "bootstrap"):
+        return True
+    return "thiếu front matter" in reason or "chưa có" in reason.lower()
+
+
 def report_blocked(repo: Path, handoff: Path, errors: list[tuple[int, str]], when: dt.datetime) -> int:
     code, reason = EXIT_MISSING, "chưa có mệnh lệnh nào từ Hermes"
     for candidate_code, candidate_reason in errors:
@@ -504,25 +518,39 @@ def report_blocked(repo: Path, handoff: Path, errors: list[tuple[int, str]], whe
         if errors:
             code, reason = errors[0]
 
+    state = read_json(handoff / STATE_NAME) or {}
+    first_time = _never_issued(state, reason)
+
     print()
     print("⛔ KHÔNG CÓ MỆNH LỆNH HỢP LỆ TỪ HERMES — DỪNG PHIÊN NGAY")
     print("─" * 72)
-    print(f"Lý do      : {reason}")
+    if first_time:
+        print("Chẩn đoán : CHƯA TỪNG có mệnh lệnh nào được ban hành")
+        print("            (STATE.json chưa có active_directive/history)")
+    else:
+        print(f"Lý do      : {reason}")
     print(f"Thời điểm  : {iso(when)}")
     print(f"Repo       : {repo}")
     print()
-    print("Việc Operator cần làm (1 lần, ~2 phút):")
+    print("Việc Operator cần làm (1 lần):")
     print("  1. Mở tab Actions → workflow “Hermes owner loop”")
     print("     https://github.com/ZeusopenAI/ZEUS/actions/workflows/hermes-owner-loop.yml")
-    print("  2. Bấm “Run workflow”, điền ghi chú nếu cần → Run")
+    print("  2. Bấm “Run workflow” → ở ô chọn branch, chọn đúng nhánh đang chứa")
+    print("     bản sửa lỗi tách mệnh lệnh (workflow chạy theo branch được chọn,")
+    print("     KHÔNG phải theo main).")
     print("  3. Chờ ~2 phút, rồi chạy lại:  bash scripts/hermes-session-boot.sh")
+    print("  4. Muốn khỏi lặp lại mỗi phiên: đặt biến repo HERMES_OWNER_AUTO=on")
+    print("     (Settings → Secrets and variables → Actions → Variables) để")
+    print("     workflow tự chạy mỗi 6 giờ và mỗi khi OUTBOX.md đổi.")
+    print()
+    print("Chẩn đoán nhanh (1 lệnh):  bash scripts/hermes-owner-status.sh")
     print()
     print("Agent: KHÔNG sửa code, KHÔNG commit, KHÔNG tự đặt mục tiêu thay chủ.")
     print("Chỉ được báo lại nguyên văn khối này cho Operator.")
     print()
     _log_boot(handoff, {
         "at": iso(when), "event": "boot_blocked", "code": code, "reason": reason,
-        "cwd": str(Path.cwd()),
+        "first_time": first_time, "cwd": str(Path.cwd()),
     })
     return code
 
