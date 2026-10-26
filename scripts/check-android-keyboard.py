@@ -49,6 +49,11 @@ BANNED_PATTERNS = [
 
 R_REF_RE = re.compile(r"\bR\.(layout|xml|drawable|mipmap|string|color|style|id|array|dimen)\." r"([A-Za-z0-9_]+)")
 
+# AAPT đọc giá trị chuỗi bắt đầu bằng '?' là tham chiếu theme attribute, '@' là
+# tham chiếu resource. `android:keyLabel="?123"` từng làm :app:processDebugResources
+# FAILED với "resource attr/123 not found" (run 40412773590). Phải escape: "\?123".
+KEY_LABEL_RE = re.compile(r'android:keyLabel="([^"]*)"')
+
 
 def java_sources(root: Path) -> list[Path]:
     return sorted(root.glob("app/src/main/java/**/*.java"))
@@ -109,6 +114,22 @@ def collect_resources(root: Path) -> tuple[dict[str, set[str]], list[str]]:
     return names, errors
 
 
+def check_keyboard_labels(root: Path) -> list[str]:
+    """Bắt nhãn phím vô tình thành tham chiếu theme/resource."""
+    errors: list[str] = []
+    for path in sorted((root / "app/src/main/res/xml").glob("*.xml")):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for match in KEY_LABEL_RE.finditer(text):
+            label = match.group(1)
+            if label[:1] in ("?", "@") and not label.startswith("\\"):
+                line = text.count("\n", 0, match.start()) + 1
+                errors.append(
+                    f"{path}:{line}: android:keyLabel=\"{label}\" sẽ bị AAPT hiểu là "
+                    f"tham chiếu theme/resource -> escape thành \\{label}"
+                )
+    return errors
+
+
 def check_resource_refs(root: Path, names: dict[str, set[str]]) -> list[str]:
     errors: list[str] = []
     for path in java_sources(root):
@@ -136,7 +157,12 @@ def main() -> int:
         return 1
 
     names, xml_errors = collect_resources(root)
-    errors = check_banned_apis(root) + xml_errors + check_resource_refs(root, names)
+    errors = (
+        check_banned_apis(root)
+        + xml_errors
+        + check_keyboard_labels(root)
+        + check_resource_refs(root, names)
+    )
 
     if errors:
         print(f"FAIL: {len(errors)} lỗi trong {root.name}/")

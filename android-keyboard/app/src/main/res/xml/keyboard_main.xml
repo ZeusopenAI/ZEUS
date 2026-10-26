@@ -47,7 +47,7 @@
 
     <!-- Row 4: ?123, AI, Space, ., Enter -->
     <Row android:rowEdgeFlags="bottom">
-        <Key android:codes="-2" android:keyLabel="?123" android:keyWidth="14%p" android:keyEdgeFlags="left" />
+        <Key android:codes="-2" android:keyLabel="\?123" android:keyWidth="14%p" android:keyEdgeFlags="left" />
         <Key android:codes="-10" android:keyLabel="⚡AI" android:keyWidth="12%p" />
         <Key android:codes="44" android:keyLabel="," android:keyWidth="8%p" />
         <Key android:codes="32" android:keyLabel=" " android:keyWidth="34%p" android:isRepeatable="true" />
