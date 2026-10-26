@@ -9,11 +9,34 @@ Gemini adapters and that the self-recovery logic is present and secret-safe.
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
+
+HOTFIX_MARKER = "Q AI hotfix: native Gemini must receive exactly one authentication"
+
+# Upstream đã tự bảo đảm "đúng một cơ chế auth": key được đặt trong `_auth_headers()`
+# (chỉ chứa x-goog-api-key) rồi spread vào `_headers()`, nên header Authorization
+# thừa từ default headers cũng bị ghi đè theo thứ tự spread. Khi gặp dạng này thì
+# hotfix không cần vá nữa (vá thêm là rủi ro, không phải giá trị).
+_UPSTREAM_SAFE_PATTERNS = (
+    # def _auth_headers(self): return {"x-goog-api-key": self.api_key}
+    re.compile(
+        r"def _auth_headers\(self\)[^\n]*:\s*\n\s*return\s*\{\s*[\"']x-goog-api-key[\"']\s*:\s*self\.api_key\s*\}",
+    ),
+    # def _headers(self): return {..., **self._auth_headers(), ...}  (không có **default_headers sau đó)
+    re.compile(
+        r"def _headers\(self\)[^\n]*:[\s\S]{0,600}?\*\*self\._auth_headers\(\)"
+    ),
+)
+
+
+def upstream_already_single_auth(source: str) -> bool:
+    """True khi adapter đã tự bảo đảm chỉ một cơ chế auth (không cần hotfix)."""
+    return all(pattern.search(source) for pattern in _UPSTREAM_SAFE_PATTERNS)
 
 
 def patch_adapter(source: str) -> str:
-    if "Q AI hotfix: native Gemini must receive exactly one authentication" in source:
+    if HOTFIX_MARKER in source:
         return source
 
     source = source.replace(
@@ -24,7 +47,11 @@ def patch_adapter(source: str) -> str:
     needle = "        headers.update(self._default_headers)\n        return headers\n"
     replacement = """        headers.update(self._default_headers)\n\n        # Q AI hotfix: native Gemini must receive exactly one authentication\n        # mechanism. Generic/OpenAI defaults can contain Authorization or a\n        # stale API-key header; remove them, then set Google's key last.\n        _auth_header_names = {\n            \"authorization\", \"api-key\", \"x-api-key\", \"apikey\",\n            \"x-auth-token\", \"x-access-token\", \"x-goog-api-key\",\n        }\n        for _name in list(headers):\n            if _name.lower() in _auth_header_names:\n                headers.pop(_name, None)\n        headers[\"x-goog-api-key\"] = self.api_key\n        return headers\n"""
     if needle not in source:
-        raise AssertionError("Gemini adapter _headers() shape changed; hotfix would refuse to patch")
+        raise AssertionError(
+            "Gemini adapter _headers() shape changed and is NOT in the known-safe "
+            "single-auth shape; hotfix would refuse to patch. Cập nhật needle trong "
+            "scripts/hermes-gemini-hotfix.sh + verifier này."
+        )
     return source.replace(needle, replacement, 1)
 
 
@@ -34,10 +61,19 @@ def verify_adapter(path: Path) -> None:
     assert "generateContent" in source, "native generateContent route missing"
     assert '"x-goog-api-key"' in source, "upstream adapter does not contain x-goog-api-key"
 
+    if HOTFIX_MARKER not in source and upstream_already_single_auth(source):
+        # Không vá, nhưng vẫn phải chắc file là Python hợp lệ.
+        compile(source, str(path), "exec")
+        print(
+            f"PASS adapter: {path} — upstream đã tự bảo đảm single auth "
+            "(x-goog-api-key trong _auth_headers), hotfix không cần áp dụng"
+        )
+        return
+
     patched = patch_adapter(source)
     compile(patched, str(path), "exec")
 
-    assert "Q AI hotfix: native Gemini must receive exactly one authentication" in patched
+    assert HOTFIX_MARKER in patched
     assert '"authorization", "api-key", "x-api-key", "apikey"' in patched
     assert 'headers["x-goog-api-key"] = self.api_key' in patched
     assert 'self.api_key = (api_key or "").strip()' in patched
@@ -47,7 +83,7 @@ def verify_adapter(path: Path) -> None:
     return_pos = patched.index("return headers", final_key_pos)
     assert update_pos < final_key_pos < return_pos
 
-    print(f"PASS adapter: {path}")
+    print(f"PASS adapter: {path} — hotfix áp dụng được (legacy _headers shape)")
 
 
 def verify_hotfix_script(path: Path) -> None:
@@ -84,9 +120,13 @@ def main() -> None:
     ap.add_argument("--script", required=True)
     args = ap.parse_args()
 
-    verify_hotfix_script(Path(args.script))
-    for adapter in args.adapter:
-        verify_adapter(Path(adapter))
+    try:
+        verify_hotfix_script(Path(args.script))
+        for adapter in args.adapter:
+            verify_adapter(Path(adapter))
+    except AssertionError as exc:  # thông báo gọn cho CI, không cần traceback
+        print(f"FAIL: {exc}")
+        raise SystemExit(1)
     print("ALL STATIC/STRUCTURAL TESTS PASSED")
 
 

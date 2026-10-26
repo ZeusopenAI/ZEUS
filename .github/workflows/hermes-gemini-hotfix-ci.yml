@@ -9,6 +9,7 @@ on:
       - scripts/hermes-gemini-hotfix.sh
       - scripts/hermes-gemini-auth-recover.sh
       - scripts/verify-hermes-gemini-hotfix.py
+      - scripts/tests/test_gemini_hotfix_verifier.py
       - .github/workflows/hermes-gemini-hotfix-ci.yml
   workflow_dispatch:
 
@@ -32,6 +33,11 @@ jobs:
         run: |
           bash -n scripts/hermes-gemini-hotfix.sh
           bash -n scripts/hermes-gemini-auth-recover.sh
+
+      - name: Test verifier itself (shape cũ / shape upstream mới / shape lạ)
+        run: |
+          python -m pip install --quiet pytest
+          python -m pytest scripts/tests/test_gemini_hotfix_verifier.py -q
 
       - name: Verify auth-recovery safety invariants
         run: |
