@@ -1,0 +1,51 @@
+# Nous-approved MCP catalog entry.
+# Presence in this directory = approval. Merged via PR review.
+manifest_version: 1
+
+name: playwright-mcp
+description: Tự động hóa trình duyệt bằng Playwright (Microsoft) — 143 device presets, accessibility snapshots, headless/headed, tự cài browser. Tốt nhất cho VPS/CI.
+source: https://github.com/microsoft/playwright-mcp
+
+# Stdio server — Hermes spawns `npx` subprocess, no extension needed.
+# Auto-installs browser binaries on first use.
+transport:
+  type: stdio
+  command: "npx"
+  args: ["-y", "@playwright/mcp@latest"]
+
+auth:
+  type: none
+
+# Playwright exposes ~25 tools; we keep a safe read-mostly default.
+# Users can opt into mutating tools via `hermes mcp configure playwright`.
+tools:
+  default_enabled:
+    - browser_navigate
+    - browser_snapshot
+    - browser_click
+    - browser_hover
+    - browser_type
+    - browser_select_option
+    - browser_take_screenshot
+    - browser_evaluate
+    - browser_wait_for
+    - browser_tabs
+    - browser_close
+    - browser_resize
+    - browser_press_key
+    - browser_file_upload
+    - browser_handle_dialog
+    - browser_console_messages
+    - browser_network_requests
+
+post_install: |
+  Không cần extension hay Chrome sẵn — Playwright tự tải Chromium khi cần.
+
+  Probe có thể timeout lần đầu (đang tải browser ~400MB) — cài vẫn thành công.
+  Chạy `hermes mcp configure playwright` sau để tinh chỉnh tools.
+
+  Kiểm tra:
+    hermes chat
+    > mở https://example.com và chụp màn hình
+
+  Trên desktop cần giữ login → dùng thêm `browser-mcp` thay vì chỉ playwright.

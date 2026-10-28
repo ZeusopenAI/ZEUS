@@ -1,0 +1,25 @@
+# Nous-approved MCP catalog entry.
+# Presence in this directory = approval. Merged via PR review.
+manifest_version: 1
+
+name: chrome-devtools-mcp
+description: Chrome DevTools cho agent — network, console (source-mapped), performance, debugging đáng tin cậy qua Puppeteer. Dùng khi cần debug sâu.
+source: https://github.com/ChromeDevTools/chrome-devtools-mcp
+
+transport:
+  type: stdio
+  command: "npx"
+  args: ["-y", "chrome-devtools-mcp@latest"]
+
+auth:
+  type: none
+
+post_install: |
+  Cho phép agent dùng DevTools đầy đủ: phân tích network requests, screenshots,
+  console messages, performance.
+
+  Cấu hình MCP client khác:
+    { "mcpServers": { "chrome-devtools": { "command": "npx", "args": ["-y", "chrome-devtools-mcp@latest"] } } }
+
+  Sau khi cài, khởi động lại Hermes session để nạp tools.
+  Xem thêm: https://github.com/ChromeDevTools/chrome-devtools-mcp

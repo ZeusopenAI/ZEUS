@@ -54,6 +54,8 @@ Dự án AI Automation cá nhân và trợ lý đa năng cho thương hiệu cá
 │   ├── HERMES_OWNER_PROTOCOL.md # Giao thức Hermes TÙY CHỌN: boot → gợi ý → báo cáo
 │   ├── HERMES_SESSION_ERROR_RCA.md # Vì sao "gọi Hermes làm chủ phiên chat" bị lỗi (28/10/2026)
 │   ├── HERMES_ACTIONS.md       # Hướng dẫn chạy Hermes qua GitHub Actions
+│   ├── HERMES_WEB_AUTOMATION.md # Web automation: Agent Reach + Browser MCP (mới 28/10/2026)
+│   ├── AGENT_REACH_BROWSER_MCP_RESEARCH.md # Nghiên cứu đầy đủ Agent Reach & Browser MCP
 │   ├── TELEGRAM_WIRING.md      # Runbook kết nối Telegram Webhook
 │   ├── second-brain.md         # Hướng dẫn gom bộ nhớ ChatGPT/Claude/Gemini
 │   ├── COLAB_COMFYUI.md        # Hướng dẫn ComfyUI / Stable Diffusion trên Colab
@@ -76,6 +78,7 @@ Dự án AI Automation cá nhân và trợ lý đa năng cho thương hiệu cá
 │   └── sync-to-zeusopenai.sh   # Đồng bộ mã nguồn sang ZeusopenAI/ZEUS
 ├── skills/                     # Kỹ năng tùy chỉnh cho Agent
 │   ├── hermes-owner/           # Skill cho Hermes khi đưa gợi ý (không bắt buộc)
+│   ├── hermes-web-automation/  # Web automation: Agent Reach (đọc 17+ nền tảng) + Browser MCP (thao tác)
 │   ├── qai-developer-manager/  # Kỹ năng kỹ sư trưởng quản lý code & CI
 │   ├── hermes-project-analyst-code-manager/ # Phân tích & chẩn đoán Hermes
 │   ├── flowkit-ai-filmmaker/   # Hướng dẫn vận hành AI filmmaking

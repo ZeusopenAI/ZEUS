@@ -1,0 +1,28 @@
+# Nous-approved MCP catalog entry.
+# Presence in this directory = approval. Merged via PR review.
+manifest_version: 1
+
+name: browser-mcp
+description: Điều khiển Chrome thật qua extension (BrowserMCP/mcp) — navigate, click, fill, screenshot, history, network. Giữ nguyên login session.
+source: https://github.com/BrowserMCP/mcp
+
+# BrowserMCP runs as a local extension bridge over Streamable HTTP.
+# User must install the Chrome extension and click Connect (port 12306).
+transport:
+  type: http
+  url: http://127.0.0.1:12306/mcp
+
+# No credentials — extension reuses the user's existing Chrome session.
+auth:
+  type: none
+
+post_install: |
+  1. Tải extension từ https://github.com/BrowserMCP/mcp/releases
+  2. Chrome → chrome://extensions/ → Developer mode → Load unpacked → chọn thư mục extension
+  3. Bấm icon extension → Connect (port 12306)
+  4. Chỉ dùng trên máy có Chrome desktop (không dùng trên VPS headless).
+     Trên VPS, cài thay thế: `hermes mcp install playwright-mcp`
+
+  Kiểm tra: mở https://example.com → bảo Hermes “chụp màn hình”.
+
+  Cập nhật: tải bản mới từ Releases → Reload extension.
