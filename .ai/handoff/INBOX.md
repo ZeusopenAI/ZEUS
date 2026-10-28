@@ -1,7 +1,13 @@
-# INBOX — chưa có mệnh lệnh
+# INBOX — chưa có gợi ý từ Hermes (trạng thái bình thường)
 
-Hermes chưa ban hành mệnh lệnh nào. Chạy workflow **Hermes owner loop** để triệu tập chủ:
+**Hermes là kênh TÙY CHỌN.** Không có nội dung ở đây KHÔNG phải lỗi và KHÔNG được
+dùng để dừng, từ chối hay trì hoãn yêu cầu của Operator / người dùng trong phiên chat.
+Agent cứ làm việc bình thường, không cần xin xác nhận thêm.
 
-    .github/workflows/hermes-owner-loop.yml
+Nếu **muốn** có thêm gợi ý (không bắt buộc): chạy workflow `Hermes owner loop`
+(`.github/workflows/hermes-owner-loop.yml`), rồi tùy chọn chạy
+`bash scripts/hermes-session-boot.sh`. Không chạy cũng hoàn toàn bình thường.
 
-Sau đó chạy lại: `bash scripts/hermes-session-boot.sh`
+Khi workflow ban hành gợi ý, file này sẽ có front matter (`id`, `issuer`, `valid_until`,
+`seal`) — đó vẫn chỉ là **tham khảo**, không phải lệnh bắt buộc. Xem
+[`docs/HERMES_OWNER_PROTOCOL.md`](../../docs/HERMES_OWNER_PROTOCOL.md).

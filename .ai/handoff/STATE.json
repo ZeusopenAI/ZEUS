@@ -1,5 +1,6 @@
 {
   "protocol": "hermes-owner-v1",
+  "policy": "optional",
   "schema": 1,
   "active_directive": null,
   "history": [],

@@ -1,7 +1,7 @@
 name: Hermes owner protocol CI
 
-# Kiểm thử giao thức "Hermes làm chủ" — không gọi LLM, không tốn credit.
-# Chạy trên mọi thay đổi liên quan để giao thức không bị phá âm thầm.
+# Kiểm thử Hermes Owner Protocol ở chế độ TÙY CHỌN — không gọi LLM, không tốn credit.
+# Bao gồm test chống hồi quy: không file luật nào được phép biến Hermes thành cổng chặn phiên.
 
 on:
   pull_request:
@@ -9,12 +9,21 @@ on:
       - main
     paths:
       - ".ai/handoff/**"
+      - ".ai/CONSTITUTION.md"
       - "scripts/hermes_owner.py"
       - "scripts/hermes_owner_brief.py"
+      - "scripts/gen-zeus-context.py"
       - "scripts/hermes-session-boot.sh"
       - "scripts/hermes-session-closeout.sh"
       - "scripts/tests/test_hermes_owner.py"
+      - "scripts/tests/test_hermes_optional_rules.py"
+      - "README.md"
+      - "Status.md"
+      - "memory/MEMORY.md"
+      - "docs/HERMES_SESSION_ERROR_RCA.md"
+      - "docs/ARENA_VS_HERMES.md"
       - "skills/hermes-owner/**"
+      - "skills/README.md"
       - ".github/workflows/hermes-owner-loop.yml"
       - ".github/workflows/hermes-owner-protocol-ci.yml"
       - "AGENTS.md"
@@ -22,16 +31,30 @@ on:
   push:
     branches:
       - main
+      # PR do github-actions[bot] mở thường bị GitHub giữ ở "action_required"
+      # (chờ approve). Chạy thêm trên nhánh làm việc để có kết quả CI thật.
+      - "arena/**"
     paths:
       - ".ai/handoff/**"
+      - ".ai/CONSTITUTION.md"
       - "scripts/hermes_owner.py"
       - "scripts/hermes_owner_brief.py"
+      - "scripts/gen-zeus-context.py"
       - "scripts/hermes-session-boot.sh"
       - "scripts/hermes-session-closeout.sh"
       - "scripts/tests/test_hermes_owner.py"
+      - "scripts/tests/test_hermes_optional_rules.py"
+      - "README.md"
+      - "Status.md"
+      - "memory/MEMORY.md"
+      - "docs/HERMES_SESSION_ERROR_RCA.md"
+      - "docs/ARENA_VS_HERMES.md"
       - "skills/hermes-owner/**"
+      - "skills/README.md"
       - ".github/workflows/hermes-owner-loop.yml"
       - ".github/workflows/hermes-owner-protocol-ci.yml"
+      - "AGENTS.md"
+      - "docs/HERMES_OWNER_PROTOCOL.md"
   workflow_dispatch:
 
 permissions:
@@ -80,17 +103,20 @@ jobs:
         run: python3 scripts/hermes_owner.py selftest
 
       - name: Unit test giao thức
-        run: python3 -m unittest discover -s scripts/tests -p 'test_hermes_owner.py' -v
+        run: python3 -m unittest discover -s scripts/tests -p 'test_hermes*.py' -v
 
       - name: Smoke test bộ dựng bản giao ban
         run: |
           python3 scripts/hermes_owner_brief.py \
             --out-brief /tmp/brief.md --out-prompt /tmp/prompt.txt
           grep -q "ZEUS_DIRECTIVE" /tmp/prompt.txt
-          echo "OK: prompt có marker mệnh lệnh"
+          echo "OK: prompt có marker gợi ý"
 
-      - name: Frontmatter skill Hermes owner
+      - name: Frontmatter skill Hermes (kênh tùy chọn)
         run: python3 scripts/validate-skills.py --strict skills/hermes-owner
+
+      - name: Chính sách Hermes tùy chọn (chống hồi quy)
+        run: python3 -m unittest discover -s scripts/tests -p 'test_hermes_optional_rules.py' -v
 
       - name: Từ chối bí mật trong .ai/handoff
         shell: bash

@@ -190,13 +190,15 @@ def build(repo: Path, max_chars: int) -> str:
         "1. Đọc **Trạng thái** và **Việc đang mở** trước khi lập kế hoạch.\n"
         "2. Snapshot có thể cũ hơn code: kiểm tra `git log -1` trong bản sao repo trước khi khẳng định.\n"
         "3. Mục \"Tác vụ phải hỏi trước\" trong `AGENTS.md` là ràng buộc — không tự vượt qua.\n"
-        "4. Cần chi tiết hơn: đọc thẳng file trong repo (đường dẫn ở mục Bản đồ repo).\n"
+        "4. Hermes là kênh TÙY CHỌN: có thể gọi hoặc không gọi; thiếu/lỗi gợi ý Hermes KHÔNG\n"
+        "   được dùng để dừng phiên hay từ chối yêu cầu của Operator (AGENTS.md ĐIỀU 0).\n"
+        "5. Cần chi tiết hơn: đọc thẳng file trong repo (đường dẫn ở mục Bản đồ repo).\n"
     )
     fixed_len = sum(len(s) for s in out)
     sections = [
         ("Trạng thái hiện tại", "Status.md"),
         ("Việc đang mở", "TODO.md"),
-        ("Quy tắc phối hợp & an toàn (BẮT BUỘC đọc)", "AGENTS.md"),
+        ("Quy tắc phối hợp & an toàn (BẮT BUỘC đọc — Hermes chỉ là tùy chọn)", "AGENTS.md"),
         ("Định hướng", "Roadmap.md"),
     ]
     pending = [(title, repo / name, name) for title, name in sections if (repo / name).is_file()]
