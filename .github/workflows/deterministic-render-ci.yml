@@ -37,10 +37,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
 
-      - name: Node >= 20 và ffmpeg/ffprobe có sẵn
+      - name: Node >= 20 + ffmpeg/ffprobe (cài nếu runner thiếu)
         run: |
+          set -e
           node -v
           node -e "const v=+process.versions.node.split('.')[0]; if(v<20) throw new Error('cần Node >= 20, có '+v)"
+          # ubuntu-latest mới (2026) KHÔNG còn ffmpeg/ffprobe sẵn. Kiểm tra thật
+          # bằng command -v (đừng dùng `ffmpeg -version | head -1`: không có
+          # pipefail nên lệnh đó vẫn exit 0 dù ffmpeg không tồn tại).
+          if ! command -v ffmpeg >/dev/null || ! command -v ffprobe >/dev/null; then
+            echo "Runner thiếu ffmpeg/ffprobe — cài qua apt"
+            sudo apt-get update -qq
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ffmpeg
+          fi
+          command -v ffmpeg
+          command -v ffprobe
           ffmpeg -version | head -1
           ffprobe -version | head -1
 
