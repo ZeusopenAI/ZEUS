@@ -55,11 +55,17 @@ async function main() {
   const timeline = makeTimeline(project);
   mkdirSync(path.dirname(out), { recursive: true });
 
+  // Some CI images ship ffmpeg without libx264. Fall back to mpeg4 so the
+  // prototype still produces a real, decodable MP4 instead of failing opaque.
+  const encoders = spawnSync(ffmpeg, ['-hide_banner', '-encoders'], { encoding: 'utf8', maxBuffer: 8 << 20 });
+  const hasX264 = encoders.status === 0 && /\blibx264\b/.test(encoders.stdout || '');
+  const vcodec = hasX264
+    ? ['-c:v', 'libx264', '-preset', opt('preset', 'veryfast'), '-crf', opt('crf', '18')]
+    : ['-c:v', 'mpeg4', '-q:v', '3'];
   const args = [
     '-y', '-loglevel', 'error',
     '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', `${pw}x${ph}`, '-r', String(fps), '-i', 'pipe:0',
-    '-an', '-c:v', 'libx264', '-preset', opt('preset', 'veryfast'),
-    '-crf', opt('crf', '18'), '-pix_fmt', 'yuv420p', '-movflags', '+faststart', out,
+    '-an', ...vcodec, '-pix_fmt', 'yuv420p', '-movflags', '+faststart', out,
   ];
   const ff = spawn(ffmpeg, args, { stdio: ['pipe', 'ignore', 'pipe'] });
   let ffErr = '';
@@ -82,12 +88,15 @@ async function main() {
   }
   ff.stdin.end();
   const [code] = await once(ff, 'exit');
-  if (code !== 0) throw new Error(`ffmpeg exit ${code}:\n${ffErr}`);
+  if (code !== 0) {
+    throw new Error(`ffmpeg exit ${code}\n  binary: ${ffmpeg}\n  encoder: ${hasX264 ? 'libx264' : 'mpeg4 (libx264 không có)'}\n  args: ${args.join(' ')}\n${ffErr}`);
+  }
 
   const secs = ((Date.now() - started) / 1000).toFixed(1);
   console.log(`OK: ${out}`);
   console.log(`   ${total} frames  ${pw}x${ph}  ${fps}fps  scale=${scale}  samples=${samples}  ${secs}s`);
   console.log(`   first=${firstHash}  last=${lastHash}  (hash này in được cả trong preview để đối chiếu)`);
+  console.log(`   encoder: ${hasX264 ? 'libx264' : 'mpeg4 (fallback: runner thiếu libx264)'}`);
   console.log(`   timeline: ${timeline.map((s) => `${s.id}[${s.start.toFixed(2)}-${s.end.toFixed(2)}]`).join(' ')}`);
 }
 

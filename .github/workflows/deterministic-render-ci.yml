@@ -52,16 +52,46 @@ jobs:
 
       - name: Export thật ra MP4
         run: |
-          node export.mjs --from 0 --to 1 --fps 12 --out /tmp/zeus-proto.mp4
-          test -s /tmp/zeus-proto.mp4
-          ffprobe -v error -show_entries stream=codec_name,width,height,pix_fmt \
-            -show_entries format=duration -of default=nw=1 /tmp/zeus-proto.mp4
+          set +e
+          node export.mjs --from 0 --to 1 --fps 12 --out /tmp/zeus-proto.mp4 > /tmp/export-1.log 2>&1
+          rc=$?; cat /tmp/export-1.log
+          if [ "$rc" -ne 0 ]; then
+            while IFS= read -r l; do echo "::error::export: $l"; done < /tmp/export-1.log
+            exit "$rc"
+          fi
+          if [ ! -s /tmp/zeus-proto.mp4 ]; then echo "::error::MP4 rỗng hoặc không tồn tại"; exit 1; fi
+          ffprobe -v error -show_entries 'stream=codec_name,width,height,pix_fmt:format=duration' \
+            -of default=nw=1 /tmp/zeus-proto.mp4 > /tmp/ffprobe-1.log 2>&1
+          rc=$?; cat /tmp/ffprobe-1.log
+          if [ "$rc" -ne 0 ]; then
+            while IFS= read -r l; do echo "::error::ffprobe: $l"; done < /tmp/ffprobe-1.log
+            exit "$rc"
+          fi
 
       - name: Export scale=2 + motion blur vẫn ra file hợp lệ
         run: |
-          node export.mjs --from 2 --to 2.25 --fps 12 --scale 2 --samples 4 --out /tmp/zeus-proto-2x.mp4
-          test -s /tmp/zeus-proto-2x.mp4
-          ffprobe -v error -show_entries stream=width,height -of csv=p=0 /tmp/zeus-proto-2x.mp4 | grep -q '960,540'
+          set +e
+          node export.mjs --from 2 --to 2.25 --fps 12 --scale 2 --samples 4 --out /tmp/zeus-proto-2x.mp4 > /tmp/export-2.log 2>&1
+          rc=$?; cat /tmp/export-2.log
+          if [ "$rc" -ne 0 ]; then
+            while IFS= read -r l; do echo "::error::export2x: $l"; done < /tmp/export-2.log
+            exit "$rc"
+          fi
+          if [ ! -s /tmp/zeus-proto-2x.mp4 ]; then echo "::error::MP4 2x rỗng"; exit 1; fi
+          ffprobe -v error -show_entries stream=width,height -of csv=p=0 /tmp/zeus-proto-2x.mp4 > /tmp/ffprobe-2.log 2>&1
+          rc=$?; cat /tmp/ffprobe-2.log
+          if [ "$rc" -ne 0 ] || ! grep -q '960,540' /tmp/ffprobe-2.log; then
+            while IFS= read -r l; do echo "::error::ffprobe2x: $l"; done < /tmp/ffprobe-2.log
+            exit 1
+          fi
+
+      - name: Thông tin runner khi có lỗi
+        if: failure()
+        run: |
+          echo "::error::node=$(node -v) npm=$(npm -v)"
+          ffmpeg -hide_banner -version 2>&1 | head -2 | while IFS= read -r l; do echo "::error::ffmpeg: $l"; done
+          ffmpeg -hide_banner -encoders 2>/dev/null | grep -E 'libx264|mpeg4' | while IFS= read -r l; do echo "::error::encoder: $l"; done
+          ls -l /tmp/zeus-*.mp4 /tmp/export-*.log /tmp/ffprobe-*.log 2>/dev/null | while IFS= read -r l; do echo "::error::file: $l"; done
 
       - name: Contact sheet QA
         run: |
