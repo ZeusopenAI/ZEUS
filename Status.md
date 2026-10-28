@@ -2,6 +2,17 @@
 
 Cập nhật: 2026-10-28
 
+## Nhịp gần nhất (28/10/2026) — Agent Reach + Browser MCP cho Hermes
+
+- **Đã nghiên cứu và tích hợp Agent Reach & Browser MCP vào repo cho Hermes.** Kết quả nằm trong
+  `docs/AGENT_REACH_BROWSER_MCP_RESEARCH.md` (nghiên cứu đầy đủ 105k★ Agent Reach + 4 biến thể Browser MCP),
+  `docs/HERMES_WEB_AUTOMATION.md` (hướng dẫn vận hành), skill `skills/hermes-web-automation/SKILL.md`,
+  script `scripts/hermes-web-tools-setup.sh` (cài + doctor một lệnh), và 3 manifest MCP
+  `agents/hermes/optional-mcps/{browser-mcp,playwright-mcp,chrome-devtools-mcp}/manifest.yaml`.
+  Triết lý: **Agent Reach = ĐỌC** (17+ nền tảng qua Jina/gh/yt-dlp/mcporter, CLI `terminal`), **Browser MCP = LÀM**
+  (điều khiển Chrome thật qua `mcp_servers`), bổ trợ nhau. VPS dùng `playwright-mcp` (headless, 38k★),
+  desktop dùng `BrowserMCP/mcp` (7.2k★) hoặc `hangwin/mcp-chrome` (12.5k★) để giữ login. Xem `TODO.md` P2.
+
 ## Nhịp gần nhất (28/10/2026) — Hermes chuyển sang TÙY CHỌN
 
 - **Sự cố "gọi Hermes làm chủ phiên chat" đã được xử lý tận gốc.** Ngày 23/10 giao thức

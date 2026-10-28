@@ -22,6 +22,8 @@ Cập nhật: 2026-09-17
 
 ## P2 — Mở rộng & Tự động hóa nâng cao
 
+- [x] Nghiên cứu Agent Reach (105k★, MIT) & Browser MCP (BrowserMCP 7.2k★, Playwright 38k★, Chrome-MCP 12.5k★) trên GitHub, cập nhật vào repo cho Hermes: `docs/AGENT_REACH_BROWSER_MCP_RESEARCH.md`, `docs/HERMES_WEB_AUTOMATION.md`, skill `hermes-web-automation`, script `scripts/hermes-web-tools-setup.sh`, 3 manifest `optional-mcps/{browser-mcp,playwright-mcp,chrome-devtools-mcp}` (28/10/2026).
+- [ ] Cài thử Agent Reach + Playwright MCP trên VPS Hermes: `bash scripts/hermes-web-tools-setup.sh --install` → `agent-reach doctor` → test “mở example.com, chụp màn hình” qua Hermes.
 - [ ] Lập lịch tải export định kỳ từ Google Takeout / ChatGPT để nạp tự động vào Second Brain.
 - [ ] Thiết lập quy tắc điều phối đa model (Multi-Model Routing) trong prompt hệ thống của Hermes.
 - [x] Chuẩn bị bộ 24/7 cho Hermes Gateway: `deploy/vps/install-hermes-vps.sh` (cài tự động, đã chạy thật trên Linux: unit `hermes-gateway.service` sinh chuẩn — `User=hermes`, `Restart=always`, enable boot-start, `systemd-analyze verify` pass), `deploy/vps/healthcheck.sh`, `deploy/vps/backup-hermes.sh` (đã chạy thật), runbook `docs/RUNBOOK_247.md` (14/10/2026).
