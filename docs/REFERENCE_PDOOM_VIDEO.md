@@ -161,6 +161,14 @@ cho AI — nhưng áp xuống cấp mã nguồn rất cụ thể.
 9. Nếu cần motion blur: adaptive sampling từng tile là **tham vọng cao** (GPU ~23 GB ở 4K),
    chỉ nên học ý tưởng "dừng sớm khi hội tụ", chưa nên implement.
 
+> **Cập nhật 2026-10-28 — Phase C bước 7 đã có prototype chạy thật:**
+> [`prototypes/deterministic-render/`](../prototypes/deterministic-render/README.md).
+> `src/drawFrame.mjs` là hàm `f(project, t)` duy nhất, dùng chung cho preview Chrome và export
+> Node (`@napi-rs/canvas`) → raw rgb24 → ffmpeg. Có `makeTimeline()` cắt theo lyric + snap beat,
+> `--scale 2`, `--samples 4`, contact sheet, 11 unit test (golden hash + so sánh pixel 1x/2x) và
+> CI riêng `deterministic-render-ci.yml`. Chưa có three.js/WebGL/adaptive-tile — đó là phần
+> production nếu sau này nâng cấp.
+
 ## 6. Không nên mang sang ZEUS
 
 - **Nhạc, lyrics, ảnh plate, font**: bài hát/lyrics không thuộc MIT license; font giữ OFL riêng.
@@ -190,3 +198,5 @@ bun scripts/render.ts video --samples auto --shutter 0.2 --out ../out/pdoom.mp4
 - `memory/flowkit-ai-filmmaking.md` · `skills/flowkit-ai-filmmaker/SKILL.md`
 - `scripts/media-batch.py` · `docs/HERMES_FULL_CAPABILITY.md` (media tools)
 - `docs/HERMES_AUTO_SYNC.md` (cách đưa tài liệu/skill vào runtime Hermes)
+- `docs/REFERENCE_VIDEO_QUALITY_PIPELINE.md` (quy trình nâng chất lượng video: 4 stage, face refine, cân bằng màu)
+- `prototypes/deterministic-render/README.md` (prototype `f(t)` preview = export)
