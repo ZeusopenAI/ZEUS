@@ -1,0 +1,121 @@
+name: Deterministic render prototype CI
+
+# Kiểm prototype f(t): cùng hash ở preview/export, timeline bám beat, export ra MP4 thật.
+# Không gọi LLM, không tốn credit, chạy ~15s.
+
+on:
+  push:
+    branches:
+      - main
+      - "arena/**"
+    paths:
+      - "prototypes/deterministic-render/**"
+      - ".github/workflows/deterministic-render-ci.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "prototypes/deterministic-render/**"
+      - ".github/workflows/deterministic-render-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deterministic-render-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prototype:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: prototypes/deterministic-render
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4
+
+      - name: Node >= 20 + ffmpeg/ffprobe (cài nếu runner thiếu)
+        run: |
+          set -e
+          node -v
+          node -e "const v=+process.versions.node.split('.')[0]; if(v<20) throw new Error('cần Node >= 20, có '+v)"
+          # ubuntu-latest mới (2026) KHÔNG còn ffmpeg/ffprobe sẵn. Kiểm tra thật
+          # bằng command -v (đừng dùng `ffmpeg -version | head -1`: không có
+          # pipefail nên lệnh đó vẫn exit 0 dù ffmpeg không tồn tại).
+          if ! command -v ffmpeg >/dev/null || ! command -v ffprobe >/dev/null; then
+            echo "Runner thiếu ffmpeg/ffprobe — cài qua apt"
+            sudo apt-get update -qq
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ffmpeg
+          fi
+          command -v ffmpeg
+          command -v ffprobe
+          ffmpeg -version | head -1
+          ffprobe -version | head -1
+
+      - name: Cài dependency (duy nhất @napi-rs/canvas)
+        run: npm ci --no-audit --no-fund
+
+      - name: Unit test (11 test, ~0.3s)
+        run: npm test
+
+      - name: Export thật ra MP4
+        run: |
+          set +e
+          node export.mjs --from 0 --to 1 --fps 12 --out /tmp/zeus-proto.mp4 > /tmp/export-1.log 2>&1
+          rc=$?; cat /tmp/export-1.log
+          if [ "$rc" -ne 0 ]; then
+            while IFS= read -r l; do echo "::error::export: $l"; done < /tmp/export-1.log
+            exit "$rc"
+          fi
+          if [ ! -s /tmp/zeus-proto.mp4 ]; then echo "::error::MP4 rỗng hoặc không tồn tại"; exit 1; fi
+          ffprobe -v error -show_entries 'stream=codec_name,width,height,pix_fmt:format=duration' \
+            -of default=nw=1 /tmp/zeus-proto.mp4 > /tmp/ffprobe-1.log 2>&1
+          rc=$?; cat /tmp/ffprobe-1.log
+          if [ "$rc" -ne 0 ]; then
+            while IFS= read -r l; do echo "::error::ffprobe: $l"; done < /tmp/ffprobe-1.log
+            exit "$rc"
+          fi
+
+      - name: Export scale=2 + motion blur vẫn ra file hợp lệ
+        run: |
+          set +e
+          node export.mjs --from 2 --to 2.25 --fps 12 --scale 2 --samples 4 --out /tmp/zeus-proto-2x.mp4 > /tmp/export-2.log 2>&1
+          rc=$?; cat /tmp/export-2.log
+          if [ "$rc" -ne 0 ]; then
+            while IFS= read -r l; do echo "::error::export2x: $l"; done < /tmp/export-2.log
+            exit "$rc"
+          fi
+          if [ ! -s /tmp/zeus-proto-2x.mp4 ]; then echo "::error::MP4 2x rỗng"; exit 1; fi
+          ffprobe -v error -show_entries stream=width,height -of csv=p=0 /tmp/zeus-proto-2x.mp4 > /tmp/ffprobe-2.log 2>&1
+          rc=$?; cat /tmp/ffprobe-2.log
+          if [ "$rc" -ne 0 ] || ! grep -q '960,540' /tmp/ffprobe-2.log; then
+            while IFS= read -r l; do echo "::error::ffprobe2x: $l"; done < /tmp/ffprobe-2.log
+            exit 1
+          fi
+
+      - name: Thông tin runner khi có lỗi
+        if: failure()
+        run: |
+          echo "::error::node=$(node -v) npm=$(npm -v)"
+          ffmpeg -hide_banner -version 2>&1 | head -2 | while IFS= read -r l; do echo "::error::ffmpeg: $l"; done
+          ffmpeg -hide_banner -encoders 2>/dev/null | grep -E 'libx264|mpeg4' | while IFS= read -r l; do echo "::error::encoder: $l"; done
+          ls -l /tmp/zeus-*.mp4 /tmp/export-*.log /tmp/ffprobe-*.log 2>/dev/null | while IFS= read -r l; do echo "::error::file: $l"; done
+
+      - name: Contact sheet QA
+        run: |
+          node sheet.mjs --cuts --out /tmp/zeus-cuts.png
+          node sheet.mjs --from 0 --to 12 --n 8 --cols 4 --out /tmp/zeus-sheet.png
+          test -s /tmp/zeus-cuts.png
+          test -s /tmp/zeus-sheet.png
+          python3 - <<'PY'
+          import struct, pathlib
+          for p in ['/tmp/zeus-cuts.png', '/tmp/zeus-sheet.png']:
+              b = pathlib.Path(p).read_bytes()
+              assert b[:8] == b'\x89PNG\r\n\x1a\n', f'{p} không phải PNG'
+              w, h = struct.unpack('>II', b[16:24])
+              assert w > 100 and h > 50, f'{p} kích thước lạ: {w}x{h}'
+              print(f'OK {p}: {w}x{h}')
+          PY

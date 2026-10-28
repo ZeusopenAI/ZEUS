@@ -11,6 +11,11 @@ Cập nhật: 2026-10-28
   trả marker lệch ⇒ `INBOX.md` chưa từng có nội dung ⇒ `boot` luôn trả 3 ⇒ mọi phiên chat bị
   chặn. Thêm vào đó `HERMES_OWNER_AUTO` không bật (các lượt schedule bị `skipped`), TTL 72h và
   sandbox Arena không có key/binary Hermes. Chi tiết: `docs/HERMES_SESSION_ERROR_RCA.md`.
+- **Repo tham khảo `mexicat/pdoom-video` đã được học và thử nghiệm.** Ghi chú kiến trúc +
+  đối chiếu ZEUS tại `docs/REFERENCE_PDOOM_VIDEO.md`; quy trình nâng chất lượng video AI tại
+  `docs/REFERENCE_VIDEO_QUALITY_PIPELINE.md`. Prototype `prototypes/deterministic-render/` chạy
+  thật: cùng `drawFrame(project,t)` cho preview Chrome và export headless → ffmpeg, 11 test xanh,
+  CI riêng `deterministic-render-ci.yml`, contact sheet QA, `--scale 2` và `--samples 4`.
 - **Toàn bộ luật đã đổi sang "có thể gọi Hermes, không bắt buộc".** Sửa đồng bộ:
   `AGENTS.md` (ĐIỀU 0), `.ai/CONSTITUTION.md`, `README.md`, `Status.md`, `memory/MEMORY.md`,
   `.ai/handoff/{INBOX.md,README.md,STATE.json,OUTBOX.md}`, `docs/HERMES_OWNER_PROTOCOL.md`,

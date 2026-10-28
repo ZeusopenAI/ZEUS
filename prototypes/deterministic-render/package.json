@@ -1,0 +1,17 @@
+{
+  "name": "zeus-deterministic-render",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Prototype: one deterministic Canvas2D frame function shared by browser preview and headless ffmpeg export.",
+  "scripts": {
+    "preview": "node serve.mjs --port 5173",
+    "test": "node --test test/*.test.mjs",
+    "export": "node export.mjs",
+    "sheet": "node sheet.mjs"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@napi-rs/canvas": "0.1.80"
+  }
+}

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ZEUS — deterministic render preview</title>
+<style>
+  :root { color-scheme: dark; --ink:#0A0A0B; --panel:#151517; --bone:#EEE9DF; --ash:#9C978F; --signal:#FF4D12; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; min-height:100%; background:var(--ink); color:var(--bone);
+    font:12px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+  header { display:flex; gap:12px; align-items:baseline; padding:10px 14px; border-bottom:1px solid #2a2a2d; flex-wrap:wrap; }
+  header b { color:var(--signal); letter-spacing:.08em; }
+  header small { color:var(--ash); }
+  main { display:flex; justify-content:center; padding:14px; }
+  canvas { width:100%; max-width:960px; height:auto; image-rendering:pixelated;
+    background:#000; border:1px solid #2a2a2d; display:block; }
+  #ui { max-width:960px; margin:0 auto 28px; padding:0 14px; }
+  #scrub { width:100%; accent-color:var(--signal); }
+  #row { display:flex; gap:14px; flex-wrap:wrap; color:var(--ash); margin-top:6px; }
+  #row b { color:var(--bone); font-weight:500; }
+  #hash { color:var(--signal); }
+  #keys { margin-top:10px; color:#6d6a66; line-height:1.8; }
+  kbd { background:var(--panel); border:1px solid #333; border-radius:3px; padding:1px 5px; color:var(--bone); }
+  body.hide #ui { display:none; }
+</style>
+</head>
+<body>
+<header>
+  <b>ZEUS / DETERMINISTIC RENDER</b>
+  <small>cùng một <code>drawFrame()</code> với exporter — xem hash để đối chiếu pixel</small>
+</header>
+<main><canvas id="c"></canvas></main>
+<div id="ui">
+  <input id="scrub" type="range" min="0" max="12" step="0.001" value="0" />
+  <div id="row">
+    <span>T <b id="t">0.00</b></span>
+    <span>FRAME <b id="f">0</b></span>
+    <span>BEAT <b id="beat">0.0</b></span>
+    <span>SCENE <b id="scene">—</b></span>
+    <span>HASH <b id="hash">—</b></span>
+    <span id="state">⏸ paused</span>
+  </div>
+  <div id="keys">
+    <kbd>space</kbd> play/pause · <kbd>←</kbd><kbd>→</kbd> ±1s (shift ±5s) ·
+    <kbd>,</kbd><kbd>.</kbd> ±1 frame · <kbd>[</kbd><kbd>]</kbd> scene trước/sau ·
+    <kbd>l</kbd> loop scene · <kbd>h</kbd> ẩn UI · <code>?t=5.5</code> · <code>?scale=2</code>
+  </div>
+</div>
+<script type="module" src="/preview/preview.mjs"></script>
+</body>
+</html>

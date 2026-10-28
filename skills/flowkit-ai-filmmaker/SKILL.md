@@ -78,6 +78,15 @@ Use the matching canonical recipe in `flowkit/skills/`:
 
 The skills are recipes, not authorization to publish content or incur third-party costs. Ask before uploading, publishing, or using a paid service.
 
+## Reference study (optional reading)
+
+[`docs/REFERENCE_PDOOM_VIDEO.md`](../../docs/REFERENCE_PDOOM_VIDEO.md) summarises lessons from
+`mexicat/pdoom-video` (MIT): deterministic `frame = f(t)` rendering, a committed audio/lyrics
+timing JSON contract, beat-snapped semantic timeline cuts, one engine for preview and headless
+export, and a style bible that keeps AI-generated footage from looking generic. Use it when
+planning overlays, captions, timing data or QA contact sheets. Do not copy that repo's song,
+lyrics or fonts — their licences are separate.
+
 ## Definition of done
 
 - All requested scenes/assets are accounted for and reviewed.

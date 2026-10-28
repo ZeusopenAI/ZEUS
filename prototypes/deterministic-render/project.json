@@ -1,0 +1,41 @@
+{
+  "id": "zeus-deterministic-demo",
+  "title": "ZEUS / DETERMINISTIC RENDER",
+  "duration": 12,
+  "fps": 30,
+  "bpm": 120,
+  "beatOffset": 0,
+  "seed": 20261028,
+  "width": 480,
+  "height": 270,
+  "palette": {
+    "ink": "#0A0A0B",
+    "ink2": "#151517",
+    "graphite": "#5E5B57",
+    "ash": "#9C978F",
+    "bone": "#EEE9DF",
+    "signal": "#FF4D12",
+    "ember": "#FF8A3D",
+    "blood": "#C21D0B"
+  },
+  "words": [
+    { "w": "DETERMINISTIC", "start": 0.0, "end": 1.2 },
+    { "w": "FRAME", "start": 1.2, "end": 2.0 },
+    { "w": "EQUALS", "start": 2.0, "end": 2.8 },
+    { "w": "F-OF-T", "start": 2.8, "end": 4.0 },
+    { "w": "ONE", "start": 4.0, "end": 4.8 },
+    { "w": "ENGINE", "start": 4.8, "end": 5.8 },
+    { "w": "PREVIEW", "start": 5.8, "end": 7.0 },
+    { "w": "AND", "start": 7.0, "end": 7.5 },
+    { "w": "EXPORT", "start": 7.5, "end": 8.8 },
+    { "w": "SAME", "start": 8.8, "end": 9.6 },
+    { "w": "PIXELS", "start": 9.6, "end": 10.8 },
+    { "w": "SHIP", "start": 10.8, "end": 12.0 }
+  ],
+  "scenes": [
+    { "id": "open", "start": 0, "kind": "grid" },
+    { "id": "type", "query": "ONE", "kind": "karaoke" },
+    { "id": "bars", "query": "PREVIEW", "kind": "bars" },
+    { "id": "outro", "query": "SAME", "kind": "spark" }
+  ]
+}
