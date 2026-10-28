@@ -31,6 +31,9 @@ on:
   push:
     branches:
       - main
+      # PR do github-actions[bot] mở thường bị GitHub giữ ở "action_required"
+      # (chờ approve). Chạy thêm trên nhánh làm việc để có kết quả CI thật.
+      - "arena/**"
     paths:
       - ".ai/handoff/**"
       - ".ai/CONSTITUTION.md"
