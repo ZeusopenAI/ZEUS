@@ -103,3 +103,7 @@ Skill `edit-anh` đã cài vào `~/.hermes/skills/edit-anh` **không chứa nộ
 
 **Cách kết hợp tốt nhất:** Arena Agent viết skill / workflow / devcontainer → commit vào repo →
 Hermes cài và vận hành. Arena giỏi *xây*, Hermes giỏi *chạy thường trực*.
+
+> **Chính sách 28/10/2026:** Hermes là kênh **TÙY CHỌN**. Phiên Arena có thể gọi Hermes để
+> lấy gợi ý, nhưng không bắt buộc; không có gợi ý / gợi ý hết hạn / workflow lỗi đều không
+> chặn phiên chat. Chi tiết: `AGENTS.md` ĐIỀU 0 · `docs/HERMES_SESSION_ERROR_RCA.md`.

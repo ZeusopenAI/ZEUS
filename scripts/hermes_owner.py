@@ -1,31 +1,40 @@
 #!/usr/bin/env python3
 """Hermes Owner Protocol — engine (stdlib only).
 
-Repo là *đường truyền* giữa Hermes (chủ) và các phiên agent (thực thi):
+CHÍNH SÁCH HIỆN HÀNH (2026-10-28): **Hermes là kênh CỐ VẤN TÙY CHỌN, không phải chủ.**
+Tên "owner" chỉ là tên lịch sử của giao thức / file / nhánh `hermes-owner/state`,
+giữ nguyên để không làm gãy workflow và dữ liệu cũ. Quyền cao nhất luôn thuộc về
+Operator / người dùng trong phiên chat. Xem `AGENTS.md` ĐIỀU 0 và
+`docs/HERMES_SESSION_ERROR_RCA.md`.
 
-    .ai/handoff/INBOX.md    Mệnh lệnh Hermes  -> agent      (có front matter + seal)
-    .ai/handoff/OUTBOX.md   Báo cáo agent     -> Hermes     (nối thêm, mới nhất ở trên)
+Repo là *đường truyền* giữa Hermes (gợi ý) và các phiên agent (thực thi):
+
+    .ai/handoff/INBOX.md    Gợi ý Hermes      -> agent      (front matter + seal, có hay không đều được)
+    .ai/handoff/OUTBOX.md   Báo cáo agent     -> Hermes     (nối thêm, mới nhất ở trên, tùy chọn)
     .ai/handoff/STATE.json  Trạng thái máy đọc (directive đang hiệu lực, báo cáo cuối)
 
 Lệnh:
 
-    python3 scripts/hermes_owner.py boot        # BƯỚC 0 của MỌI phiên agent
+    python3 scripts/hermes_owner.py boot        # hỏi thăm Hermes (TÙY CHỌN, không chặn phiên)
     python3 scripts/hermes_owner.py status      # xem nhanh trạng thái, không gọi LLM
-    python3 scripts/hermes_owner.py issue ...   # (workflow) Hermes ban hành mệnh lệnh
-    python3 scripts/hermes_owner.py closeout .. # kết phiên, ghi báo cáo
+    python3 scripts/hermes_owner.py issue ...   # (workflow) Hermes ghi một gợi ý
+    python3 scripts/hermes_owner.py closeout .. # kết phiên, ghi báo cáo (tùy chọn)
     python3 scripts/hermes_owner.py selftest    # tự kiểm tra trong thư mục tạm
 
-Mã thoát của `boot` / `status --strict`:
+Mã thoát: `boot` mặc định **luôn trả 0** — kể cả khi không có gợi ý nào. Khi đó nó in
+thông báo "KHÔNG BẮT BUỘC, KHÔNG CHẶN PHIÊN" và (với --json) trả
+{"ok": false, "blocking": false, "code": ...}. Các mã 3/4/5/6 chỉ còn là TÍN HIỆU
+TRẠNG THÁI, không phải lệnh dừng:
 
-    0  OK — có mệnh lệnh hợp lệ của Hermes
+    0  OK — có gợi ý hợp lệ của Hermes (hoặc không có gợi ý, vẫn OK)
     2  lỗi dùng / thiếu file
-    3  chưa có mệnh lệnh nào
-    4  mệnh lệnh đã hết hạn
+    3  chưa có gợi ý nào
+    4  gợi ý đã hết hạn
     5  seal không khớp (file bị sửa tay / hỏng)
     6  sai người ban hành / id không khớp STATE
 
-Chính sách đã chốt với Operator: **không có mệnh lệnh hợp lệ thì phiên phải DỪNG**
-(không tự quyết, không sửa code). Không có fallback im lặng.
+Chỉ khi Operator **chủ động** bật `boot --strict` hoặc `HERMES_OWNER_STRICT=1` thì
+3/4/5/6 mới được trả ra và kèm dòng "DỪNG PHIÊN NGAY". `status --strict` giữ nguyên.
 """
 
 from __future__ import annotations
@@ -44,7 +53,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-PROTOCOL = "hermes-owner-v1"
+PROTOCOL = "hermes-owner-v1"   # tên lịch sử — không còn nghĩa "chủ sở hữu"
+POLICY = "optional"            # "optional" | "strict" (strict chỉ khi Operator bật)
 SCHEMA = 1
 HANDOFF_REL = Path(".ai") / "handoff"
 INBOX_NAME = "INBOX.md"
@@ -74,15 +84,18 @@ OUTBOX_HEADER = f"""# OUTBOX — báo cáo của agent gửi Hermes
 > Máy đọc: mỗi báo cáo nằm giữa hai dòng đánh dấu `report:start` và `report:end`
 > (dạng comment HTML, mỗi dòng đứng riêng). Mới nhất ở trên.
 > Không sửa báo cáo cũ; chỉ nối thêm.
+>
+> Báo cáo là TÙY CHỌN. Không có báo cáo không phải lỗi và không chặn phiên nào.
 """
 
-INBOX_STUB = """# INBOX — chưa có mệnh lệnh
+INBOX_STUB = """# INBOX — chưa có gợi ý từ Hermes (trạng thái bình thường)
 
-Hermes chưa ban hành mệnh lệnh nào. Chạy workflow **Hermes owner loop** để triệu tập chủ:
+**Hermes là kênh TÙY CHỌN.** Không có nội dung ở đây KHÔNG phải lỗi và KHÔNG được
+dùng để dừng, từ chối hay trì hoãn yêu cầu của Operator / người dùng trong phiên chat.
 
-    .github/workflows/hermes-owner-loop.yml
-
-Sau đó chạy lại: `bash scripts/hermes-session-boot.sh`
+Nếu muốn có thêm gợi ý: chạy workflow `Hermes owner loop`
+(`.github/workflows/hermes-owner-loop.yml`), rồi tùy chọn chạy
+`bash scripts/hermes-session-boot.sh`. Không chạy cũng hoàn toàn bình thường.
 """
 
 
@@ -220,6 +233,7 @@ def build_inbox(meta: dict[str, Any], body: str) -> str:
 def empty_state() -> dict[str, Any]:
     return {
         "protocol": PROTOCOL,
+        "policy": POLICY,
         "schema": SCHEMA,
         "active_directive": None,
         "history": [],
@@ -265,14 +279,14 @@ def validate_directive(
     max_age_hours: int = MAX_AGE_HOURS,
 ) -> None:
     if not meta.get("id"):
-        raise ProtocolError(EXIT_MISSING, "mệnh lệnh không có id")
+        raise ProtocolError(EXIT_MISSING, "gợi ý không có id")
 
     issuer = str(meta.get("issuer") or "").strip()
     if issuer != "hermes":
         raise ProtocolError(
             EXIT_WRONG_ISSUER,
             f"người ban hành là '{issuer or 'không rõ'}', không phải 'hermes' — "
-            "chỉ mệnh lệnh do Hermes ban hành mới có hiệu lực",
+            "chỉ gợi ý do Hermes ban hành mới dùng được (kênh tùy chọn)",
         )
 
     active = (state or {}).get("active_directive") or {}
@@ -286,23 +300,23 @@ def validate_directive(
     declared = str(meta.get("seal") or "")
     actual = seal_of(meta.get("_body", ""))
     if not declared:
-        raise ProtocolError(EXIT_TAMPERED, "mệnh lệnh thiếu seal — không kiểm được toàn vẹn")
+        raise ProtocolError(EXIT_TAMPERED, "gợi ý thiếu seal — không kiểm được toàn vẹn")
     if declared != actual:
         raise ProtocolError(
             EXIT_TAMPERED,
-            "seal không khớp: nội dung mệnh lệnh đã bị thay đổi sau khi Hermes ban hành "
+            "seal không khớp: nội dung gợi ý đã bị thay đổi sau khi Hermes ban hành "
             f"(khai báo {declared[:19]}…, thực tế {actual[:19]}…)",
         )
 
     try:
         valid_until = parse_ts(str(meta.get("valid_until") or ""))
     except Exception:
-        raise ProtocolError(EXIT_MISSING, "mệnh lệnh thiếu valid_until hợp lệ")
+        raise ProtocolError(EXIT_MISSING, "gợi ý thiếu valid_until hợp lệ")
 
     if when > valid_until:
         raise ProtocolError(
             EXIT_STALE,
-            f"mệnh lệnh {meta.get('id')} đã hết hạn ({human_delta(when - valid_until)})",
+            f"gợi ý {meta.get('id')} đã hết hạn ({human_delta(when - valid_until)})",
         )
 
     try:
@@ -313,7 +327,7 @@ def validate_directive(
     if (when - issued_at) > dt.timedelta(hours=max_age_hours):
         raise ProtocolError(
             EXIT_STALE,
-            f"mệnh lệnh đã cũ hơn {max_age_hours} giờ ({human_delta(when - issued_at)})",
+            f"gợi ý đã cũ hơn {max_age_hours} giờ ({human_delta(when - issued_at)})",
         )
 
 
@@ -408,7 +422,7 @@ def print_banner(meta: dict[str, Any], when: dt.datetime, source: str) -> None:
     except Exception:
         remaining = "không rõ hạn"
     print("╔══════════════════════════════════════════════════════════════════════╗")
-    print("║  MỆNH LỆNH TỪ HERMES — chủ của repo ZEUS                             ║")
+    print("║  GỢI Ý TỪ HERMES — kênh TÙY CHỌN, không bắt buộc                    ║")
     print("╚══════════════════════════════════════════════════════════════════════╝")
     print(f"ID        : {meta.get('id')}  (#{meta.get('number', '?')})")
     print(f"Tiêu đề   : {meta.get('title')}")
@@ -417,6 +431,13 @@ def print_banner(meta: dict[str, Any], when: dt.datetime, source: str) -> None:
     print(f"Nguồn     : {label}")
     print(f"Seal      : OK ({str(meta.get('seal'))[:19]}…)")
     print()
+
+
+def strict_requested(args: argparse.Namespace) -> bool:
+    """Chế độ dừng phiên CHỈ tồn tại khi Operator bật rõ ràng."""
+    if bool(getattr(args, "strict", False)):
+        return True
+    return os.environ.get("HERMES_OWNER_STRICT", "").strip().lower() in {"1", "true", "on", "yes"}
 
 
 def cmd_boot(args: argparse.Namespace) -> int:
@@ -465,14 +486,15 @@ def cmd_boot(args: argparse.Namespace) -> int:
             chosen = (meta, "live")
 
     if chosen is None:
-        return report_blocked(repo, handoff, errors, when)
+        return report_no_directive(repo, handoff, errors, when, args)
 
     meta, source = chosen
     if not args.quiet:
         print_banner(meta, when, source)
         print(normalize_body(meta.get("_body", "")))
         print("─" * 72)
-        print("Bắt buộc khi kết thúc phiên:")
+        print("Gợi ý này KHÔNG bắt buộc — ưu tiên yêu cầu trực tiếp của Operator / người dùng.")
+        print("Tùy chọn khi kết thúc phiên:")
         print('  bash scripts/hermes-session-closeout.sh --status DONE --summary "…"')
         print("Chi tiết: docs/HERMES_OWNER_PROTOCOL.md")
     else:
@@ -486,7 +508,8 @@ def cmd_boot(args: argparse.Namespace) -> int:
 
     if args.json:
         print(json.dumps({
-            "ok": True, "source": source, "id": meta.get("id"),
+            "ok": True, "policy": POLICY, "blocking": False,
+            "source": source, "id": meta.get("id"),
             "number": meta.get("number"), "title": meta.get("title"),
             "valid_until": meta.get("valid_until"),
             "body": normalize_body(meta.get("_body", "")),
@@ -494,8 +517,10 @@ def cmd_boot(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
-def report_blocked(repo: Path, handoff: Path, errors: list[tuple[int, str]], when: dt.datetime) -> int:
-    code, reason = EXIT_MISSING, "chưa có mệnh lệnh nào từ Hermes"
+def report_no_directive(repo: Path, handoff: Path, errors: list[tuple[int, str]],
+                        when: dt.datetime, args: argparse.Namespace) -> int:
+    """Không có gợi ý hợp lệ: mặc định là thông tin, KHÔNG phải lỗi chặn phiên."""
+    code, reason = EXIT_MISSING, "chưa có gợi ý nào từ Hermes"
     for candidate_code, candidate_reason in errors:
         if candidate_code != EXIT_MISSING:
             code, reason = candidate_code, candidate_reason
@@ -504,39 +529,64 @@ def report_blocked(repo: Path, handoff: Path, errors: list[tuple[int, str]], whe
         if errors:
             code, reason = errors[0]
 
+    strict = strict_requested(args)
     print()
-    print("⛔ KHÔNG CÓ MỆNH LỆNH HỢP LỆ TỪ HERMES — DỪNG PHIÊN NGAY")
+    if strict:
+        print("⛔ HERMES: KHÔNG CÓ GỢI Ý HỢP LỆ — DỪNG PHIÊN NGAY (--strict do Operator bật)")
+    else:
+        print("ℹ️  HERMES: KHÔNG CÓ GỢI Ý HỢP LỆ — KHÔNG BẮT BUỘC, KHÔNG CHẶN PHIÊN")
     print("─" * 72)
     print(f"Lý do      : {reason}")
+    print(f"Mã tín hiệu: {code} (3 chưa có · 4 hết hạn · 5 seal sai · 6 sai người ban hành)")
     print(f"Thời điểm  : {iso(when)}")
     print(f"Repo       : {repo}")
     print()
-    print("Việc Operator cần làm (1 lần, ~2 phút):")
-    print("  1. Mở tab Actions → workflow “Hermes owner loop”")
-    print("     https://github.com/ZeusopenAI/ZEUS/actions/workflows/hermes-owner-loop.yml")
-    print("  2. Bấm “Run workflow”, điền ghi chú nếu cần → Run")
-    print("  3. Chờ ~2 phút, rồi chạy lại:  bash scripts/hermes-session-boot.sh")
+    if strict:
+        print("Agent: Operator đã bật chế độ strict → DỪNG, báo lại nguyên văn khối này.")
+    else:
+        print("Agent: TIẾP TỤC làm theo yêu cầu trực tiếp của Operator / người dùng trong phiên chat.")
+        print("       Đây KHÔNG phải lỗi. Không dừng phiên, không từ chối việc, không bắt người dùng chờ.")
     print()
-    print("Agent: KHÔNG sửa code, KHÔNG commit, KHÔNG tự đặt mục tiêu thay chủ.")
-    print("Chỉ được báo lại nguyên văn khối này cho Operator.")
+    if not strict:
+        print("Nếu MUỐN có thêm gợi ý từ Hermes (tùy chọn, không bắt buộc):")
+        print("  1. Actions → workflow `Hermes owner loop` → Run workflow")
+        print("     https://github.com/ZeusopenAI/ZEUS/actions/workflows/hermes-owner-loop.yml")
+        print("  2. Chờ ~2 phút rồi chạy lại (tùy chọn): bash scripts/hermes-session-boot.sh")
+        print()
+        print("Chế độ cũ (dừng khi thiếu lệnh) CHỈ khi Operator nói rõ:")
+        print("  bash scripts/hermes-session-boot.sh --strict   hoặc   HERMES_OWNER_STRICT=1")
     print()
+    if getattr(args, "json", False):
+        print(json.dumps({
+            "ok": False, "policy": POLICY, "blocking": strict,
+            "code": code, "reason": reason, "directive": None,
+        }, ensure_ascii=False, indent=2))
     _log_boot(handoff, {
-        "at": iso(when), "event": "boot_blocked", "code": code, "reason": reason,
+        "at": iso(when), "event": "boot_blocked" if strict else "boot_skipped",
+        "code": code, "reason": reason, "policy": POLICY,
         "cwd": str(Path.cwd()),
     })
-    return code
+    return code if strict else EXIT_OK
+
+
+# Alias giữ tương thích với code cũ gọi tên hàm này.
+report_blocked = report_no_directive
 
 
 # ---------------------------------------------------------------------------
 # Live mode (tuỳ chọn — cần binary hermes + key provider)
 # ---------------------------------------------------------------------------
 
-LIVE_PROMPT = """Bạn là Hermes, CHỦ của repo ZEUS. Một phiên agent Arena vừa mở và xin mệnh lệnh.
+LIVE_PROMPT = """Bạn là Hermes — CỐ VẤN TÙY CHỌN cho repo ZEUS. Bạn KHÔNG phải chủ của phiên:
+Operator / người dùng trong phiên chat là quyền cao nhất. Một agent đang hỏi ý kiến tham khảo
+và có thể nghe hoặc bỏ qua gợi ý của bạn. Bạn KHÔNG thực thi code trong lượt này.
 
 Bối cảnh repo:
 {brief}
 
-Hãy ban hành ĐÚNG MỘT mệnh lệnh, ngắn, kiểm chứng được, và chỉ in phần giữa hai dòng đánh dấu:
+Hãy gợi ý ĐÚNG MỘT bản kế hoạch ngắn, kiểm chứng được, và chỉ in phần giữa hai dòng đánh dấu.
+Không viết câu nào yêu cầu agent dừng phiên, chờ lệnh hay từ chối yêu cầu của Operator.
+Tiêu đề "# MỆNH LỆNH" ở dưới chỉ là nhãn định dạng cũ, KHÔNG phải quyền ra lệnh:
 
 <<<ZEUS_DIRECTIVE>>>
 # MỆNH LỆNH — <tiêu đề ngắn>
@@ -557,12 +607,41 @@ Hãy ban hành ĐÚNG MỘT mệnh lệnh, ngắn, kiểm chứng được, và 
 """
 
 
+def _strip_code_fence(body: str) -> str:
+    """Bỏ hàng rào ``` và dòng trang trí markdown ở hai đầu khối."""
+    lines = body.strip().splitlines()
+    start, end = 0, len(lines)
+    while start < end and (
+        lines[start].strip() in _MARKDOWN_FILLER_LINES or lines[start].strip().startswith("```")
+    ):
+        start += 1
+    while end > start and (
+        lines[end - 1].strip() in _MARKDOWN_FILLER_LINES or lines[end - 1].strip().startswith("```")
+    ):
+        end -= 1
+    return "\n".join(lines[start:end]).strip()
+
+
+def _has_directive_sections(text: str) -> bool:
+    return any(hint in text for hint in _DIRECTIVE_REQUIRED_HINTS)
+
+
 def _extract_directive(text: str) -> str | None:
-    match = re.search(r"<<<ZEUS_DIRECTIVE>>>(.*?)<<<END_ZEUS_DIRECTIVE>>>", text, re.S)
-    if not match:
+    """Tách thân gợi ý khỏi output của Hermes, chịu marker lệch + code fence."""
+    if not text or not text.strip():
         return None
-    body = match.group(1).strip()
-    return body or None
+    open_match = _DIRECTIVE_OPEN_RE.search(text)
+    if open_match:
+        rest = text[open_match.end():]
+        close_match = _DIRECTIVE_CLOSE_RE.search(rest)
+        body = rest[: close_match.start()] if close_match else rest
+        return _strip_code_fence(body) or None
+    heading = _DIRECTIVE_HEADING_RE.search(text)
+    if heading:
+        candidate = _strip_code_fence(text[heading.start():])
+        if candidate and _has_directive_sections(candidate):
+            return candidate
+    return None
 
 
 def live_directive(repo: Path, args: argparse.Namespace) -> dict[str, Any] | None:
@@ -600,7 +679,7 @@ def live_directive(repo: Path, args: argparse.Namespace) -> dict[str, Any] | Non
         return None
     body = _extract_directive(result.stdout)
     if not body:
-        print("⚠ Hermes không trả về khối mệnh lệnh đúng định dạng — bỏ qua.", file=sys.stderr)
+        print("⚠ Hermes không trả về khối gợi ý đúng định dạng — bỏ qua (kênh tùy chọn).", file=sys.stderr)
         return None
     return issue_directive(
         repo=repo,
@@ -705,7 +784,7 @@ def cmd_issue(args: argparse.Namespace) -> int:
     else:
         body = sys.stdin.read()
     if not body.strip():
-        raise ProtocolError(EXIT_USAGE, "nội dung mệnh lệnh rỗng")
+        raise ProtocolError(EXIT_USAGE, "nội dung gợi ý rỗng")
     title = args.title or _title_of(body) or "Mệnh lệnh"
     result = issue_directive(
         repo=repo, body=body, title=title, ttl_hours=args.ttl_hours,
@@ -714,7 +793,7 @@ def cmd_issue(args: argparse.Namespace) -> int:
     )
     meta = result["meta"]
     if not args.quiet:
-        print(f"✅ Đã ban hành mệnh lệnh #{meta['number']} — {meta['id']}")
+        print(f"✅ Đã ghi gợi ý (tùy chọn) #{meta['number']} — {meta['id']}")
         print(f"   Tiêu đề : {meta['title']}")
         print(f"   Hiệu lực: {meta['issued_at']} → {meta['valid_until']}")
         print(f"   Seal    : {meta['seal'][:23]}…")
@@ -788,7 +867,7 @@ def cmd_closeout(args: argparse.Namespace) -> int:
         ("HEAD", git_info.get("head")),
         ("Tóm tắt", summary.replace("\n", " ")),
         ("Đã kiểm chứng", args.tests),
-        ("Câu hỏi cho chủ", args.questions),
+        ("Câu hỏi cho Hermes", args.questions),
         ("Blocker", args.blocker),
     ]
     meta_block = [f"- **{name}:** {value}" for name, value in bullets if value]
@@ -851,7 +930,7 @@ def cmd_closeout(args: argparse.Namespace) -> int:
         if not committed and result.stdout.strip():
             print(result.stdout.strip(), file=sys.stderr)
 
-    print(f"✅ Đã ghi báo cáo {report_id} ({status}) cho mệnh lệnh {directive_id}")
+    print(f"✅ Đã ghi báo cáo (tùy chọn) {report_id} ({status}) cho gợi ý {directive_id}")
     print(f"   File: {HANDOFF_REL / OUTBOX_NAME}")
     if args.commit:
         print(f"   Commit: {'có' if committed else 'không (không có gì để commit)'}")
@@ -871,7 +950,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     state = read_json(handoff / STATE_NAME) or {}
     active = state.get("active_directive") or {}
 
-    print("Hermes Owner Protocol — trạng thái")
+    print("Hermes Owner Protocol (kênh TÙY CHỌN) — trạng thái")
     print("─" * 60)
     print(f"Repo        : {repo}")
     print(f"Bây giờ     : {iso(when)}")
@@ -909,14 +988,36 @@ def cmd_status(args: argparse.Namespace) -> int:
 DIRECTIVE_START = "<<<ZEUS_DIRECTIVE>>>"
 DIRECTIVE_END = "<<<END_ZEUS_DIRECTIVE>>>"
 
+# Model hay làm lệch marker: thêm dấu cách, bọc đậm (**…**), đổi hoa/thường, gạch dưới,
+# hoặc bọc cả khối trong code fence. Parser chịu các biến thể đó (lỗi thật đã gặp ở
+# run 40062072101 / 40062270254 — xem docs/HERMES_SESSION_ERROR_RCA.md).
+_DIRECTIVE_OPEN_RE = re.compile(
+    r"<<<[^<>\n]{0,8}ZEUS[ _-]{0,3}DIRECTIVE[^<>\n]{0,8}>>>", re.IGNORECASE
+)
+_DIRECTIVE_CLOSE_RE = re.compile(
+    r"<<<[^<>\n]{0,8}END[ _-]{0,3}ZEUS[ _-]{0,3}DIRECTIVE[^<>\n]{0,8}>>>", re.IGNORECASE
+)
+# Dự phòng khi model bỏ hẳn marker: lấy từ tiêu đề, NHƯNG phải có mục bắt buộc
+# để không nhặt nhầm câu văn xuôi có nhắc "mệnh lệnh".
+_DIRECTIVE_HEADING_RE = re.compile(
+    r"^[ \t]*#{1,3}[ \t]*\**[ \t]*M[ỆE]NH[ \t]+L[ỆE]NH\b",
+    re.IGNORECASE | re.MULTILINE,
+)
+_DIRECTIVE_REQUIRED_HINTS = ("## Mục tiêu", "## Việc phải làm", "## Bằng chứng")
+_MARKDOWN_FILLER_LINES = {"", "*", "**", "***", "_", "__", "___", "---"}
+
 
 def cmd_extract(args: argparse.Namespace) -> int:
     raw = Path(args.input).read_text(encoding="utf-8", errors="replace") if args.input != "-" else sys.stdin.read()
-    body = _extract_directive(raw.replace(DIRECTIVE_START, "<<<ZEUS_DIRECTIVE>>>"))
+    body = _extract_directive(raw)
     if not body:
+        preview = "\n".join(raw.strip().splitlines()[:15]) or "(rỗng)"
         raise ProtocolError(
             EXIT_MISSING,
-            f"output của Hermes không có khối {DIRECTIVE_START} … {DIRECTIVE_END}",
+            f"output của Hermes không có khối {DIRECTIVE_START} … {DIRECTIVE_END} "
+            "và cũng không có tiêu đề '# MỆNH LỆNH' kèm mục bắt buộc. "
+            "Đây là lỗi của kênh TÙY CHỌN — phiên agent vẫn chạy bình thường.\n"
+            f"--- 15 dòng đầu output ---\n{preview}",
         )
     if args.output:
         Path(args.output).write_text(normalize_body(body), encoding="utf-8")
@@ -939,7 +1040,7 @@ def cmd_selftest(args: argparse.Namespace) -> int:
         print(("  ✓ " if condition else "  ✗ ") + name)
         failures += 0 if condition else 1
 
-    print("Hermes Owner Protocol — selftest")
+    print("Hermes Owner Protocol (kênh TÙY CHỌN) — selftest")
     body = "# MỆNH LỆNH — thử\n\n## Mục tiêu\nKiểm tra seal.\n"
     sealed = seal_of(body)
     check("seal ổn định giữa 2 lần", sealed == seal_of(body + "\n\n"))
@@ -991,25 +1092,27 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--repo", help="Đường dẫn repo (mặc định: git toplevel của CWD)")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    boot = sub.add_parser("boot", help="BƯỚC 0 của mọi phiên agent")
+    boot = sub.add_parser("boot", help="Hỏi thăm Hermes (TÙY CHỌN, không chặn phiên)")
     boot.add_argument("--no-fetch", action="store_true", help="Không fetch nhánh trạng thái từ origin")
     boot.add_argument("--offline", action="store_true", help="Không dùng mạng (tương đương --no-fetch)")
     boot.add_argument("--remote", default=DEFAULT_REMOTE_REF, help=f"Nhánh trạng thái (mặc định {DEFAULT_REMOTE_REF})")
     boot.add_argument("--live", action="store_true", help="Cho phép gọi Hermes trực tiếp nếu có binary + key")
     boot.add_argument("--materialize", action="store_true", help="Ghi bản remote vào working tree")
-    boot.add_argument("--max-age-hours", type=int, default=MAX_AGE_HOURS, help="Tuổi tối đa của mệnh lệnh")
-    boot.add_argument("--quiet", action="store_true", help="Chỉ in nội dung mệnh lệnh")
+    boot.add_argument("--max-age-hours", type=int, default=MAX_AGE_HOURS, help="Tuổi tối đa của gợi ý")
+    boot.add_argument("--quiet", action="store_true", help="Chỉ in nội dung gợi ý")
     boot.add_argument("--json", action="store_true", help="In thêm JSON máy đọc")
+    boot.add_argument("--strict", action="store_true",
+                      help="Chỉ khi Operator yêu cầu: trả 3/4/5/6 và DỪNG phiên khi thiếu lệnh")
     _add_repo_flag(boot)
     boot.set_defaults(func=cmd_boot)
 
     status = sub.add_parser("status", help="Xem trạng thái")
-    status.add_argument("--strict", action="store_true", help="Trả mã lỗi nếu mệnh lệnh không hợp lệ")
+    status.add_argument("--strict", action="store_true", help="Trả mã lỗi nếu gợi ý không hợp lệ")
     status.add_argument("--max-age-hours", type=int, default=MAX_AGE_HOURS)
     _add_repo_flag(status)
     status.set_defaults(func=cmd_status)
 
-    issue = sub.add_parser("issue", help="Ban hành mệnh lệnh mới")
+    issue = sub.add_parser("issue", help="Ghi một gợi ý mới (tùy chọn)")
     issue.add_argument("--body-file", default="-", help="File nội dung (mặc định: stdin)")
     issue.add_argument("--title", default="")
     issue.add_argument("--ttl-hours", type=int, default=DEFAULT_TTL_HOURS)
@@ -1033,9 +1136,9 @@ def build_parser() -> argparse.ArgumentParser:
     _add_repo_flag(closeout)
     closeout.set_defaults(func=cmd_closeout)
 
-    extract = sub.add_parser("extract", help="Tách khối mệnh lệnh từ output Hermes")
+    extract = sub.add_parser("extract", help="Tách khối gợi ý từ output Hermes")
     extract.add_argument("--input", default="-", help="File output (mặc định: stdin)")
-    extract.add_argument("--output", default="", help="Ghi thân mệnh lệnh ra file")
+    extract.add_argument("--output", default="", help="Ghi thân gợi ý ra file")
     extract.add_argument("--title-out", default="", help="Ghi tiêu đề ra file")
     _add_repo_flag(extract)
     extract.set_defaults(func=cmd_extract)

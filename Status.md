@@ -1,25 +1,46 @@
 # Status — Zeus / Quang Quý AI
 
-Cập nhật: 2026-10-23
+Cập nhật: 2026-10-28
 
-## Nhịp gần nhất (23/10/2026)
+## Nhịp gần nhất (28/10/2026) — Hermes chuyển sang TÙY CHỌN
+
+- **Sự cố "gọi Hermes làm chủ phiên chat" đã được xử lý tận gốc.** Ngày 23/10 giao thức
+  Hermes Owner được dựng như một **cổng chặn cứng**: `AGENTS.md` ĐIỀU 0 bắt mọi phiên chạy
+  `hermes-session-boot.sh`, và thiếu lệnh thì **dừng**. Workflow `hermes-owner-loop.yml`
+  sau đó lỗi 2 lượt (run `40062072101`, `40062270254`) ở bước "Tách khối mệnh lệnh" do model
+  trả marker lệch ⇒ `INBOX.md` chưa từng có nội dung ⇒ `boot` luôn trả 3 ⇒ mọi phiên chat bị
+  chặn. Thêm vào đó `HERMES_OWNER_AUTO` không bật (các lượt schedule bị `skipped`), TTL 72h và
+  sandbox Arena không có key/binary Hermes. Chi tiết: `docs/HERMES_SESSION_ERROR_RCA.md`.
+- **Toàn bộ luật đã đổi sang "có thể gọi Hermes, không bắt buộc".** Sửa đồng bộ:
+  `AGENTS.md` (ĐIỀU 0), `.ai/CONSTITUTION.md`, `README.md`, `Status.md`, `memory/MEMORY.md`,
+  `.ai/handoff/{INBOX.md,README.md,STATE.json,OUTBOX.md}`, `docs/HERMES_OWNER_PROTOCOL.md`,
+  `skills/hermes-owner/SKILL.md`, `scripts/hermes_owner.py`, `scripts/hermes_owner_brief.py`,
+  2 wrapper, `scripts/gen-zeus-context.py`, workflow `hermes-owner-loop.yml` và CI giao thức.
+- **Engine:** `boot` mặc định luôn thoát 0, in "KHÔNG BẮT BUỘC, KHÔNG CHẶN PHIÊN" và JSON
+  `blocking: false`. Mã 3/4/5/6 chỉ là tín hiệu trạng thái. Chế độ cũ chỉ tồn tại dưới
+  `--strict` / `HERMES_OWNER_STRICT=1` do Operator bật rõ; AI không tự bật.
+- **Workflow không còn là điểm lỗi duy nhất:** parser `extract` chịu marker lệch
+  (`<<< ZEUS_DIRECTIVE >>>`, bọc `**…**`, chữ thường, code fence) + dự phòng theo tiêu đề;
+  nếu vẫn không tách được thì workflow cảnh báo rồi bỏ qua thay vì đỏ, vì gợi ý là tùy chọn.
+- **Chống hồi quy:** `scripts/tests/test_hermes_optional_rules.py` kiểm tra các file luật không
+  còn câu kiểu "Hermes làm chủ / bắt buộc / dừng phiên", và `boot` wrapper thoát 0 khi thiếu gợi ý;
+  CI `hermes-owner-protocol-ci.yml` chạy toàn bộ `test_hermes*.py`.
+
+## Nhịp trước (23/10/2026) — đã thay thế bởi chính sách tùy chọn ở trên
 
 - **CI toàn repo được pin SHA**: policy của repo chuyển sang chế độ “chỉ cho phép action do GitHub
   tạo / thuộc ZeusopenAI / verified Marketplace **và phải pin bằng commit SHA đầy đủ**”, khiến mọi
   workflow dùng `actions/checkout@v4`… chết ngay ở bước khởi động (`startup_failure` 0s). Đã pin
   toàn bộ `uses:` trong 14 workflow sang SHA 40 ký tự kèm comment phiên bản.
-- **Hermes làm chủ mọi phiên agent (Hermes Owner Protocol)**: `AGENTS.md` có **ĐIỀU 0** buộc
-  phiên Arena/Codespaces chạy `bash scripts/hermes-session-boot.sh` trước khi làm bất cứ việc gì.
-  Mệnh lệnh do Hermes ban hành nằm ở `.ai/handoff/INBOX.md` (front matter + seal SHA-256,
-  hạn dùng 72h); hết hạn / chưa có lệnh / seal lệch ⇒ boot trả mã 3/4/5/6 và **phiên dừng**,
-  không tự quyết. Báo cáo cuối phiên ghi vào `OUTBOX.md` để chủ đọc ở chu kỳ sau.
-  Workflow `hermes-owner-loop.yml` là nơi Hermes thức dậy: dựng brief từ Status/TODO/Roadmap/
-  OUTBOX/PR, gọi `hermes -z` qua OpenRouter (toolset `safe`), rồi ghi mệnh lệnh mới lên nhánh
-  `hermes-owner/state` + mở PR. Tự động chạy khi đặt biến repo `HERMES_OWNER_AUTO=on`
-  (mỗi 6 giờ + mỗi khi OUTBOX merge vào main); bấm tay thì luôn chạy được.
-  Engine thuần stdlib: `scripts/hermes_owner.py`; test: `scripts/tests/test_hermes_owner.py`
-  (14 test, gồm cả nhánh dự phòng đọc từ `hermes-owner/state`); CI riêng:
-  `hermes-owner-protocol-ci.yml` (không gọi LLM). Đặc tả: `docs/HERMES_OWNER_PROTOCOL.md`.
+- **Hermes Owner Protocol — ban đầu là "chủ", nay là kênh TÙY CHỌN**: giao thức vẫn gồm
+  `.ai/handoff/INBOX.md` (gợi ý có front matter + seal SHA-256, hạn 72h), `OUTBOX.md`
+  (báo cáo tùy chọn), `STATE.json` (`policy: "optional"`), engine stdlib
+  `scripts/hermes_owner.py` và workflow `hermes-owner-loop.yml` (dựng brief từ
+  Status/TODO/Roadmap/OUTBOX/PR → gọi `hermes -z` qua OpenRouter, toolset `safe` → ghi nhánh
+  `hermes-owner/state` + mở PR). Tự động khi `HERMES_OWNER_AUTO=on`, bấm tay luôn được.
+  **Khác biệt cốt lõi:** gợi ý KHÔNG bắt buộc; thiếu/gợi ý hỏng/workflow lỗi KHÔNG chặn phiên.
+  Test: `scripts/tests/test_hermes*.py`; CI riêng: `hermes-owner-protocol-ci.yml` (không gọi
+  LLM). Đặc tả: `docs/HERMES_OWNER_PROTOCOL.md`; RCA: `docs/HERMES_SESSION_ERROR_RCA.md`.
 - **Đường ống "repo → Hermes" khép kín**: `scripts/hermes-sync.sh` đẩy skill + sinh skill
   `zeus-context` (Status/TODO/Roadmap/AGENTS/bản đồ repo/docs/git HEAD) vào runtime Hermes;
   `scripts/gen-zeus-context.py` sinh nội dung tất định, có ngân sách ký tự, không cắt cụt.

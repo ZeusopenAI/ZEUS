@@ -93,6 +93,20 @@ Full guide: [skills/hermes-media-tools/SKILL.md](hermes-media-tools/SKILL.md) & 
 
 ---
 
+### 8. hermes-owner
+
+**Purpose**: Kênh cố vấn **TÙY CHỌN** — soạn gợi ý cho phiên agent, đọc báo cáo
+`OUTBOX.md`, kiểm tra seal/hạn gợi ý. Hermes **không phải chủ**; thiếu gợi ý không chặn phiên.
+
+**When to use**: Khi Operator muốn Hermes góp ý qua `.ai/handoff/INBOX.md`, hoặc khi cần
+chẩn đoán vì sao không có gợi ý. Bỏ qua hoàn toàn cũng đúng luật.
+
+Full guide: [skills/hermes-owner/SKILL.md](hermes-owner/SKILL.md),
+[docs/HERMES_OWNER_PROTOCOL.md](../docs/HERMES_OWNER_PROTOCOL.md) &
+[docs/HERMES_SESSION_ERROR_RCA.md](../docs/HERMES_SESSION_ERROR_RCA.md).
+
+---
+
 ## Đồng bộ sang Hermes
 
 Mọi skill trong thư mục này được đẩy vào runtime Hermes bằng:

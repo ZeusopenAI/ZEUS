@@ -4,13 +4,16 @@
 
 Dự án AI Automation cá nhân và trợ lý đa năng cho thương hiệu cá nhân **Nguyễn Quang Quý**. Tối ưu cho vận hành gọn nhẹ (Phone/Cloud-first), các module độc lập và dễ bảo trì.
 
-> ### 🧭 Hermes là chủ — agent chỉ thực thi
-> Mọi phiên agent mở repo này phải chạy **BƯỚC 0** trước khi làm bất cứ việc gì:
+> ### 🧭 Hermes là kênh cố vấn TÙY CHỌN — không bắt buộc, không chặn phiên
+> Người dùng / Operator trong phiên chat là quyền cao nhất. AI **có thể gọi Hermes** để lấy
+> thêm gợi ý, nhưng **không bắt buộc**; nếu không có gợi ý, gợi ý hết hạn, seal sai hay workflow
+> lỗi thì cứ **tiếp tục làm việc bình thường**.
 > ```bash
-> bash scripts/hermes-session-boot.sh
+> bash scripts/hermes-session-boot.sh       # tùy chọn; thoát 0 dù không có gợi ý
 > ```
-> Có mệnh lệnh hợp lệ của Hermes thì làm đúng mệnh lệnh; không có thì **dừng**, không tự quyết.
-> Đặc tả: [`docs/HERMES_OWNER_PROTOCOL.md`](docs/HERMES_OWNER_PROTOCOL.md) · Luật gốc: [`AGENTS.md`](AGENTS.md) ĐIỀU 0.
+> Chế độ strict (dừng khi thiếu lệnh) chỉ khi Operator nói rõ. Luật gốc: [`AGENTS.md`](AGENTS.md)
+> ĐIỀU 0 · Phân tích sự cố: [`docs/HERMES_SESSION_ERROR_RCA.md`](docs/HERMES_SESSION_ERROR_RCA.md)
+> · Đặc tả: [`docs/HERMES_OWNER_PROTOCOL.md`](docs/HERMES_OWNER_PROTOCOL.md).
 
 
 ---
@@ -33,11 +36,11 @@ Dự án AI Automation cá nhân và trợ lý đa năng cho thương hiệu cá
 ```text
 .
 ├── .ai/                        # Hiến pháp + hộp thư Hermes ↔ agent
-│   ├── CONSTITUTION.md         # Hiến pháp vận hành
-│   └── handoff/                # INBOX (mệnh lệnh của chủ) · OUTBOX (báo cáo) · STATE.json
+│   ├── CONSTITUTION.md         # Hiến pháp vận hành (Operator là quyền cao nhất)
+│   └── handoff/                # INBOX (gợi ý tùy chọn) · OUTBOX (báo cáo tùy chọn) · STATE.json
 ├── .github/workflows/          # Tự động hóa GitHub Actions
-│   ├── hermes-owner-loop.yml   # Hermes đọc báo cáo → ban hành mệnh lệnh cho phiên agent
-│   ├── hermes-owner-protocol-ci.yml # Test giao thức Hermes làm chủ (không tốn credit)
+│   ├── hermes-owner-loop.yml   # Hermes đọc báo cáo → gợi ý (kênh tùy chọn)
+│   ├── hermes-owner-protocol-ci.yml # Test giao thức Hermes + chặn luật bắt buộc hồi quy
 │   ├── hermes-openrouter.yml   # Chạy Hermes Agent + tạo ảnh bằng OpenRouter
 │   ├── arena-auto-pr.yml       # Tự động mở PR khi có cập nhật code từ Arena
 │   ├── flowkit-ci.yml          # Kiểm thử backend, extension và dashboard FlowKit
@@ -48,7 +51,8 @@ Dự án AI Automation cá nhân và trợ lý đa năng cho thương hiệu cá
 │   └── bootstrap.py            # Script khởi động tự động trên Google Colab
 ├── docs/                       # Tài liệu hướng dẫn & vận hành
 │   ├── FLOWKIT_INTEGRATION.md  # Hướng dẫn chạy FlowKit trong ZEUS
-│   ├── HERMES_OWNER_PROTOCOL.md # Hermes làm chủ: boot → nhận lệnh → closeout → báo cáo
+│   ├── HERMES_OWNER_PROTOCOL.md # Giao thức Hermes TÙY CHỌN: boot → gợi ý → báo cáo
+│   ├── HERMES_SESSION_ERROR_RCA.md # Vì sao "gọi Hermes làm chủ phiên chat" bị lỗi (28/10/2026)
 │   ├── HERMES_ACTIONS.md       # Hướng dẫn chạy Hermes qua GitHub Actions
 │   ├── TELEGRAM_WIRING.md      # Runbook kết nối Telegram Webhook
 │   ├── second-brain.md         # Hướng dẫn gom bộ nhớ ChatGPT/Claude/Gemini
@@ -63,7 +67,7 @@ Dự án AI Automation cá nhân và trợ lý đa năng cho thương hiệu cá
 │   └── tests/                  # Kiểm thử backend và extension
 ├── scripts/                    # Bộ công cụ & script tiện ích
 │   ├── hermes_owner.py         # Engine Hermes Owner Protocol (boot/issue/closeout/status)
-│   ├── hermes-session-boot.sh  # BƯỚC 0 bắt buộc của mọi phiên agent
+│   ├── hermes-session-boot.sh  # Hỏi thăm Hermes (tùy chọn, thoát 0)
 │   ├── hermes-session-closeout.sh # Ghi báo cáo cuối phiên gửi Hermes
 │   ├── second-brain-import.mjs # Import lịch sử chat (Node.js >= 22)
 │   ├── second-brain/           # Chuẩn hóa hội thoại
@@ -71,7 +75,7 @@ Dự án AI Automation cá nhân và trợ lý đa năng cho thương hiệu cá
 │   ├── hermes-gemini-auth-recover.sh # Khôi phục key Gemini an toàn
 │   └── sync-to-zeusopenai.sh   # Đồng bộ mã nguồn sang ZeusopenAI/ZEUS
 ├── skills/                     # Kỹ năng tùy chỉnh cho Agent
-│   ├── hermes-owner/           # Skill cho chính Hermes khi ban hành mệnh lệnh
+│   ├── hermes-owner/           # Skill cho Hermes khi đưa gợi ý (không bắt buộc)
 │   ├── qai-developer-manager/  # Kỹ năng kỹ sư trưởng quản lý code & CI
 │   ├── hermes-project-analyst-code-manager/ # Phân tích & chẩn đoán Hermes
 │   ├── flowkit-ai-filmmaker/   # Hướng dẫn vận hành AI filmmaking

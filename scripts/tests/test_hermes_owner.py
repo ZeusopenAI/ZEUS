@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""Test cho Hermes Owner Protocol (stdlib unittest, không cần pytest).
+"""Test cho Hermes Owner Protocol — chính sách TÙY CHỌN (stdlib unittest).
 
-    python3 -m unittest discover -s scripts/tests -p 'test_hermes_owner.py' -v
+    python3 -m unittest discover -s scripts/tests -p 'test_hermes*.py' -v
     python3 scripts/tests/test_hermes_owner.py
+
+Kể từ 28/10/2026: thiếu gợi ý Hermes KHÔNG còn là lỗi chặn phiên. `boot` mặc định
+trả 0; chỉ `--strict` / HERMES_OWNER_STRICT=1 (Operator bật rõ) mới trả 3/4/5/6.
 """
 
 from __future__ import annotations
@@ -56,16 +59,32 @@ class ProtocolTest(unittest.TestCase):
         return run_engine("boot", "--repo", str(self.repo), "--offline", *extra)
 
     # -- tests -----------------------------------------------------------
-    def test_missing_directive_exits_3(self) -> None:
+    # -- chính sách tùy chọn ----------------------------------------------
+    def test_missing_directive_is_optional_by_default(self) -> None:
         result = self.boot()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("KHÔNG BẮT BUỘC", result.stdout)
+        self.assertNotIn("DỪNG PHIÊN", result.stdout)
+
+    def test_missing_directive_strict_is_opt_in(self) -> None:
+        result = self.boot("--strict")
         self.assertEqual(result.returncode, hop.EXIT_MISSING, result.stdout + result.stderr)
         self.assertIn("DỪNG PHIÊN", result.stdout)
+
+    def test_missing_directive_json_not_blocking(self) -> None:
+        result = self.boot("--json")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout[result.stdout.index("{"):])
+        self.assertFalse(payload["ok"])
+        self.assertFalse(payload["blocking"])
+        self.assertEqual(payload["policy"], "optional")
+        self.assertEqual(payload["code"], hop.EXIT_MISSING)
 
     def test_valid_directive_exits_0_and_prints_body(self) -> None:
         self.issue()
         result = self.boot()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("MỆNH LỆNH TỪ HERMES", result.stdout)
+        self.assertIn("GỢI Ý TỪ HERMES", result.stdout)
         self.assertIn("Làm việc.", result.stdout)
 
     def test_boot_json_payload(self) -> None:
@@ -75,25 +94,32 @@ class ProtocolTest(unittest.TestCase):
         payload = json.loads(result.stdout[result.stdout.index("{"):])
         self.assertEqual(payload["id"], issued["meta"]["id"])
         self.assertEqual(payload["source"], "local")
+        self.assertFalse(payload["blocking"])
         self.assertIn("Làm việc.", payload["body"])
 
-    def test_tampering_breaks_seal(self) -> None:
+    def test_tampering_breaks_seal_but_does_not_block(self) -> None:
         self.issue()
         inbox = self.repo / ".ai" / "handoff" / "INBOX.md"
         inbox.write_text(inbox.read_text(encoding="utf-8") + "\nThêm dòng lạ.\n", encoding="utf-8")
         result = self.boot()
-        self.assertEqual(result.returncode, hop.EXIT_TAMPERED, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("seal", result.stdout.lower())
+        strict = self.boot("--strict")
+        self.assertEqual(strict.returncode, hop.EXIT_TAMPERED, strict.stdout + strict.stderr)
 
-    def test_expired_directive(self) -> None:
+    def test_expired_directive_is_optional(self) -> None:
         self.issue(ttl=-2)
         result = self.boot()
-        self.assertEqual(result.returncode, hop.EXIT_STALE, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        strict = self.boot("--strict")
+        self.assertEqual(strict.returncode, hop.EXIT_STALE, strict.stdout + strict.stderr)
 
-    def test_wrong_issuer(self) -> None:
+    def test_wrong_issuer_is_optional(self) -> None:
         self.issue(issuer="arena")
         result = self.boot()
-        self.assertEqual(result.returncode, hop.EXIT_WRONG_ISSUER, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        strict = self.boot("--strict")
+        self.assertEqual(strict.returncode, hop.EXIT_WRONG_ISSUER, strict.stdout + strict.stderr)
 
     def test_number_increments_and_history_kept(self) -> None:
         first = self.issue(title="Một")
@@ -143,6 +169,60 @@ class ProtocolTest(unittest.TestCase):
         # stdin rỗng trong subprocess -> phải lỗi; test hàm trực tiếp thay thế
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(hop._extract_directive(raw).strip().splitlines()[0], "# MỆNH LỆNH #2 — abc")
+
+    # -- extract: chịu được biến thể marker của model -----------------------
+    _DIRECTIVE_BODY = "# MỆNH LỆNH #7 — Thử\n\n## Mục tiêu\nLàm xong.\n"
+
+    def _extract_cli(self, raw: str) -> subprocess.CompletedProcess[str]:
+        with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as fh:
+            fh.write(raw)
+            path = fh.name
+        try:
+            return run_engine("extract", "--input", path)
+        finally:
+            os.unlink(path)
+
+    def test_extract_tolerates_spaced_markers(self) -> None:
+        raw = f"<<< ZEUS_DIRECTIVE >>>\n{self._DIRECTIVE_BODY}<<< END_ZEUS_DIRECTIVE >>>\n"
+        result = self._extract_cli(raw)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("# MỆNH LỆNH #7", result.stdout)
+
+    def test_extract_tolerates_bold_and_code_fence(self) -> None:
+        raw = (
+            "**<<<ZEUS_DIRECTIVE>>>**\n\n"
+            f"```markdown\n{self._DIRECTIVE_BODY}```\n\n"
+            "**<<<END_ZEUS_DIRECTIVE>>>**\n"
+        )
+        result = self._extract_cli(raw)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(result.stdout.startswith("# MỆNH LỆNH #7"), result.stdout)
+        self.assertNotIn("```", result.stdout)
+
+    def test_extract_tolerates_lowercase_and_underscore_markers(self) -> None:
+        raw = f"<<<zeus_directive>>>\n{self._DIRECTIVE_BODY}<<<end_zeus_directive>>>\n"
+        result = self._extract_cli(raw)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("# MỆNH LỆNH #7", result.stdout)
+
+    def test_extract_falls_back_to_heading_when_markers_missing(self) -> None:
+        raw = (
+            "Đây là gợi ý của phiên này:\n\n"
+            f"{self._DIRECTIVE_BODY}\n## Việc phải làm\n1. Việc A — kiểm chứng: `x` → OK\n"
+        )
+        result = self._extract_cli(raw)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(result.stdout.startswith("# MỆNH LỆNH #7"), result.stdout)
+
+    def test_extract_rejects_prose_without_directive(self) -> None:
+        raw = "Tôi đã đọc báo cáo. MỆNH LỆNH sẽ được ban hành sau khi có thêm dữ liệu.\n"
+        result = self._extract_cli(raw)
+        self.assertEqual(result.returncode, hop.EXIT_MISSING)
+        self.assertIn("không có khối", result.stderr)
+
+    def test_extract_rejects_heading_without_required_sections(self) -> None:
+        result = self._extract_cli("# MỆNH LỆNH #8 — Thiếu mục\n\nChỉ có một dòng.\n")
+        self.assertEqual(result.returncode, hop.EXIT_MISSING)
 
     def test_selftest_command_passes(self) -> None:
         result = run_engine("selftest")
@@ -204,6 +284,58 @@ class RemoteFallbackTest(unittest.TestCase):
         self.assertIn("Chỉ có trên nhánh.", result.stdout)
         payload = json.loads(result.stdout[result.stdout.index("{"):])
         self.assertEqual(payload["source"], "remote")
+
+
+class EndToEndTest(unittest.TestCase):
+    """Chuỗi thật: output LLM lệch marker -> extract -> issue -> boot.
+
+    Khoá lại lỗi đã làm `hermes-owner-loop` đỏ 2 lượt (run 40062072101,
+    40062270254) và, do luật cũ, chặn mọi phiên agent ở ĐIỀU 0.
+    """
+
+    MESSY_OUTPUT = (
+        "Đây là gợi ý của phiên:\n\n"
+        "**<<< ZEUS_DIRECTIVE >>>**\n\n"
+        "```markdown\n"
+        "# MỆNH LỆNH #7 — Sửa lỗi tách khối\n\n"
+        "## Mục tiêu\nChứng minh chuỗi extract -> issue -> boot chạy được.\n\n"
+        "## Việc phải làm (theo thứ tự)\n"
+        "1. Chạy boot — kiểm chứng: `boot` -> exit 0\n\n"
+        "## Bằng chứng hoàn thành\n- boot exit 0\n"
+        "```\n\n"
+        "**<<< END_ZEUS_DIRECTIVE >>>**\n"
+    )
+
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        self.repo = Path(self._tmp.name)
+        handoff = self.repo / ".ai" / "handoff"
+        handoff.mkdir(parents=True)
+        (handoff / "STATE.json").write_text(json.dumps(hop.empty_state()), encoding="utf-8")
+        (handoff / "INBOX.md").write_text("# chưa có\n", encoding="utf-8")
+        self.raw = self.repo / "raw.txt"
+        self.raw.write_text(self.MESSY_OUTPUT, encoding="utf-8")
+
+    def tearDown(self) -> None:
+        self._tmp.cleanup()
+
+    def test_messy_llm_output_becomes_valid_inbox(self) -> None:
+        directive = self.repo / "directive.md"
+        title = self.repo / "title.txt"
+        extracted = run_engine(
+            "extract", "--input", str(self.raw), "--output", str(directive), "--title-out", str(title),
+        )
+        self.assertEqual(extracted.returncode, 0, extracted.stderr)
+        self.assertIn("MỆNH LỆNH #7", title.read_text(encoding="utf-8"))
+        issued = run_engine(
+            "issue", "--repo", str(self.repo), "--body-file", str(directive),
+            "--title", title.read_text(encoding="utf-8").strip(), "--ttl-hours", "24",
+        )
+        self.assertEqual(issued.returncode, 0, issued.stdout + issued.stderr)
+        self.assertTrue((self.repo / ".ai/handoff/INBOX.md").read_text(encoding="utf-8").startswith("---"))
+        booted = run_engine("boot", "--repo", str(self.repo), "--offline")
+        self.assertEqual(booted.returncode, 0, booted.stdout + booted.stderr)
+        self.assertIn("MỆNH LỆNH #7", booted.stdout)
 
 
 if __name__ == "__main__":

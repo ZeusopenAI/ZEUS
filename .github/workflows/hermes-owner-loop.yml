@@ -1,13 +1,20 @@
 name: Hermes owner loop
 
 # ============================================================================
-# CHỦ THỨC DẬY: Hermes đọc báo cáo của các phiên Arena rồi ban hành mệnh lệnh mới.
+# KÊNH CỐ VẤN TÙY CHỌN: Hermes đọc báo cáo rồi ban hành GỢI Ý (không bắt buộc).
+#
+# Tên "owner" / "mệnh lệnh" là tên lịch sử. Hermes KHÔNG phải chủ phiên chat;
+# quyền cao nhất là Operator / người dùng. Xem AGENTS.md ĐIỀU 0 và
+# docs/HERMES_SESSION_ERROR_RCA.md.
 #
 # Luồng:
-#   OUTBOX.md (arena báo cáo) ──► workflow này ──► Hermes (OpenRouter)
+#   OUTBOX.md (báo cáo tùy chọn) ──► workflow này ──► Hermes (OpenRouter)
 #        ──► INBOX.md + STATE.json trên nhánh hermes-owner/state
-#        ──► PR về main để Operator duyệt
-#        ──► phiên Arena sau chạy `scripts/hermes-session-boot.sh` và nhận lệnh
+#        ──► PR về main để Operator duyệt (không merge cũng không sao)
+#        ──► phiên agent MUỐN thì chạy `scripts/hermes-session-boot.sh` để đọc gợi ý
+#
+# ⚠ Workflow lỗi / không có gợi ý / lượt schedule bị skipped = BÌNH THƯỜNG.
+#   Không có bước nào ở đây được phép chặn phiên chat của người dùng.
 #
 # Chạy tự động: chỉ khi biến repo HERMES_OWNER_AUTO = "on"
 #   Settings → Secrets and variables → Actions → Variables → New repository variable
@@ -30,7 +37,7 @@ on:
         default: "google/gemini-2.5-flash"
         type: string
       ttl_hours:
-        description: "Mệnh lệnh có hiệu lực bao nhiêu giờ"
+        description: "Gợi ý có hiệu lực bao nhiêu giờ (tùy chọn)"
         required: false
         default: "72"
         type: string
@@ -40,7 +47,7 @@ on:
         default: "safe"
         type: string
       dry_run:
-        description: "Chỉ xem Hermes trả lời, không ghi mệnh lệnh"
+        description: "Chỉ xem Hermes trả lời, không ghi gợi ý"
         required: false
         default: false
         type: boolean
@@ -124,7 +131,7 @@ jobs:
             --out-brief .ai/handoff/.tmp/brief.md \
             --out-prompt .ai/handoff/.tmp/prompt.txt
 
-      - name: Hermes ban hành mệnh lệnh
+      - name: Hermes ban hành gợi ý (tùy chọn)
         run: |
           set +e
           hermes -z "$(cat .ai/handoff/.tmp/prompt.txt)" \
@@ -142,32 +149,42 @@ jobs:
           echo "::endgroup::"
           exit $rc
 
-      - name: Tách khối mệnh lệnh
+      - name: Tách khối gợi ý (lỗi cũng không chặn phiên)
+        id: extract
         run: |
+          set +e
           python3 scripts/hermes_owner.py extract \
             --input .ai/handoff/.tmp/raw.txt \
             --output .ai/handoff/.tmp/directive.md \
             --title-out .ai/handoff/.tmp/title.txt
+          rc=$?
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            echo "::warning::Hermes không trả khối gợi ý đúng định dạng — BỎ QUA. Đây là kênh TÙY CHỌN; các phiên chat/agent vẫn chạy bình thường (xem docs/HERMES_SESSION_ERROR_RCA.md)."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "ok=true" >> "$GITHUB_OUTPUT"
           echo "Tiêu đề: $(cat .ai/handoff/.tmp/title.txt)"
-          echo "::group::Mệnh lệnh"
+          echo "::group::Gợi ý từ Hermes (tham khảo)"
           cat .ai/handoff/.tmp/directive.md
           echo "::endgroup::"
 
       - name: Chế độ xem trước (dry run)
-        if: ${{ env.DRY_RUN == 'true' }}
+        if: ${{ env.DRY_RUN == 'true' && steps.extract.outputs.ok == 'true' }}
         run: |
           echo "Dry run — không ghi INBOX.md, không commit."
           cp .ai/handoff/.tmp/directive.md /tmp/preview.md
-          echo "::notice::Dry run xong. Xem artifact để biết mệnh lệnh."
+          echo "::notice::Dry run xong. Xem artifact để biết gợi ý (không bắt buộc)."
 
-      - name: Ghi mệnh lệnh vào nhánh trạng thái
-        if: ${{ env.DRY_RUN != 'true' }}
+      - name: Ghi gợi ý vào nhánh trạng thái
+        if: ${{ env.DRY_RUN != 'true' && steps.extract.outputs.ok == 'true' }}
         run: |
           set -euo pipefail
           git config user.name "hermes-owner[bot]"
           git config user.email "hermes-owner[bot]@users.noreply.github.com"
 
-          # Nhánh trạng thái = main + lịch sử mệnh lệnh của các lượt trước
+          # Nhánh trạng thái = main + lịch sử gợi ý của các lượt trước
           git fetch --depth=1 origin \
             hermes-owner/state:refs/remotes/origin/hermes-owner/state 2>/dev/null || true
           git checkout -B hermes-owner/state origin/main
@@ -185,38 +202,40 @@ jobs:
 
           NUMBER=$(python3 -c "import json;print((json.load(open('.ai/handoff/STATE.json')).get('active_directive') or {}).get('number','?'))")
           git add .ai/handoff/INBOX.md .ai/handoff/STATE.json .ai/handoff/archive
-          git commit -m "chore(hermes-owner): mệnh lệnh #${NUMBER} (${MODEL})" \
+          git commit -m "chore(hermes-owner): gợi ý #${NUMBER} (${MODEL})" \
             -m "Nguồn: ${RUN_URL}"
           git push --force origin hermes-owner/state
 
       - name: Mở / cập nhật PR về main
-        if: ${{ env.DRY_RUN != 'true' }}
+        if: ${{ env.DRY_RUN != 'true' && steps.extract.outputs.ok == 'true' }}
         run: |
           set -euo pipefail
           NUMBER=$(python3 -c "import json;print((json.load(open('.ai/handoff/STATE.json')).get('active_directive') or {}).get('number','?'))")
-          TITLE=$(python3 -c "import json;print((json.load(open('.ai/handoff/STATE.json')).get('active_directive') or {}).get('title','Mệnh lệnh'))")
+          TITLE=$(python3 -c "import json;print((json.load(open('.ai/handoff/STATE.json')).get('active_directive') or {}).get('title','Gợi ý'))")
           BODY=$(python3 scripts/hermes_owner.py extract --input .ai/handoff/.tmp/raw.txt 2>/dev/null || cat .ai/handoff/.tmp/directive.md)
 
           existing=$(gh pr list --head hermes-owner/state --state open --json number --jq '.[0].number // empty')
           {
-            echo "## 🧭 Mệnh lệnh #${NUMBER} — ${TITLE}"
+            echo "## 🧭 Gợi ý TÙY CHỌN #${NUMBER} — ${TITLE}"
             echo
-            echo "Ban hành bởi Hermes qua workflow \`hermes-owner-loop.yml\`."
+            echo "Gợi ý (KHÔNG bắt buộc) từ Hermes qua workflow \`hermes-owner-loop.yml\`."
+            echo "Quyền quyết định vẫn là Operator / người dùng trong phiên chat (AGENTS.md ĐIỀU 0)."
             echo
             echo "$BODY"
             echo
             echo "---"
             echo "- Run: ${RUN_URL}"
-            echo "- Merge PR này để mệnh lệnh có trong \`main\`; **không merge cũng không sao** — \`scripts/hermes-session-boot.sh\` đọc trực tiếp nhánh \`hermes-owner/state\`."
-            echo "- Từ chối mệnh lệnh: đóng PR + chạy lại workflow với ghi chú mới."
+            echo "- **Không merge cũng không sao.** \`scripts/hermes-session-boot.sh\` đọc trực tiếp nhánh \`hermes-owner/state\` nếu agent muốn tham khảo."
+            echo "- Không có gợi ý / gợi ý lỗi / workflow lỗi đều KHÔNG chặn phiên chat."
+            echo "- Không đồng ý gợi ý: đóng PR + chạy lại workflow với ghi chú mới (hoặc bỏ qua)."
           } > /tmp/pr-body.md
 
           if [ -n "$existing" ]; then
-            gh pr edit "$existing" --title "🧭 Mệnh lệnh Hermes #${NUMBER}: ${TITLE}" --body-file /tmp/pr-body.md
+            gh pr edit "$existing" --title "🧭 Gợi ý Hermes (tùy chọn) #${NUMBER}: ${TITLE}" --body-file /tmp/pr-body.md
             echo "Đã cập nhật PR #${existing}"
           else
             gh pr create --base main --head hermes-owner/state \
-              --title "🧭 Mệnh lệnh Hermes #${NUMBER}: ${TITLE}" \
+              --title "🧭 Gợi ý Hermes (tùy chọn) #${NUMBER}: ${TITLE}" \
               --body-file /tmp/pr-body.md
           fi
 
@@ -232,9 +251,17 @@ jobs:
           fi
           TEXT=$(python3 - <<'PY'
           import json, pathlib
-          state = json.loads(pathlib.Path('.ai/handoff/STATE.json').read_text(encoding='utf-8'))
+          try:
+              state = json.loads(pathlib.Path('.ai/handoff/STATE.json').read_text(encoding='utf-8'))
+          except Exception:
+              state = {}
           active = state.get('active_directive') or {}
-          print(f"🧭 Hermes đã ban hành mệnh lệnh #{active.get('number','?')}: {active.get('title','')}\nHết hạn: {active.get('valid_until','')}")
+          if active:
+              print(f"🧭 Hermes gợi ý (TÙY CHỌN) #{active.get('number','?')}: "
+                    f"{active.get('title','')}\nHết hạn: {active.get('valid_until','')}")
+          else:
+              print("ℹ️ Hermes chưa có gợi ý hợp lệ — kênh TÙY CHỌN, không sao. "
+                    "Các phiên chat/agent vẫn chạy bình thường theo yêu cầu của Operator.")
           PY
           )
           curl -fsS --max-time 20 \
@@ -243,6 +270,11 @@ jobs:
             --data-urlencode "text=${TEXT}" \
             --data-urlencode "disable_web_page_preview=true" >/dev/null \
             && echo "Đã gửi Telegram." || echo "Gửi Telegram thất bại (không chặn workflow)."
+
+      - name: Nhắc chính sách (luôn chạy)
+        if: always()
+        run: |
+          echo "::notice::Hermes là kênh TÙY CHỌN. Gợi ý chỉ để tham khảo; lỗi hay thiếu gợi ý không chặn bất kỳ phiên chat nào. Xem AGENTS.md ĐIỀU 0."
 
       - name: Lưu bằng chứng
         if: always()
